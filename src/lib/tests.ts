@@ -23,7 +23,7 @@ export type TestDocument = {
   title: string;
   description?: string;
   subject: "science" | "geography" | "history" | "mathematics";
-  grade?: string;
+  grade: string;
   passPercentage?: number;
   questions: TestQuestionInput[];
 };

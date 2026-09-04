@@ -68,7 +68,7 @@ export default function TestStartPage({ params }: RouteContext) {
       <h1>{test.title}</h1>
       <p className={styles.detailCopy}>{test.description ?? "A focused practice set to help you keep moving."}</p>
       <div className={styles.detailMeta}><span>{test.questionCount} questions</span><span>Pass at {test.passPercentage}%</span><span>No time limit</span></div>
-      <button className={styles.primaryAction} type="button" onClick={() => void startAttempt()} disabled={state === "starting"}>{state === "starting" ? "Starting…" : "Start test"}<span aria-hidden="true">↗</span></button>
+      <div className={styles.detailActions}><button className={styles.primaryAction} type="button" onClick={() => void startAttempt()} disabled={state === "starting"}>{state === "starting" ? "Starting…" : "Start test"}<span aria-hidden="true">↗</span></button><Link className={styles.secondaryAction} href={`/dashboard/tests/${test.id}/history`}>View history</Link></div>
     </main>
   );
 }

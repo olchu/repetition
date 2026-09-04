@@ -29,6 +29,23 @@ export async function POST(_request: Request, context: RouteContext) {
     );
   }
 
+  const resumable = await prisma.attempt.findFirst({
+    where: {
+      childId: user.id,
+      status: "IN_PROGRESS",
+      assignment: { testId, status: "ACTIVE" },
+    },
+    orderBy: { startedAt: "desc" },
+  });
+
+  if (resumable) {
+    const savedAttempt = await findAttemptForChild(resumable.id, user.id);
+
+    if (savedAttempt) {
+      return NextResponse.json({ attempt: serializeAttempt(savedAttempt), resumed: true });
+    }
+  }
+
   const attempt = await prisma.attempt.create({
     data: {
       assignmentId: assignment.id,

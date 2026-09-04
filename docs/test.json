@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1.0",
+  "id": "science-plants-01",
+  "title": "Растения",
+  "description": "Проверка базовых знаний о растениях.",
+  "subject": "science",
+  "grade": "5",
+  "passPercentage": 90,
+  "questions": [
+    {
+      "id": "q1",
+      "text": "Что нужно растению для фотосинтеза?",
+      "points": 1,
+      "options": [
+        { "id": "a", "text": "Свет" },
+        { "id": "b", "text": "Только песок" },
+        { "id": "c", "text": "Только лёд" }
+      ],
+      "correctOptionId": "a",
+      "explanation": "Свет необходим для фотосинтеза."
+    }
+  ]
+}

@@ -28,6 +28,7 @@ export async function GET(request: Request) {
       subject: true,
       grade: true,
       status: true,
+      createdAt: true,
       passPercentage: true,
       _count: { select: { questions: true, assignments: true } },
     },

@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const test = await prisma.test.findUnique({ where: { id: testId }, select: { id: true, status: true } });
+  const test = await prisma.test.findUnique({ where: { id: testId }, select: { id: true, status: true, grade: true } });
 
   if (!test) {
     return NextResponse.json(
@@ -50,12 +50,29 @@ export async function POST(request: Request) {
     );
   }
 
+  if (!test.grade) {
+    return NextResponse.json(
+      { error: { code: "TEST_GRADE_REQUIRED", message: "Tests must specify a grade before assignment." } },
+      { status: 409 },
+    );
+  }
+
   if (hasGroup) {
-    const group = await prisma.group.findUnique({ where: { id: groupId }, select: { id: true, status: true } });
+    const group = await prisma.group.findUnique({
+      where: { id: groupId },
+      select: { id: true, status: true, members: { select: { child: { select: { childProfile: { select: { grade: true } } } } } } },
+    });
 
     if (!group || group.status !== "ACTIVE") {
       return NextResponse.json(
         { error: { code: "INVALID_GROUP", message: "Active group not found." } },
+        { status: 422 },
+      );
+    }
+
+    if (group.members.some((member) => member.child.childProfile?.grade !== test.grade)) {
+      return NextResponse.json(
+        { error: { code: "GRADE_MISMATCH", message: `Every child in the group must be in grade ${test.grade}.` } },
         { status: 422 },
       );
     }
@@ -75,7 +92,7 @@ export async function POST(request: Request) {
 
   const children = await prisma.user.findMany({
     where: { id: { in: childIds }, role: "CHILD", status: "ACTIVE" },
-    select: { id: true },
+    select: { id: true, childProfile: { select: { grade: true } } },
   });
   const foundIds = new Set(children.map((child) => child.id));
   const missingIds = childIds.filter((id) => !foundIds.has(id));
@@ -89,6 +106,13 @@ export async function POST(request: Request) {
           details: missingIds.map((id) => ({ id })),
         },
       },
+      { status: 422 },
+    );
+  }
+
+  if (children.some((child) => child.childProfile?.grade !== test.grade)) {
+    return NextResponse.json(
+      { error: { code: "GRADE_MISMATCH", message: `Tests for grade ${test.grade} can only be assigned to children in that grade.` } },
       { status: 422 },
     );
   }

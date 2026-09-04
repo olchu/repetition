@@ -18,6 +18,7 @@ type DashboardTest = {
   subject: string;
   status: "not_started" | "in_progress" | "completed" | "passed";
   attemptCount: number;
+  inProgressAttemptId: string | null;
   bestPercentage: number;
   latestPercentage: number | null;
   latestSubmittedAt: string | null;
@@ -157,6 +158,7 @@ export default function DashboardPage() {
                 <span style={{ width: `${subject.progress}%` }} />
               </div>
               <p>{subject.passed} of {subject.assigned} tests passed</p>
+              <Link className={styles.subjectLink} href={`/dashboard/subjects/${subject.subject}`}>View subject</Link>
             </article>
           ))}
         </div>
@@ -188,7 +190,7 @@ export default function DashboardPage() {
                   <span className={styles.statusDot} aria-hidden="true" />
                   {statusLabels[test.status]}
                 </div>
-                <Link className={styles.testAction} href={`/dashboard/tests/${test.id}`}>
+                <Link className={styles.testAction} href={test.status === "in_progress" && test.inProgressAttemptId ? `/dashboard/attempts/${test.inProgressAttemptId}` : `/dashboard/tests/${test.id}`}>
                   {test.status === "passed" ? "Review" : test.status === "in_progress" ? "Continue" : "Start"}
                   <span aria-hidden="true">↗</span>
                 </Link>

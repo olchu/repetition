@@ -1,19 +1,20 @@
 "use client";
 
+import Image from "next/image";
+import { ArrowRight, Eye, EyeOff, GraduationCap, Lock, School, Settings, User } from "lucide-react";
 import { FormEvent, useState } from "react";
-import Link from "next/link";
 import styles from "./page.module.css";
 
 type Role = "child" | "admin";
 
 const roleCopy: Record<Role, { title: string; description: string }> = {
   child: {
-    title: "Pick up where you left off.",
-    description: "Your assigned tests, your pace, your progress.",
+    title: "Pick up where you left off",
+    description: "Your lessons, your pace, your progress.",
   },
   admin: {
-    title: "Keep learning moving.",
-    description: "Manage children, publish tests, and follow every milestone.",
+    title: "Shape the learning journey",
+    description: "Manage children, tests, and their progress.",
   },
 };
 
@@ -21,6 +22,8 @@ export default function Home() {
   const [role, setRole] = useState<Role>("child");
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [feedback, setFeedback] = useState<{ tone: "success" | "error"; text: string } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -33,7 +36,7 @@ export default function Home() {
       const response = await fetch("/api/v1/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ login, password, role }),
+        body: JSON.stringify({ login, password, role, rememberMe }),
       });
       const payload = (await response.json().catch(() => null)) as {
         user?: { role?: string };
@@ -44,10 +47,6 @@ export default function Home() {
         throw new Error(payload?.error?.message ?? "Unable to sign in right now.");
       }
 
-      setFeedback({
-        tone: "success",
-        text: `Signed in as ${payload?.user?.role ?? role}. Your 30-day session is active.`,
-      });
       window.location.assign(role === "admin" ? "/admin" : "/dashboard");
     } catch (error) {
       setFeedback({
@@ -61,58 +60,32 @@ export default function Home() {
 
   return (
     <main className={styles.page}>
-      <section className={styles.story} aria-label="Repetition introduction">
-        <div className={styles.storyTop}>
-          <Link className={styles.brand} href="/" aria-label="Repetition home">
-            <span className={styles.brandMark} aria-hidden="true">
-              <span />
-              <span />
-              <span />
-            </span>
-            <span>repetition</span>
-          </Link>
-          <span className={styles.privateLabel}>Private learning room</span>
-        </div>
-
-        <div className={styles.orbit} aria-hidden="true">
-          <div className={styles.orbitRing} />
-          <div className={styles.orbitRing} />
-          <div className={styles.orbitDot} />
-          <span className={styles.orbitNumber}>04</span>
-        </div>
-
-        <div className={styles.storyContent}>
-          <p className={styles.eyebrow}>A little further, every day</p>
-          <h1>
-            Small steps.
-            <br />
-            Real progress.
-          </h1>
-          <p className={styles.storyDescription}>
-            A calm space for curious minds to practice, learn, and see how far
-            they&apos;ve come.
-          </p>
-        </div>
-
-        <div className={styles.storyFooter}>
-          <span>Built for steady learning</span>
-          <span className={styles.footerLine} />
-          <span>01 / 04 subjects</span>
-        </div>
+      <section className={styles.artPanel} aria-label="Learning with Repetition">
+        <Image
+          alt=""
+          className={styles.heroImage}
+          fill
+          priority
+          sizes="(max-width: 720px) 0px, (max-width: 1120px) 100vw, 55vw"
+          src="/images/auth-hero.webp"
+        />
+        <Image
+          alt=""
+          className={styles.heroImageMobile}
+          width={1882}
+          height={3344}
+          priority
+          sizes="(max-width: 720px) 100vw, 0px"
+          src="/images/auth-hero-mobile.webp"
+        />
+        <div className={styles.imageShade} aria-hidden="true" />
       </section>
 
       <section className={styles.auth} aria-labelledby="welcome-title">
-        <div className={styles.authHeader}>
-          <span className={styles.authKicker}>Welcome back</span>
-          <span className={styles.secureNote}>
-            <span className={styles.secureDot} aria-hidden="true" />
-            Secure sign in
-          </span>
-        </div>
 
         <div className={styles.formWrap}>
           <div className={styles.formIntro}>
-            <h2 id="welcome-title">{roleCopy[role].title}</h2>
+            <h1 id="welcome-title">{roleCopy[role].title}</h1>
             <p>{roleCopy[role].description}</p>
           </div>
 
@@ -126,7 +99,8 @@ export default function Home() {
                 setFeedback(null);
               }}
             >
-              I&apos;m a child
+              <GraduationCap className={styles.roleIcon} aria-hidden="true" size={20} strokeWidth={2.1} />
+              I&apos;m a student
             </button>
             <button
               className={role === "admin" ? styles.roleActive : ""}
@@ -137,63 +111,107 @@ export default function Home() {
                 setFeedback(null);
               }}
             >
-              I&apos;m an admin
+              <Settings className={styles.roleIcon} aria-hidden="true" size={20} strokeWidth={2.1} />
+              Admin sign in
             </button>
           </div>
 
           <form className={styles.form} onSubmit={handleSubmit}>
             <label htmlFor="login">Username</label>
-            <input
-              id="login"
-              name="login"
-              type="text"
-              autoComplete="username"
-              placeholder={role === "child" ? "e.g. alex" : "e.g. olchu"}
-              value={login}
-              onChange={(event) => {
-                setLogin(event.target.value);
-                setFeedback(null);
-              }}
-              required
-            />
-
-            <div className={styles.passwordLabel}>
-              <label htmlFor="password">Password</label>
-              <span>Keep it safe</span>
+            <div className={styles.field}>
+              <User className={styles.fieldIcon} aria-hidden="true" size={20} strokeWidth={1.8} />
+              <input
+                id="login"
+                name="login"
+                type="text"
+                autoComplete="username"
+                placeholder={role === "child" ? "for example, alex2008" : "for example, admin"}
+                value={login}
+                onChange={(event) => {
+                  setLogin(event.target.value);
+                  setFeedback(null);
+                }}
+                required
+              />
             </div>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(event) => {
-                setPassword(event.target.value);
-                setFeedback(null);
-              }}
-              required
-            />
+
+            <label className={styles.passwordLabel} htmlFor="password">Password</label>
+            <div className={styles.field}>
+              <Lock className={styles.fieldIcon} aria-hidden="true" size={20} strokeWidth={1.8} />
+              <input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(event) => {
+                  setPassword(event.target.value);
+                  setFeedback(null);
+                }}
+                required
+              />
+              <button
+                className={styles.passwordToggle}
+                type="button"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                onClick={() => setShowPassword((current) => !current)}
+              >
+                {showPassword ? (
+                  <EyeOff size={20} strokeWidth={1.8} />
+                ) : (
+                  <Eye size={20} strokeWidth={1.8} />
+                )}
+              </button>
+            </div>
+
+            <div className={styles.formOptions}>
+              <label className={styles.remember}>
+                <input checked={rememberMe} onChange={(event) => setRememberMe(event.target.checked)} type="checkbox" />
+                Remember me
+              </label>
+              <span className={styles.helpText}>Password help? Ask your administrator.</span>
+            </div>
 
             <button className={styles.submit} type="submit" disabled={isSubmitting} aria-busy={isSubmitting}>
               {isSubmitting ? "Signing in…" : "Continue"}
-              <span aria-hidden="true">↗</span>
+              <ArrowRight className={styles.submitIcon} aria-hidden="true" size={20} strokeWidth={2.25} />
             </button>
           </form>
 
           {feedback && (
-            <p
-              className={`${styles.feedback} ${feedback.tone === "error" ? styles.feedbackError : ""}`}
-              role={feedback.tone === "error" ? "alert" : "status"}
-            >
+            <p className={`${styles.feedback} ${feedback.tone === "error" ? styles.feedbackError : ""}`} role={feedback.tone === "error" ? "alert" : "status"}>
               {feedback.text}
             </p>
           )}
 
-          <p className={styles.formNote}>
-            No public sign-ups. Your administrator creates your account.
+          <div className={styles.mobileSwitch}>
+            <div className={styles.mobileDivider} role="presentation">
+              <span>OR</span>
+            </div>
+            <button
+              type="button"
+              className={styles.mobileSwitchButton}
+              onClick={() => {
+                setRole((current) => (current === "admin" ? "child" : "admin"));
+                setFeedback(null);
+              }}
+            >
+              {role === "admin" ? (
+                <GraduationCap size={20} strokeWidth={2.1} />
+              ) : (
+                <School size={20} strokeWidth={2.1} />
+              )}
+              {role === "admin" ? "I'm a student" : "Admin sign in"}
+              <ArrowRight size={18} strokeWidth={2.25} />
+            </button>
+          </div>
+
+          <p className={styles.tagline}>
+            Learn <span aria-hidden="true">•</span> Grow <span aria-hidden="true">•</span> Create your future
           </p>
         </div>
+
       </section>
     </main>
   );

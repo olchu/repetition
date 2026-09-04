@@ -1,29 +1,264 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import { SignOutButton } from "@/components/SignOutButton";
 import styles from "./page.module.css";
 
 type Child = { id: string; login: string; displayName: string | null; grade: string | null; status: string };
-type Test = { id: string; title: string; subject: string; status: string; questionCount: number; assignmentCount: number };
+type Test = { id: string; title: string; subject: string; grade: string | null; status: string; version: number; stableId: string; createdAt: string; questionCount: number; assignmentCount: number; passPercentage: number };
 type Result = { attemptId: string; child: { displayName: string }; test: { title: string; subject: string }; percentage: number; passed: boolean; submittedAt: string | null };
-type AdminData = { children: Child[]; tests: Test[]; results: Result[] };
+type Group = { id: string; name: string; status: string; memberCount: number; activeAssignmentCount: number };
+type AdminData = { children: Child[]; tests: Test[]; results: Result[]; groups: Group[] };
+type View = "overview" | "children" | "groups" | "tests" | "assignments";
+type Notice = { tone: "success" | "error"; text: string } | null;
 
 const subjectLabels: Record<string, string> = { science: "Science", geography: "Geography", history: "History", mathematics: "Mathematics" };
+
+async function getApiError(response: Response, fallback: string) {
+  const payload = (await response.json().catch(() => null)) as {
+    error?: { message?: string; details?: Array<{ path?: string; message?: string }> };
+  } | null;
+  const details = payload?.error?.details?.map((detail) => `${detail.path ?? "$"}: ${detail.message ?? "Invalid value."}`).join(" ");
+  return details ? `${payload?.error?.message ?? fallback} ${details}` : payload?.error?.message ?? fallback;
+}
+
+function AdminNavigation({ view, onChange }: { view: View; onChange: (view: View) => void }) {
+  return (
+    <nav className={styles.nav} aria-label="Admin navigation">
+      {(["overview", "children", "groups", "tests", "assignments"] as View[]).map((item) => (
+        <button className={`${styles.navButton} ${view === item ? styles.navActive : ""}`} key={item} type="button" onClick={() => onChange(item)}>
+          {item === "overview" ? "Overview" : item === "children" ? "Children" : item === "groups" ? "Groups" : item === "tests" ? "Tests" : "Assignments"}
+        </button>
+      ))}
+      <SignOutButton className={styles.navLink} />
+    </nav>
+  );
+}
+
+function ChildrenManager({ childAccounts, onRefresh }: { childAccounts: Child[]; onRefresh: () => Promise<void> }) { const [form, setForm] = useState({ displayName: "", login: "", grade: "", password: "" });
+const [notice, setNotice] = useState<Notice>(null);
+const [isSaving, setIsSaving] = useState(false);
+
+async function createChild(event: FormEvent<HTMLFormElement>) {
+  event.preventDefault();
+  setIsSaving(true);
+  setNotice(null);
+  const response = await fetch("/api/v1/admin/children", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+  if (!response.ok) {
+    setNotice({ tone: "error", text: await getApiError(response, "Unable to create child.") });
+    setIsSaving(false);
+    return;
+  }
+  setForm({ displayName: "", login: "", grade: "", password: "" });
+  setNotice({ tone: "success", text: "Child account created." });
+  setIsSaving(false);
+  await onRefresh();
+}
+
+async function toggleStatus(child: Child) {
+  const nextStatus = child.status === "active" ? "blocked" : "active";
+  const response = await fetch(`/api/v1/admin/children/${child.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: nextStatus }) });
+  setNotice(response.ok ? { tone: "success", text: `${child.displayName ?? child.login} is now ${nextStatus}.` } : { tone: "error", text: await getApiError(response, "Unable to update account.") });
+  if (response.ok) await onRefresh();
+}
+
+return (
+  <section className={styles.controlSection} aria-labelledby="children-heading">
+    <div className={styles.controlHeader}><div><p className={styles.eyebrow}>Account management</p><h1 id="children-heading">Children</h1></div><span>{childAccounts.length} accounts</span></div>
+    <form className={styles.createForm} onSubmit={createChild}>
+      <h2>Create a child account</h2>
+      <div className={styles.formGrid}>
+        <label>Display name<input value={form.displayName} onChange={(event) => setForm({ ...form, displayName: event.target.value })} required /></label>
+        <label>Username<input value={form.login} onChange={(event) => setForm({ ...form, login: event.target.value })} required /></label>
+        <label>Grade<input value={form.grade} onChange={(event) => setForm({ ...form, grade: event.target.value })} placeholder="e.g. 5" required /></label>
+        <label>Permanent password<input type="password" minLength={8} value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} required /></label>
+      </div>
+      <button className={styles.action} type="submit" disabled={isSaving}>{isSaving ? "Creating…" : "Create account"}<span aria-hidden="true">↗</span></button>
+    </form>
+    {notice && <p className={`${styles.notice} ${notice.tone === "error" ? styles.noticeError : ""}`} role={notice.tone === "error" ? "alert" : "status"}>{notice.text}</p>}
+    <div className={styles.controlList}>
+      <div className={styles.controlListHeader}><span>Name</span><span>Grade</span><span>Status</span><span>Action</span></div>
+      {childAccounts.length === 0 ? <p className={styles.empty}>No child accounts yet.</p> : childAccounts.map((child) => <div className={styles.controlRow} key={child.id}><div><strong>{child.displayName ?? child.login}</strong><span>{child.login}</span></div><span>{child.grade ?? "—"}</span><span className={`${styles.pill} ${child.status === "active" ? styles.pillGood : ""}`}>{child.status}</span><button className={styles.textButton} type="button" onClick={() => void toggleStatus(child)}>{child.status === "active" ? "Block" : "Restore"}</button></div>)}
+    </div>
+  </section>
+); }
+
+function GroupsManager({ childAccounts, groups, onRefresh }: { childAccounts: Child[]; groups: Group[]; onRefresh: () => Promise<void> }) {
+  const [name, setName] = useState("");
+  const [selectedChildren, setSelectedChildren] = useState<Record<string, boolean>>({});
+  const [notice, setNotice] = useState<Notice>(null);
+
+  async function createGroup(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const childIds = Object.entries(selectedChildren).filter(([, selected]) => selected).map(([id]) => id);
+    if (!name.trim() || childIds.length === 0) {
+      setNotice({ tone: "error", text: "A group name and at least one child are required." });
+      return;
+    }
+    const response = await fetch("/api/v1/admin/groups", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, childIds }) });
+    setNotice(response.ok ? { tone: "success", text: "Group created." } : { tone: "error", text: await getApiError(response, "Unable to create group.") });
+    if (response.ok) {
+      setName("");
+      setSelectedChildren({});
+      await onRefresh();
+    }
+  }
+
+  return (
+    <section className={styles.controlSection} aria-labelledby="groups-heading">
+      <div className={styles.controlHeader}><div><p className={styles.eyebrow}>Learning plan</p><h1 id="groups-heading">Groups</h1></div><span>{groups.length} groups</span></div>
+      <form className={styles.assignmentForm} onSubmit={createGroup}>
+        <label>Group name<input value={name} onChange={(event) => setName(event.target.value)} placeholder="e.g. Grade 5" /></label>
+        <fieldset><legend>Add active children</legend><div className={styles.childChoices}>{childAccounts.filter((child) => child.status === "active").map((child) => <label key={child.id}><input type="checkbox" checked={Boolean(selectedChildren[child.id])} onChange={() => setSelectedChildren((current) => ({ ...current, [child.id]: !current[child.id] }))} />{child.displayName ?? child.login}<span>{child.grade ?? "—"}</span></label>)}</div></fieldset>
+        <button className={styles.action} type="submit">Create group<span aria-hidden="true">↗</span></button>
+      </form>
+      {notice && <p className={`${styles.notice} ${notice.tone === "error" ? styles.noticeError : ""}`} role={notice.tone === "error" ? "alert" : "status"}>{notice.text}</p>}
+      <div className={styles.controlList}><div className={styles.controlListHeader}><span>Group</span><span>Members</span><span>Assignments</span><span>Status</span></div>{groups.length === 0 ? <p className={styles.empty}>No groups created yet.</p> : groups.map((group) => <div className={styles.controlRow} key={group.id}><strong>{group.name}</strong><span>{group.memberCount}</span><span>{group.activeAssignmentCount}</span><span className={`${styles.pill} ${group.status === "active" ? styles.pillGood : ""}`}>{group.status}</span></div>)}</div>
+    </section>
+  );
+}
+
+function TestsManager({ tests, onRefresh }: { tests: Test[]; onRefresh: () => Promise<void> }) {
+  const [notice, setNotice] = useState<Notice>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [preview, setPreview] = useState<{ title: string; subject: string; passPercentage: number; questions: Array<{ id: string; text: string; options: Array<{ id: string; text: string; isCorrect: boolean }> }> } | null>(null);
+
+  async function uploadTest(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const fileInput = form.elements.namedItem("file");
+    if (!(fileInput instanceof HTMLInputElement) || !fileInput.files?.[0]) {
+      setNotice({ tone: "error", text: "Choose a JSON file first." });
+      return;
+    }
+    setIsUploading(true);
+    setNotice(null);
+    const body = new FormData();
+    body.append("file", fileInput.files[0]);
+    const response = await fetch("/api/v1/admin/tests/import", { method: "POST", body });
+    if (!response.ok) {
+      setNotice({ tone: "error", text: await getApiError(response, "Unable to import test.") });
+      setIsUploading(false);
+      return;
+    }
+    setNotice({ tone: "success", text: "Test imported as a draft." });
+    form.reset();
+    setIsUploading(false);
+    await onRefresh();
+  }
+
+  async function publishTest(test: Test) {
+    const response = await fetch(`/api/v1/admin/tests/${test.id}/publish`, { method: "POST" });
+    setNotice(response.ok ? { tone: "success", text: `${test.title} is now published.` } : { tone: "error", text: await getApiError(response, "Unable to publish test.") });
+    if (response.ok) await onRefresh();
+  }
+
+  async function previewTest(test: Test) {
+    const response = await fetch(`/api/v1/admin/tests/${test.id}`);
+    if (!response.ok) {
+      setNotice({ tone: "error", text: await getApiError(response, "Unable to load test preview.") });
+      return;
+    }
+    const payload = (await response.json()) as { test: NonNullable<typeof preview> };
+    setPreview(payload.test);
+  }
+
+  async function archiveTest(test: Test) {
+    const response = await fetch(`/api/v1/admin/tests/${test.id}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "archive" }) });
+    setNotice(response.ok ? { tone: "success", text: `${test.title} is archived.` } : { tone: "error", text: await getApiError(response, "Unable to archive test.") });
+    if (response.ok) await onRefresh();
+  }
+
+  async function restoreTest(test: Test) {
+    const response = await fetch(`/api/v1/admin/tests/${test.id}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "restore" }) });
+    setNotice(response.ok ? { tone: "success", text: `${test.title} is published again.` } : { tone: "error", text: await getApiError(response, "Unable to restore test.") });
+    if (response.ok) await onRefresh();
+  }
+
+  async function deleteTest(test: Test) {
+    if (!window.confirm(`Delete "${test.title}" permanently? This cannot be undone.`)) return;
+    const response = await fetch(`/api/v1/admin/tests/${test.id}`, { method: "DELETE" });
+    setNotice(response.ok ? { tone: "success", text: `${test.title} was deleted.` } : { tone: "error", text: await getApiError(response, "Unable to delete test.") });
+    if (response.ok) {
+      if (preview?.title === test.title) setPreview(null);
+      await onRefresh();
+    }
+  }
+
+  return (
+    <section className={styles.controlSection} aria-labelledby="tests-heading">
+      <div className={styles.controlHeader}><div><p className={styles.eyebrow}>Content library</p><h1 id="tests-heading">Tests</h1></div><span>{tests.length} versions</span></div>
+      <form className={styles.uploadForm} onSubmit={uploadTest}><div><h2>Upload a JSON test</h2><p>Validated against the Repetition 1.0 format. New versions start as drafts.</p></div><label className={styles.fileInput}>Choose JSON file<input name="file" type="file" accept=".json,application/json" /></label><button className={styles.action} type="submit" disabled={isUploading}>{isUploading ? "Uploading…" : "Upload test"}<span aria-hidden="true">↗</span></button></form>
+      {notice && <p className={`${styles.notice} ${notice.tone === "error" ? styles.noticeError : ""}`} role={notice.tone === "error" ? "alert" : "status"}>{notice.text}</p>}
+      <div className={styles.controlList}>
+        <div className={styles.controlListHeader}><span>Test</span><span>Subject</span><span>Status</span><span>Action</span></div>
+        {tests.length === 0 ? <p className={styles.empty}>No tests uploaded yet.</p> : tests.map((test) => <div className={styles.controlRow} key={test.id}><div><strong>{test.title}</strong><span>{test.stableId} · v{test.version} · Grade {test.grade ?? "—"} · {test.questionCount} questions</span></div><span>{subjectLabels[test.subject] ?? test.subject}</span><span className={`${styles.pill} ${test.status === "published" ? styles.pillGood : ""}`}>{test.status}</span><span className={styles.rowActions}><button className={styles.textButton} type="button" onClick={() => void previewTest(test)}>Preview</button>{test.status === "draft" && <><button className={styles.textButton} type="button" onClick={() => void publishTest(test)}>Publish</button><button className={styles.textButton} type="button" onClick={() => void deleteTest(test)}>Delete</button></>}{test.status === "published" && <button className={styles.textButton} type="button" onClick={() => void archiveTest(test)}>Archive</button>}{test.status === "archived" && <><button className={styles.textButton} type="button" onClick={() => void restoreTest(test)}>Restore</button><button className={styles.textButton} type="button" onClick={() => void deleteTest(test)}>Delete</button></>}</span></div>)}
+      </div>
+      {preview && <section className={styles.preview} aria-label="Test preview"><div className={styles.sectionHeader}><div><span className={styles.meta}>{subjectLabels[preview.subject] ?? preview.subject}</span><h2>{preview.title}</h2></div><button className={styles.textButton} type="button" onClick={() => setPreview(null)}>Close preview</button></div><p>Pass at {preview.passPercentage}%</p>{preview.questions.map((question, index) => <article key={question.id}><span>0{index + 1}</span><div><h3>{question.text}</h3>{question.options.map((option) => <p className={option.isCorrect ? styles.correctOption : ""} key={option.id}>{option.isCorrect ? "✓ " : ""}{option.text}</p>)}</div></article>)}</section>}
+    </section>
+  );
+}
+
+function AssignmentManager({ childAccounts, groups, tests, onRefresh }: { childAccounts: Child[]; groups: Group[]; tests: Test[]; onRefresh: () => Promise<void> }) {
+  const [testId, setTestId] = useState("");
+  const [target, setTarget] = useState<"children" | "group">("children");
+  const [groupId, setGroupId] = useState("");
+  const [selectedChildren, setSelectedChildren] = useState<Record<string, boolean>>({});
+  const [notice, setNotice] = useState<Notice>(null);
+  const publishedTests = [...tests].filter((test) => test.status === "published").sort((first, second) => second.createdAt.localeCompare(first.createdAt));
+  const selectedGrades = new Set(childAccounts.filter((child) => selectedChildren[child.id]).map((child) => child.grade).filter((grade): grade is string => grade !== null));
+  const selectedGrade = selectedGrades.size === 1 ? [...selectedGrades][0] : null;
+  const availableTests = target === "children"
+    ? selectedGrade ? publishedTests.filter((test) => test.grade === selectedGrade) : []
+    : publishedTests;
+
+function toggleChild(id: string) {
+  setSelectedChildren((current) => ({ ...current, [id]: !current[id] }));
+  setTestId("");
+}
+
+async function assignTest(event: FormEvent<HTMLFormElement>) {
+  event.preventDefault();
+  const childIds = Object.entries(selectedChildren).filter(([, selected]) => selected).map(([id]) => id);
+  if (!testId || (target === "children" && childIds.length === 0) || (target === "group" && !groupId)) {
+    setNotice({ tone: "error", text: target === "children" ? "Choose a published test and at least one child." : "Choose a published test and a group." });
+    return;
+  }
+  const response = await fetch("/api/v1/admin/assignments", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(target === "children" ? { testId, childIds } : { testId, groupId }),
+  });
+  setNotice(response.ok ? { tone: "success", text: "Test assignment saved." } : { tone: "error", text: await getApiError(response, "Unable to assign test.") });
+  if (response.ok) {
+    setSelectedChildren({});
+    setGroupId("");
+    await onRefresh();
+  }
+}
+
+return (
+  <section className={styles.controlSection} aria-labelledby="assignments-heading">
+    <div className={styles.controlHeader}><div><p className={styles.eyebrow}>Learning plan</p><h1 id="assignments-heading">Assignments</h1></div><span>Children or groups</span></div>
+    <form className={styles.assignmentForm} onSubmit={assignTest}>
+      <fieldset><legend>Assign to</legend><div className={styles.targetSwitch}><label><input type="radio" name="target" checked={target === "children"} onChange={() => { setTarget("children"); setTestId(""); }} />Children</label><label><input type="radio" name="target" checked={target === "group"} onChange={() => { setTarget("group"); setTestId(""); }} />Group</label></div>{target === "children" ? <><div className={styles.childChoices}>{childAccounts.filter((child) => child.status === "active").map((child) => <label key={child.id}><input type="checkbox" checked={Boolean(selectedChildren[child.id])} onChange={() => toggleChild(child.id)} />{child.displayName ?? child.login}<span>{child.grade ?? "—"}</span></label>)}</div><p className={styles.gradeHint}>{selectedGrade ? `Showing tests for grade ${selectedGrade}.` : selectedGrades.size > 1 ? "Choose children from one grade." : "Choose a child to see matching tests."}</p></> : <select value={groupId} onChange={(event) => { setGroupId(event.target.value); setTestId(""); }}><option value="">Choose a group</option>{groups.filter((group) => group.status === "active").map((group) => <option key={group.id} value={group.id}>{group.name} · {group.memberCount} children</option>)}</select>}</fieldset>
+      <label>Published test<select value={testId} onChange={(event) => setTestId(event.target.value)} disabled={target === "children" && !selectedGrade}><option value="">{target === "children" && !selectedGrade ? "Choose recipient first" : "Choose a test"}</option>{availableTests.map((test) => <option value={test.id} key={test.id}>{test.title} · Grade {test.grade} · {subjectLabels[test.subject] ?? test.subject}</option>)}</select></label>
+      <button className={styles.action} type="submit">Assign test<span aria-hidden="true">↗</span></button>
+    </form>
+    {notice && <p className={`${styles.notice} ${notice.tone === "error" ? styles.noticeError : ""}`} role={notice.tone === "error" ? "alert" : "status"}>{notice.text}</p>}
+  </section>
+); }
 
 export default function AdminPage() {
   const [data, setData] = useState<AdminData | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "unauthorized" | "error">("loading");
+  const [view, setView] = useState<View>("overview");
 
   const loadAdmin = useCallback(async () => {
     setState("loading");
     try {
-      const responses = await Promise.all([
-        fetch("/api/v1/admin/children", { cache: "no-store" }),
-        fetch("/api/v1/admin/tests", { cache: "no-store" }),
-        fetch("/api/v1/admin/results", { cache: "no-store" }),
-      ]);
+      const responses = await Promise.all(["children", "groups", "tests", "results"].map((resource) => fetch(`/api/v1/admin/${resource}`, { cache: "no-store" })));
       if (responses.some((response) => response.status === 401 || response.status === 403)) {
         setState("unauthorized");
         return;
@@ -32,8 +267,8 @@ export default function AdminPage() {
         setState("error");
         return;
       }
-      const [children, tests, results] = await Promise.all(responses.map((response) => response.json()));
-      setData({ children: children.children, tests: tests.tests, results: results.results });
+      const [children, groups, tests, results] = await Promise.all(responses.map((response) => response.json()));
+      setData({ children: children.children, groups: groups.groups, tests: tests.tests, results: results.results });
       setState("ready");
     } catch {
       setState("error");
@@ -46,12 +281,8 @@ export default function AdminPage() {
   }, [loadAdmin]);
 
   if (state === "loading") return <main className={styles.statePage}>Loading overview…</main>;
-  if (state === "unauthorized") {
-    return <main className={styles.statePage}><div className={styles.stateCard}><span className={styles.brandSmall}>repetition</span><h1>Administrator access required.</h1><p>Sign in with the administrator account to open this room.</p><Link className={styles.action} href="/">Go to sign in</Link></div></main>;
-  }
-  if (state === "error" || !data) {
-    return <main className={styles.statePage}><div className={styles.stateCard}><span className={styles.brandSmall}>repetition</span><h1>The overview is unavailable.</h1><p>Try loading the administrator view again.</p><button className={styles.action} type="button" onClick={() => void loadAdmin()}>Try again</button></div></main>;
-  }
+  if (state === "unauthorized") return <main className={styles.statePage}><div className={styles.stateCard}><span className={styles.brandSmall}>repetition</span><h1>Administrator access required.</h1><p>Sign in with the administrator account to open this room.</p><Link className={styles.action} href="/">Go to sign in</Link></div></main>;
+  if (state === "error" || !data) return <main className={styles.statePage}><div className={styles.stateCard}><span className={styles.brandSmall}>repetition</span><h1>The overview is unavailable.</h1><p>Try loading the administrator view again.</p><button className={styles.action} type="button" onClick={() => void loadAdmin()}>Try again</button></div></main>;
 
   const activeChildren = data.children.filter((child) => child.status === "active").length;
   const publishedTests = data.tests.filter((test) => test.status === "published").length;
@@ -60,29 +291,17 @@ export default function AdminPage() {
 
   return (
     <main className={styles.page}>
-      <header className={styles.header}>
-        <Link className={styles.brand} href="/" aria-label="Repetition home"><span className={styles.brandMark} aria-hidden="true"><span /><span /><span /></span>repetition</Link>
-        <nav className={styles.nav} aria-label="Admin navigation"><span className={styles.navActive}>Overview</span><SignOutButton className={styles.navLink} /></nav>
-      </header>
-
-      <section className={styles.hero} aria-labelledby="admin-title">
-        <div><p className={styles.eyebrow}>Administrator overview</p><h1 id="admin-title">Keep learning moving.</h1><p className={styles.heroCopy}>A clear view of who is practicing, what is ready, and where progress is building.</p></div>
-        <div className={styles.heroMark} aria-hidden="true">↗</div>
-      </section>
-
-      <section className={styles.metrics} aria-label="Overview metrics">
-        <article><span>Active children</span><strong>{activeChildren}</strong></article>
-        <article><span>Published tests</span><strong>{publishedTests}</strong></article>
-        <article><span>Average score</span><strong>{average}%</strong></article>
-        <article><span>Passed attempts</span><strong>{passedResults}</strong></article>
-      </section>
-
-      <div className={styles.columns}>
-        <section className={styles.panel} aria-labelledby="tests-title"><div className={styles.sectionHeader}><h2 id="tests-title">Test library</h2><span>{data.tests.length} total</span></div>{data.tests.length === 0 ? <p className={styles.empty}>No tests uploaded yet.</p> : <div className={styles.list}>{data.tests.slice(0, 6).map((test) => <div className={styles.listRow} key={test.id}><div><span className={styles.meta}>{subjectLabels[test.subject] ?? test.subject}</span><h3>{test.title}</h3></div><span className={styles.detail}>{test.questionCount} questions<br />{test.assignmentCount} assigned</span><span className={`${styles.pill} ${test.status === "published" ? styles.pillGood : ""}`}>{test.status}</span></div>)}</div>}</section>
-        <section className={styles.panel} aria-labelledby="children-title"><div className={styles.sectionHeader}><h2 id="children-title">Children</h2><span>{activeChildren} active</span></div>{data.children.length === 0 ? <p className={styles.empty}>No child accounts yet.</p> : <div className={styles.list}>{data.children.slice(0, 6).map((child) => <div className={styles.listRow} key={child.id}><div><h3>{child.displayName ?? child.login}</h3><span className={styles.meta}>{child.login} · Grade {child.grade ?? "—"}</span></div><span className={`${styles.pill} ${child.status === "active" ? styles.pillGood : ""}`}>{child.status}</span></div>)}</div>}</section>
-      </div>
-
-      <section className={styles.panel} aria-labelledby="results-title"><div className={styles.sectionHeader}><h2 id="results-title">Recent results</h2><span>{data.results.length} submitted</span></div>{data.results.length === 0 ? <p className={styles.empty}>Completed attempts will appear here.</p> : <div className={styles.resultTable}><div className={styles.tableHeader}><span>Child</span><span>Test</span><span>Score</span><span>Status</span></div>{data.results.slice(0, 8).map((result) => <div className={styles.resultRow} key={result.attemptId}><span>{result.child.displayName}</span><span>{result.test.title}</span><strong>{result.percentage}%</strong><span className={result.passed ? styles.resultPassed : styles.resultKeep}>{result.passed ? "Passed" : "Keep practicing"}</span></div>)}</div>}</section>
+      <header className={styles.header}><Link className={styles.brand} href="/" aria-label="Repetition home"><span className={styles.brandMark} aria-hidden="true"><span /><span /><span /></span>repetition</Link><AdminNavigation view={view} onChange={setView} /></header>
+      {view === "children" && <ChildrenManager childAccounts={data.children} onRefresh={loadAdmin} />}
+      {view === "groups" && <GroupsManager childAccounts={data.children} groups={data.groups} onRefresh={loadAdmin} />}
+      {view === "tests" && <TestsManager tests={data.tests} onRefresh={loadAdmin} />}
+      {view === "assignments" && <AssignmentManager childAccounts={data.children} groups={data.groups} tests={data.tests} onRefresh={loadAdmin} />}
+      {view === "overview" && <>
+        <section className={styles.hero} aria-labelledby="admin-title"><div><p className={styles.eyebrow}>Administrator overview</p><h1 id="admin-title">Keep learning moving.</h1><p className={styles.heroCopy}>A clear view of who is practicing, what is ready, and where progress is building.</p></div><div className={styles.heroMark} aria-hidden="true">↗</div></section>
+        <section className={styles.metrics} aria-label="Overview metrics"><article><span>Active children</span><strong>{activeChildren}</strong></article><article><span>Published tests</span><strong>{publishedTests}</strong></article><article><span>Average score</span><strong>{average}%</strong></article><article><span>Passed attempts</span><strong>{passedResults}</strong></article></section>
+        <div className={styles.columns}><section className={styles.panel} aria-labelledby="tests-title"><div className={styles.sectionHeader}><h2 id="tests-title">Test library</h2><button className={styles.textButton} type="button" onClick={() => setView("tests")}>Manage tests</button></div>{data.tests.length === 0 ? <p className={styles.empty}>No tests uploaded yet.</p> : <div className={styles.list}>{data.tests.slice(0, 6).map((test) => <div className={styles.listRow} key={test.id}><div><span className={styles.meta}>{subjectLabels[test.subject] ?? test.subject}</span><h3>{test.title}</h3></div><span className={styles.detail}>{test.questionCount} questions<br />{test.assignmentCount ?? 0} assigned</span><span className={`${styles.pill} ${test.status === "published" ? styles.pillGood : ""}`}>{test.status}</span></div>)}</div>}</section><section className={styles.panel} aria-labelledby="children-title"><div className={styles.sectionHeader}><h2 id="children-title">Children</h2><button className={styles.textButton} type="button" onClick={() => setView("children")}>Manage children</button></div>{data.children.length === 0 ? <p className={styles.empty}>No child accounts yet.</p> : <div className={styles.list}>{data.children.slice(0, 6).map((child) => <div className={styles.listRow} key={child.id}><div><h3>{child.displayName ?? child.login}</h3><span className={styles.meta}>{child.login} · Grade {child.grade ?? "—"}</span></div><span className={`${styles.pill} ${child.status === "active" ? styles.pillGood : ""}`}>{child.status}</span></div>)}</div>}</section></div>
+        <section className={styles.panel} aria-labelledby="results-title"><div className={styles.sectionHeader}><h2 id="results-title">Recent results</h2><span>{data.results.length} submitted</span></div>{data.results.length === 0 ? <p className={styles.empty}>Completed attempts will appear here.</p> : <div className={styles.resultTable}><div className={styles.tableHeader}><span>Child</span><span>Test</span><span>Score</span><span>Status</span></div>{data.results.slice(0, 8).map((result) => <div className={styles.resultRow} key={result.attemptId}><span>{result.child.displayName}</span><span>{result.test.title}</span><strong>{result.percentage}%</strong><span className={result.passed ? styles.resultPassed : styles.resultKeep}>{result.passed ? "Passed" : "Keep practicing"}</span></div>)}</div>}</section>
+      </>}
     </main>
   );
 }

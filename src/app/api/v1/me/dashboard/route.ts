@@ -12,6 +12,7 @@ type DashboardTest = {
   grade: string | null;
   passPercentage: number;
   attempts: Array<{
+    id: string;
     status: string;
     startedAt: Date;
     submittedAt: Date | null;
@@ -91,6 +92,7 @@ export async function GET() {
       passPercentage: test.passPercentage,
       status,
       attemptCount: test.attempts.length,
+      inProgressAttemptId: test.attempts.find((attempt) => attempt.status === "IN_PROGRESS")?.id ?? null,
       bestPercentage,
       latestPercentage: latest?.result?.percentage ?? null,
       latestSubmittedAt: latest?.submittedAt ?? null,
