@@ -19,22 +19,27 @@
 Требуется Node.js 20.9 или новее.
 
 ```bash
+cd /Users/olchu/Documents/projects/pet/repetition
 npm install
 npm run dev
 ```
 
 Откройте `http://localhost:3000`.
 
-Для API и локальной базы:
+Для API и локальной базы PostgreSQL:
 
 ```bash
 cp .env.example .env
+createuser repetition_app
+psql postgres -c "ALTER ROLE repetition_app WITH LOGIN PASSWORD 'repetition_local';"
+createdb --owner=repetition_app repetition
+createdb --owner=repetition_app repetition_shadow
 npm run db:validate
 npm run db:migrate -- --name init
 SEED_ADMIN_PASSWORD="replace-this-password" npm run db:seed
 ```
 
-В PostgreSQL должна существовать база `repetition`. Команда seed создаёт одного администратора из `SEED_ADMIN_LOGIN` и `SEED_ADMIN_PASSWORD`.
+Команды `createuser` и `createdb` нужны только один раз. Если роль или база уже существуют, их повторно создавать не нужно. Запуск PostgreSQL через Homebrew описан в `docs/LOCAL-DATABASE.md`.
 
 Проверки перед коммитом:
 

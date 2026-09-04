@@ -14,7 +14,7 @@ const subjectLabels: Record<string, string> = { science: "Science", geography: "
 
 export default function AdminPage() {
   const [data, setData] = useState<AdminData | null>(null);
-  const [state, setState] = useState<"loading" | "unauthorized" | "error">("loading");
+  const [state, setState] = useState<"loading" | "ready" | "unauthorized" | "error">("loading");
 
   const loadAdmin = useCallback(async () => {
     setState("loading");
@@ -34,6 +34,7 @@ export default function AdminPage() {
       }
       const [children, tests, results] = await Promise.all(responses.map((response) => response.json()));
       setData({ children: children.children, tests: tests.tests, results: results.results });
+      setState("ready");
     } catch {
       setState("error");
     }
