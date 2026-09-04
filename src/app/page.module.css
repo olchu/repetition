@@ -1,0 +1,476 @@
+.page {
+  min-height: 100svh;
+  display: grid;
+  grid-template-columns: minmax(360px, 0.9fr) minmax(480px, 1.1fr);
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.story {
+  position: relative;
+  display: flex;
+  min-height: 100svh;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 42px 52px 32px;
+  color: var(--paper-bright);
+  background:
+    radial-gradient(circle at 75% 17%, rgba(48, 101, 110, 0.48), transparent 34%),
+    var(--ink-deep);
+}
+
+.story::after {
+  position: absolute;
+  right: -12%;
+  bottom: -20%;
+  width: 72%;
+  height: 52%;
+  border: 1px solid rgba(215, 242, 74, 0.2);
+  border-radius: 50%;
+  content: "";
+  transform: rotate(-21deg);
+}
+
+.storyTop,
+.storyFooter {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--paper-bright);
+  font-family: var(--font-space-grotesk), sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+}
+
+.brandMark {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 3px;
+  width: 22px;
+  height: 20px;
+}
+
+.brandMark span {
+  display: block;
+  width: 5px;
+  border-radius: 2px 2px 0 0;
+  background: var(--acid);
+}
+
+.brandMark span:nth-child(1) {
+  height: 9px;
+}
+
+.brandMark span:nth-child(2) {
+  height: 15px;
+}
+
+.brandMark span:nth-child(3) {
+  height: 20px;
+}
+
+.privateLabel,
+.secureNote,
+.storyFooter,
+.eyebrow,
+.authKicker {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.privateLabel {
+  color: rgba(255, 253, 248, 0.58);
+}
+
+.storyContent {
+  position: relative;
+  z-index: 1;
+  max-width: 540px;
+  margin: auto 0;
+  padding: 88px 0;
+}
+
+.eyebrow,
+.authKicker {
+  margin-bottom: 22px;
+  font-weight: 700;
+}
+
+.eyebrow {
+  color: var(--acid);
+}
+
+.story h1 {
+  max-width: 570px;
+  margin: 0;
+  color: var(--paper-bright);
+  font-family: var(--font-space-grotesk), sans-serif;
+  font-size: clamp(52px, 6.4vw, 96px);
+  font-weight: 500;
+  letter-spacing: -0.075em;
+  line-height: 0.93;
+}
+
+.storyDescription {
+  max-width: 350px;
+  margin-top: 32px;
+  color: rgba(255, 253, 248, 0.68);
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.orbit {
+  position: absolute;
+  top: 20%;
+  right: 8%;
+  width: 140px;
+  height: 140px;
+  opacity: 0.86;
+}
+
+.orbitRing {
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(255, 253, 248, 0.22);
+  border-radius: 50%;
+}
+
+.orbitRing:nth-child(2) {
+  inset: 21px -12px;
+  border-color: rgba(215, 242, 74, 0.5);
+  transform: rotate(42deg);
+}
+
+.orbitDot {
+  position: absolute;
+  top: 7px;
+  right: 21px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--acid);
+  box-shadow: 0 0 0 7px rgba(215, 242, 74, 0.12);
+}
+
+.orbitNumber {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  color: rgba(255, 253, 248, 0.84);
+  font-family: var(--font-space-grotesk), sans-serif;
+  font-size: 32px;
+  letter-spacing: -0.08em;
+  transform: translate(-50%, -50%);
+}
+
+.storyFooter {
+  position: relative;
+  z-index: 1;
+  gap: 14px;
+  color: rgba(255, 253, 248, 0.44);
+  font-size: 10px;
+}
+
+.footerLine {
+  width: 42px;
+  height: 1px;
+  background: rgba(255, 253, 248, 0.24);
+}
+
+.auth {
+  display: flex;
+  min-height: 100svh;
+  flex-direction: column;
+  padding: 42px clamp(32px, 8vw, 128px) 32px;
+  background: var(--paper);
+}
+
+.authHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.authKicker {
+  margin: 0;
+  color: var(--muted);
+}
+
+.secureNote {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.secureDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #4d9e76;
+}
+
+.formWrap {
+  width: 100%;
+  max-width: 440px;
+  margin: auto;
+  padding: 72px 0;
+}
+
+.formIntro h2 {
+  max-width: 420px;
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-space-grotesk), sans-serif;
+  font-size: clamp(38px, 4vw, 58px);
+  font-weight: 500;
+  letter-spacing: -0.065em;
+  line-height: 0.98;
+}
+
+.formIntro p {
+  max-width: 320px;
+  margin-top: 18px;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.roleSwitch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  margin-top: 42px;
+  padding: 5px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: rgba(255, 253, 248, 0.52);
+}
+
+.roleSwitch button {
+  min-height: 42px;
+  border: 0;
+  border-radius: 3px;
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  transition: color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+}
+
+.roleSwitch button:hover {
+  color: var(--ink);
+}
+
+.roleSwitch .roleActive {
+  color: var(--ink-deep);
+  background: var(--paper-bright);
+  box-shadow: 0 2px 7px rgba(16, 44, 58, 0.08);
+  font-weight: 700;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  margin-top: 34px;
+}
+
+.form label,
+.passwordLabel span {
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.form input {
+  width: 100%;
+  height: 52px;
+  margin-top: 9px;
+  padding: 0 15px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--ink);
+  outline: none;
+  background: rgba(255, 253, 248, 0.7);
+  font: inherit;
+  font-size: 15px;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.form input::placeholder {
+  color: #9aa09b;
+}
+
+.form input:focus {
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px rgba(16, 44, 58, 0.1);
+}
+
+.passwordLabel {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-top: 22px;
+}
+
+.passwordLabel span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.submit {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 56px;
+  margin-top: 28px;
+  padding: 0 17px 0 20px;
+  border: 1px solid var(--ink);
+  border-radius: 4px;
+  color: var(--paper-bright);
+  background: var(--ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  transition: background 180ms ease, color 180ms ease, transform 180ms ease;
+}
+
+.submit span {
+  color: var(--acid);
+  font-size: 21px;
+  line-height: 1;
+}
+
+.submit:hover {
+  color: var(--ink-deep);
+  background: var(--acid);
+  transform: translateY(-1px);
+}
+
+.submit:hover span {
+  color: var(--ink-deep);
+}
+
+.submit:disabled {
+  cursor: wait;
+  opacity: 0.7;
+  transform: none;
+}
+
+.submit:focus-visible,
+.roleSwitch button:focus-visible,
+.brand:focus-visible {
+  outline: 3px solid var(--coral);
+  outline-offset: 3px;
+}
+
+.feedback {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-left: 3px solid #4d9e76;
+  color: #386c52;
+  background: rgba(77, 158, 118, 0.09);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.feedbackError {
+  border-left-color: var(--coral);
+  color: #9a4935;
+  background: rgba(255, 142, 110, 0.12);
+}
+
+.formNote {
+  margin-top: 24px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+  .page {
+    grid-template-columns: minmax(300px, 0.8fr) minmax(420px, 1.2fr);
+  }
+
+  .story {
+    padding-right: 34px;
+    padding-left: 34px;
+  }
+
+  .orbit {
+    right: 4%;
+    transform: scale(0.78);
+    transform-origin: top right;
+  }
+
+  .auth {
+    padding-right: 48px;
+    padding-left: 48px;
+  }
+}
+
+@media (max-width: 720px) {
+  .page {
+    display: block;
+  }
+
+  .story {
+    min-height: 43svh;
+    padding: 26px 24px 22px;
+  }
+
+  .storyContent {
+    padding: 58px 0 34px;
+  }
+
+  .story h1 {
+    font-size: clamp(48px, 13vw, 72px);
+  }
+
+  .storyDescription {
+    margin-top: 20px;
+    font-size: 14px;
+  }
+
+  .orbit {
+    top: 28%;
+    right: 0;
+    transform: scale(0.55);
+  }
+
+  .storyFooter {
+    font-size: 9px;
+  }
+
+  .auth {
+    min-height: 57svh;
+    padding: 28px 24px 36px;
+  }
+
+  .formWrap {
+    padding: 58px 0 22px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .roleSwitch button,
+  .form input,
+  .submit {
+    transition: none;
+  }
+}

@@ -1,0 +1,200 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  CHILD
+}
+
+enum AccountStatus {
+  ACTIVE
+  BLOCKED
+}
+
+enum Subject {
+  SCIENCE
+  GEOGRAPHY
+  HISTORY
+  MATHEMATICS
+}
+
+enum TestStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum AssignmentStatus {
+  ACTIVE
+  CANCELLED
+}
+
+enum AttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+}
+
+model User {
+  id                String          @id @default(cuid())
+  role              Role
+  login             String          @unique
+  passwordHash      String
+  status            AccountStatus   @default(ACTIVE)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  childProfile      ChildProfile?
+  sessions          Session[]
+  groupMemberships  GroupMember[]
+  assignments       Assignment[]    @relation("ChildAssignments")
+  attempts          Attempt[]
+
+  @@index([role, status])
+}
+
+model ChildProfile {
+  userId      String   @id
+  displayName String
+  grade       String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+}
+
+model Group {
+  id        String        @id @default(cuid())
+  name      String
+  status    AccountStatus @default(ACTIVE)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  members   GroupMember[]
+  assignments Assignment[]
+
+  @@unique([name])
+}
+
+model GroupMember {
+  groupId String
+  childId String
+  group   Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  child   User  @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@id([groupId, childId])
+}
+
+model Test {
+  id             String         @id @default(cuid())
+  stableId       String
+  version        Int
+  title          String
+  description    String?
+  subject        Subject
+  grade          String?
+  passPercentage Int            @default(70)
+  status         TestStatus     @default(DRAFT)
+  sourceJson     Json
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  questions      TestQuestion[]
+  assignments    Assignment[]
+
+  @@unique([stableId, version])
+  @@index([subject, status])
+}
+
+model TestQuestion {
+  id          String       @id @default(cuid())
+  testId      String
+  externalId  String
+  position    Int
+  text        String
+  points      Int          @default(1)
+  explanation String?
+  test        Test         @relation(fields: [testId], references: [id], onDelete: Cascade)
+  options     TestOption[]
+
+  @@unique([testId, externalId])
+  @@unique([testId, position])
+}
+
+model TestOption {
+  id         String       @id @default(cuid())
+  questionId String
+  externalId String
+  position   Int
+  text       String
+  isCorrect  Boolean
+  question   TestQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([questionId, externalId])
+  @@unique([questionId, position])
+}
+
+model Assignment {
+  id        String           @id @default(cuid())
+  testId    String
+  childId   String?
+  groupId   String?
+  status    AssignmentStatus @default(ACTIVE)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  test      Test             @relation(fields: [testId], references: [id], onDelete: Restrict)
+  child     User?            @relation("ChildAssignments", fields: [childId], references: [id], onDelete: Cascade)
+  group     Group?           @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  attempts  Attempt[]
+
+  @@index([childId, status])
+  @@index([groupId, status])
+}
+
+model Attempt {
+  id           String        @id @default(cuid())
+  assignmentId String
+  childId      String
+  testVersion  Int
+  status       AttemptStatus @default(IN_PROGRESS)
+  startedAt    DateTime      @default(now())
+  submittedAt  DateTime?
+  assignment   Assignment    @relation(fields: [assignmentId], references: [id], onDelete: Restrict)
+  child        User          @relation(fields: [childId], references: [id], onDelete: Restrict)
+  answers      Answer[]
+  result       Result?
+
+  @@index([childId, status])
+}
+
+model Answer {
+  attemptId  String
+  questionId String
+  optionId   String
+  updatedAt  DateTime      @updatedAt
+  attempt    Attempt       @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+
+  @@id([attemptId, questionId])
+}
+
+model Result {
+  attemptId      String   @id
+  earnedPoints   Int
+  totalPoints    Int
+  percentage     Float
+  passed         Boolean
+  createdAt      DateTime @default(now())
+  attempt        Attempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+}
