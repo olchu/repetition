@@ -29,7 +29,7 @@
 }
 ```
 
-Полная JSON Schema находится в [`test.schema.json`](./test.schema.json).
+Полная JSON Schema находится в [`test.schema.json`](./test.schema.json). Что происходит с файлом после загрузки — в [TEST-STORAGE.md](./TEST-STORAGE.md).
 
 ## 2. Поля верхнего уровня
 

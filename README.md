@@ -9,6 +9,7 @@
 - [Требования к продукту](docs/PRODUCT.md)
 - [Формат теста и JSON Schema](docs/TEST-FORMAT.md)
 - [JSON Schema](docs/test.schema.json)
+- [Хранение тестов: реализация и открытые вопросы](docs/TEST-STORAGE.md)
 - [API и модель данных](docs/API-DRAFT.md)
 - [Экраны и критерии приёмки](docs/SCREENS.md)
 

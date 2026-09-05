@@ -97,15 +97,15 @@
 - `groups`: `id`, `name`, `status`;
 - `group_members`: `group_id`, `child_id`;
 - `subjects`: фиксированный seed-справочник либо enum;
-- `tests`: `id`, `stable_id`, `version`, `title`, `description`, `subject`, `grade`, `pass_percentage`, `status`, `source_json`, timestamps;
-- `questions`: `id`, `test_id`, `position`, `text`, `points`, `explanation`;
-- `options`: `id`, `question_id`, `position`, `text`, `is_correct`;
+- `tests`: `id`, `stable_id`, `version`, `title`, `description`, `subject`, `grade`, `pass_percentage`, `status`, `question_count`, `content`, timestamps;
 - `assignments`: `id`, `test_id`, `child_id` или `group_id`, `status`, timestamps;
 - `attempts`: `id`, `assignment_id`, `child_id`, `test_version`, `status`, `started_at`, `submitted_at`;
 - `answers`: `attempt_id`, `question_id`, `option_id`;
 - `results`: `attempt_id`, `earned_points`, `total_points`, `percentage`, `passed`.
 
-На уровне БД должен быть запрещён результат без принадлежащей ему попытки и ответ с вопросом из другого теста. Правильность ответа рассчитывается на сервере по зафиксированной версии теста.
+Отдельных таблиц под вопросы и варианты нет. Версия теста неизменяема, поэтому вопросы с вариантами хранятся целиком в JSON-колонке `tests.content`, а `answers.question_id` и `answers.option_id` ссылаются на авторские идентификаторы из загруженного файла (`"q1"`, `"a"`). Подробности и открытые вопросы — в [TEST-STORAGE.md](./TEST-STORAGE.md).
+
+На уровне БД должен быть запрещён результат без принадлежащей ему попытки. Принадлежность ответа текущей версии теста проверяется на сервере при сохранении: вопрос и вариант ищутся в `tests.content`, иначе `422`. Правильность ответа рассчитывается на сервере по зафиксированной версии теста.
 
 ## 6. Правила прогресса
 
@@ -126,6 +126,8 @@
 ## 8. Открытые решения
 
 1. Способ деплоя.
-2. Объектное хранилище для исходных JSON-файлов.
+2. ~~Объектное хранилище для исходных JSON-файлов.~~ Отклонено: исходный файл не сохраняется, тест живёт в `tests.content`. Обоснование — [TEST-STORAGE.md](./TEST-STORAGE.md#1-решение).
+
+Открытые вопросы по хранению тестов собраны в [TEST-STORAGE.md](./TEST-STORAGE.md#5-что-сделать-в-будущем) — в частности, неиспользуемое поле `attempts.test_version` и то, что назначение привязано к конкретной версии теста.
 
 CSV-импорт детей и групп в первую версию не входит: группы создаются и наполняются вручную в админке.
