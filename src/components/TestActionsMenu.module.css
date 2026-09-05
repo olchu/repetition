@@ -1,0 +1,83 @@
+.root {
+  position: relative;
+  justify-self: end;
+}
+
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid #e2e8f5;
+  border-radius: 10px;
+  color: #16204a;
+  background: #fff;
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.trigger:hover,
+.trigger[aria-expanded="true"] {
+  background: #f4f8ff;
+  border-color: #ccdaf7;
+}
+
+.menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  min-width: 184px;
+  padding: 6px;
+  border: 1px solid #e7edf9;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 18px 40px #1b2c5820, 0 4px 12px #1b2c5810;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 9px;
+  color: #16204a;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: background 140ms ease;
+}
+
+.item svg {
+  flex-shrink: 0;
+  color: #6f8bc7;
+}
+
+.item:hover:not(:disabled) {
+  background: #f2f6ff;
+}
+
+.item:disabled {
+  color: #9aa7c6;
+  cursor: default;
+}
+
+.error {
+  margin: 4px 6px 2px;
+  color: #d64562;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+@media (max-width: 600px) {
+  .menu {
+    min-width: 200px;
+  }
+}

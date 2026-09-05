@@ -225,7 +225,7 @@
 }
 
 .sectionHeader h2 {
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 700;
   letter-spacing: -0.025em;
 }
@@ -399,9 +399,10 @@
 .tableHead,
 .tableRow {
   display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(0, 0.9fr) minmax(0, 0.8fr) 150px;
+  grid-template-columns:
+    minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 0.5fr) minmax(0, 0.55fr) minmax(0, 0.85fr) 40px;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
 }
 
 .tableHead {
@@ -413,6 +414,18 @@
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+}
+
+/* The subject cell is a pill with its own inner padding; nudge the header
+   label over by the same amount so it sits above the pill's icon. */
+.tableHead > span:nth-child(2) {
+  padding-left: 11px;
+}
+
+/* Questions / Pass mark: header and value both centred in their column. */
+.tableHead > span:nth-child(3),
+.tableHead > span:nth-child(4) {
+  text-align: center;
 }
 
 .tableRow {
@@ -454,9 +467,6 @@
 
 .status {
   justify-self: start;
-  padding: 8px 14px;
-  border-radius: 99px;
-  background: #f0f5fc;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -477,23 +487,30 @@
 .statusCompleted { color: #b0426a; }
 .statusPassed { color: #15803d; }
 
-.rowAction {
+.cellNumber {
   display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 9px;
-  min-height: 36px;
-  padding: 0 16px;
-  border-radius: 10px;
-  color: #fff;
-  background: #16204a;
+  align-items: baseline;
+  justify-self: center;
+  gap: 5px;
+  color: #16204a;
   font-size: 14px;
   font-weight: 700;
-  transition: background 160ms ease;
 }
 
-.rowAction:hover {
-  background: #24316b;
+.rowMenu {
+  display: flex;
+  justify-content: flex-end;
+  justify-self: end;
+}
+
+/* The column header carries the label on desktop; the word only earns its
+   place on mobile where the header row is hidden. */
+.cellNumber i {
+  display: none;
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 600;
+  color: #8c9ac1;
 }
 
 .empty {
@@ -612,19 +629,34 @@
   .panel {
     padding: 18px;
   }
+}
 
+/* Below this the six-column table gets too cramped — stack each row into a
+   card: name + menu, then subject + status, then the question / pass-mark meta. */
+@media (max-width: 960px) {
   .tableHead {
     display: none;
   }
 
   .tableRow {
     grid-template-columns: minmax(0, 1fr) auto;
-    gap: 10px 14px;
+    gap: 8px 14px;
     padding: 16px 0;
+  }
+
+  .testName {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .rowMenu {
+    grid-column: 2;
+    grid-row: 1;
   }
 
   .subjectChip {
     grid-column: 1;
+    grid-row: 2;
   }
 
   .status {
@@ -633,8 +665,17 @@
     justify-self: end;
   }
 
-  .rowAction {
-    grid-column: 1 / -1;
+  .cellNumber {
+    grid-row: 3;
+    justify-self: start;
+  }
+
+  .cellNumber + .cellNumber {
+    justify-self: end;
+  }
+
+  .cellNumber i {
+    display: inline;
   }
 }
 
@@ -642,7 +683,6 @@
   .ringValue,
   .track span,
   .signOut,
-  .rowAction,
   .subjectAction {
     transition: none;
   }

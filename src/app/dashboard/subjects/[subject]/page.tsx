@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { TestActionsMenu } from "@/components/TestActionsMenu";
 import styles from "../../page.module.css";
 
-type Test = { id: string; title: string; subject: string; status: "not_started" | "in_progress" | "completed" | "passed"; inProgressAttemptId: string | null; bestPercentage: number; latestPercentage: number | null };
+type Test = { id: string; title: string; subject: string; status: "not_started" | "in_progress" | "completed" | "passed"; attemptCount: number; inProgressAttemptId: string | null; bestPercentage: number; latestPercentage: number | null };
 type Dashboard = { subjects: Array<{ subject: string; assigned: number; passed: number; progress: number }>; tests: Test[] };
 type RouteContext = { params: Promise<{ subject: string }> };
 
@@ -40,5 +41,5 @@ export default function SubjectPage({ params }: RouteContext) {
 
   const summary = dashboard.subjects.find((item) => item.subject === subject);
   const tests = dashboard.tests.filter((test) => test.subject === subject);
-  return <main className={styles.detailPage}><Link className={styles.backLink} href="/dashboard">← Back to progress</Link><p className={styles.eyebrow}>Subject progress</p><h1>{labels[subject]}</h1><p className={styles.detailCopy}>{summary?.passed ?? 0} of {summary?.assigned ?? 0} tests passed — {summary?.progress ?? 0}% complete.</p><div className={styles.progressTrack} role="progressbar" aria-label={`${labels[subject]} progress`} aria-valuenow={summary?.progress ?? 0} aria-valuemin={0} aria-valuemax={100}><span style={{ width: `${summary?.progress ?? 0}%` }} /></div><div className={styles.subjectTestList}>{tests.length === 0 ? <p>No tests assigned for this subject yet.</p> : tests.map((test) => <article key={test.id}><div><h2>{test.title}</h2><span>{test.latestPercentage !== null ? `Best score ${test.bestPercentage}%` : "Not started"}</span></div><Link className={styles.secondaryAction} href={test.status === "in_progress" && test.inProgressAttemptId ? `/dashboard/attempts/${test.inProgressAttemptId}` : `/dashboard/tests/${test.id}`}>{test.status === "in_progress" ? "Continue" : "Open"}</Link></article>)}</div></main>;
+  return <main className={styles.detailPage}><Link className={styles.backLink} href="/dashboard">← Back to progress</Link><p className={styles.eyebrow}>Subject progress</p><h1>{labels[subject]}</h1><p className={styles.detailCopy}>{summary?.passed ?? 0} of {summary?.assigned ?? 0} tests passed — {summary?.progress ?? 0}% complete.</p><div className={styles.progressTrack} role="progressbar" aria-label={`${labels[subject]} progress`} aria-valuenow={summary?.progress ?? 0} aria-valuemin={0} aria-valuemax={100}><span style={{ width: `${summary?.progress ?? 0}%` }} /></div><div className={styles.subjectTestList}>{tests.length === 0 ? <p>No tests assigned for this subject yet.</p> : tests.map((test) => <article key={test.id}><div><h2>{test.title}</h2><span>{test.latestPercentage !== null ? `Best score ${test.bestPercentage}%` : "Not started"}</span></div><TestActionsMenu testId={test.id} attemptCount={test.attemptCount} inProgressAttemptId={test.inProgressAttemptId} /></article>)}</div></main>;
 }

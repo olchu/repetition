@@ -16,6 +16,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { DashboardSidebar } from "@/components/DashboardSidebar";
 import { SignOutButton } from "@/components/SignOutButton";
+import { TestActionsMenu } from "@/components/TestActionsMenu";
 import styles from "./home.module.css";
 
 type SubjectSummary = {
@@ -30,6 +31,8 @@ type DashboardTest = {
   title: string;
   subject: string;
   status: "not_started" | "in_progress" | "completed" | "passed";
+  passPercentage: number;
+  questionCount: number;
   attemptCount: number;
   inProgressAttemptId: string | null;
   bestPercentage: number;
@@ -71,13 +74,6 @@ const statusClass: Record<DashboardTest["status"], string> = {
   in_progress: styles.statusInProgress,
   completed: styles.statusCompleted,
   passed: styles.statusPassed,
-};
-
-const actionLabels: Record<DashboardTest["status"], string> = {
-  not_started: "Start test",
-  in_progress: "Continue",
-  completed: "Try again",
-  passed: "Review",
 };
 
 function isSubjectTone(value: string): value is SubjectTone {
@@ -288,6 +284,8 @@ export default function DashboardPage() {
               <div className={styles.tableHead} role="presentation">
                 <span>Test name</span>
                 <span>Subject</span>
+                <span>Questions</span>
+                <span>Pass mark</span>
                 <span>Status</span>
                 <span />
               </div>
@@ -305,21 +303,25 @@ export default function DashboardPage() {
                       <Icon size={15} strokeWidth={2.2} aria-hidden="true" />
                       {subjectLabel(test.subject)}
                     </span>
+                    <span className={styles.cellNumber}>
+                      <b>{test.questionCount}</b>
+                      <i>{test.questionCount === 1 ? "question" : "questions"}</i>
+                    </span>
+                    <span className={styles.cellNumber}>
+                      <b>{test.passPercentage}%</b>
+                      <i>to pass</i>
+                    </span>
                     <span className={`${styles.status} ${statusClass[test.status]}`}>
                       <span className={styles.statusDot} aria-hidden="true" />
                       {statusLabels[test.status]}
                     </span>
-                    <Link
-                      className={styles.rowAction}
-                      href={
-                        test.status === "in_progress" && test.inProgressAttemptId
-                          ? `/dashboard/attempts/${test.inProgressAttemptId}`
-                          : `/dashboard/tests/${test.id}`
-                      }
-                    >
-                      {actionLabels[test.status]}
-                      <ArrowRight size={16} strokeWidth={2.2} aria-hidden="true" />
-                    </Link>
+                    <span className={styles.rowMenu}>
+                      <TestActionsMenu
+                        testId={test.id}
+                        attemptCount={test.attemptCount}
+                        inProgressAttemptId={test.inProgressAttemptId}
+                      />
+                    </span>
                   </article>
                 );
               })}

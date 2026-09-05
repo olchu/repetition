@@ -11,6 +11,7 @@ type DashboardTest = {
   subject: string;
   grade: string | null;
   passPercentage: number;
+  questionCount: number;
   attempts: Array<{
     id: string;
     status: string;
@@ -47,6 +48,7 @@ export async function GET() {
           subject: true,
           grade: true,
           passPercentage: true,
+          _count: { select: { questions: true } },
         },
       },
       attempts: {
@@ -61,8 +63,10 @@ export async function GET() {
 
   for (const assignment of assignments) {
     const existing = testsById.get(assignment.test.id);
+    const { _count, ...testFields } = assignment.test;
     const test = existing ?? {
-      ...assignment.test,
+      ...testFields,
+      questionCount: _count.questions,
       attempts: [],
     };
     test.attempts.push(...assignment.attempts);
@@ -90,6 +94,7 @@ export async function GET() {
       subject: test.subject.toLowerCase(),
       grade: test.grade,
       passPercentage: test.passPercentage,
+      questionCount: test.questionCount,
       status,
       attemptCount: test.attempts.length,
       inProgressAttemptId: test.attempts.find((attempt) => attempt.status === "IN_PROGRESS")?.id ?? null,
