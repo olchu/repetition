@@ -185,13 +185,14 @@ export default function DashboardPage() {
           <div className={styles.heroArt} aria-hidden="true" />
 
           <aside className={styles.progressCard} aria-label="Overall progress">
-            <p className={styles.progressTitle}>Keep going!</p>
+            <p className={styles.visuallyHidden}>Keep going!</p>
             <div className={styles.ring}>
               <svg viewBox="0 0 120 120" role="img" aria-label={`${overall}% overall progress`}>
                 <defs>
-                  <linearGradient id="ringGradient" x1="0" y1="1" x2="1" y2="0">
-                    <stop offset="0%" stopColor="#4fe0c6" />
-                    <stop offset="100%" stopColor="#4a9bff" />
+                  <linearGradient id="ringGradient" gradientUnits="userSpaceOnUse" x1="112" y1="35" x2="8" y2="85">
+                    <stop offset="0%" stopColor="#38ffc4" />
+                    <stop offset="48%" stopColor="#28f2d5" />
+                    <stop offset="100%" stopColor="#a4edff" />
                   </linearGradient>
                 </defs>
                 <circle className={styles.ringTrack} cx="60" cy="60" r={RING_RADIUS} />
@@ -206,11 +207,11 @@ export default function DashboardPage() {
                 />
               </svg>
               <span className={styles.ringLabel}>
-                <strong>{overall}%</strong>
+                <strong>{overall}<small>%</small></strong>
                 <span>overall</span>
               </span>
             </div>
-            <p className={styles.progressQuote}>&ldquo;One step at a time.&rdquo;</p>
+            <p className={styles.visuallyHidden}>&ldquo;One step at a time.&rdquo;</p>
           </aside>
         </section>
 
@@ -230,15 +231,14 @@ export default function DashboardPage() {
                 >
                   <div className={styles.subjectTop}>
                     <span className={styles.subjectIcon} aria-hidden="true">
-                      <Icon size={22} strokeWidth={2} />
+                      <Icon size={24} strokeWidth={2} />
                     </span>
                     <h3>{subjectLabel(subject.subject)}</h3>
                     <ChevronRight className={styles.subjectChevron} size={18} strokeWidth={2.2} aria-hidden="true" />
+                    <p className={styles.subjectMeta}>
+                      <strong>{subject.progress}%</strong> complete
+                    </p>
                   </div>
-
-                  <p className={styles.subjectMeta}>
-                    <strong>{subject.progress}%</strong> complete
-                  </p>
 
                   <div
                     className={styles.track}

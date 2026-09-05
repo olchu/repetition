@@ -1,6 +1,8 @@
+import Image from "next/image";
 import Link from "next/link";
 import { BarChart3, BookOpen, FileText, Heart, House } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import logo from "../../public/images/logo.png";
 import styles from "./DashboardSidebar.module.css";
 
 export type DashboardSection = "home" | "subjects" | "tests" | "progress";
@@ -33,11 +35,9 @@ export function DashboardSidebar({ userName, userRole = "Student", active = "hom
   return (
     <aside className={styles.sidebar}>
       <div className={styles.brand}>
-        <span className={styles.brandMark} aria-hidden="true">
-          <svg viewBox="0 0 32 32" role="presentation">
-            <path d="M11 4c3.3 0 6 2.7 6 6v6.5c0 3-2.5 5.5-5.5 5.5S6 19.5 6 16.5V10c0-3.3 2.7-6 5-6Z" fill="#4f9bff" />
-            <path d="M23 6c2.8 0 5 2.2 5 5v7c0 3.3-2.7 6-6 6s-6-2.7-6-6v-7c0-2.8 2.2-5 5-5Z" fill="#43dfc0" opacity="0.85" />
-          </svg>
+        <span className={styles.brandMark}>
+          {/* Decorative: the "OL CHU" wordmark next to it carries the name. */}
+          <Image src={logo} alt="" width={36} height={36} priority />
         </span>
         <span className={styles.brandText}>
           <strong>OL CHU</strong>
