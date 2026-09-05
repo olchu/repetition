@@ -3,6 +3,8 @@
 import Image from "next/image";
 import { ArrowRight, Eye, EyeOff, GraduationCap, Lock, School, Settings, User } from "lucide-react";
 import { FormEvent, useState } from "react";
+import heroDesktop from "../../public/images/auth-hero.webp";
+import heroMobile from "../../public/images/auth-hero-mobile.webp";
 import styles from "./page.module.css";
 
 type Role = "child" | "admin";
@@ -67,16 +69,15 @@ export default function Home() {
           fill
           priority
           sizes="(max-width: 720px) 0px, (max-width: 1120px) 100vw, 55vw"
-          src="/images/auth-hero.webp"
+          src={heroDesktop}
         />
         <Image
           alt=""
           className={styles.heroImageMobile}
-          width={1882}
-          height={3344}
+          fill
           priority
           sizes="(max-width: 720px) 100vw, 0px"
-          src="/images/auth-hero-mobile.webp"
+          src={heroMobile}
         />
         <div className={styles.imageShade} aria-hidden="true" />
       </section>
