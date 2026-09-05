@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight, Check, ChevronsRight, Lightbulb, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, ChevronsRight, HelpCircle, Lightbulb, X } from "lucide-react";
+import { Markdown } from "@/components/Markdown";
 import styles from "../../test.module.css";
 
 type Question = {
@@ -11,6 +12,9 @@ type Question = {
   points: number;
   options: Array<{ id: string; text: string }>;
   correctOptionId?: string | null;
+  /** Markdown the child can reveal before answering. */
+  hint?: string | null;
+  /** Markdown shown once the answer has been checked. */
   explanation?: string | null;
 };
 
@@ -29,6 +33,7 @@ export default function AttemptPage({ params }: RouteContext) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [hintsShown, setHintsShown] = useState<Record<string, boolean>>({});
   const [state, setState] = useState<"loading" | "ready" | "error" | "saving" | "submitting">("loading");
   const [attemptId, setAttemptId] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -110,6 +115,7 @@ export default function AttemptPage({ params }: RouteContext) {
   const checked = Boolean(answers[question.id]) || submitted;
   const correct = checked && answers[question.id] === question.correctOptionId;
   const correctOption = question.options.find((option) => option.id === question.correctOptionId);
+  const hintOpen = Boolean(hintsShown[question.id]);
 
   return (
     <main className={styles.attemptPage}>
@@ -129,6 +135,25 @@ export default function AttemptPage({ params }: RouteContext) {
       <section className={styles.question} aria-labelledby="question-title">
         <p className={styles.questionNumber}>Question {currentIndex + 1}</p>
         <h2 id="question-title">{question.text}</h2>
+        {question.hint && (
+          <div className={styles.hintBlock}>
+            <button
+              className={styles.hintToggle}
+              type="button"
+              aria-expanded={hintOpen}
+              aria-controls={`hint-${question.id}`}
+              onClick={() => setHintsShown((current) => ({ ...current, [question.id]: !current[question.id] }))}
+            >
+              <HelpCircle size={16} strokeWidth={2.2} aria-hidden="true" />
+              {hintOpen ? "Hide hint" : "Show hint"}
+            </button>
+            {hintOpen && (
+              <div className={styles.hint} id={`hint-${question.id}`}>
+                <Markdown>{question.hint}</Markdown>
+              </div>
+            )}
+          </div>
+        )}
         <div className={styles.options} role="group" aria-label="Answer choices">
           {question.options.map((option, index) => (
             <button className={`${styles.option} ${drafts[question.id] === option.id ? styles.optionSelected : ""} ${checked && option.id === question.correctOptionId ? styles.optionCorrect : ""} ${checked && answers[question.id] === option.id && !correct ? styles.optionWrong : ""}`} key={option.id} type="button" aria-pressed={drafts[question.id] === option.id} disabled={busy || checked} onClick={() => { setDrafts((current) => ({ ...current, [question.id]: option.id })); setSaveError(null); }}>
@@ -142,7 +167,7 @@ export default function AttemptPage({ params }: RouteContext) {
             {correct ? <Check size={24} aria-hidden="true" /> : <X size={24} aria-hidden="true" />}
             <div><h3>{correct ? "Correct!" : answers[question.id] ? "Not quite!" : "Not answered"}</h3><p>{correct ? "Well done! You got it right." : `The correct answer is ${correctOption?.text ?? "unavailable"}.`}</p></div>
           </div>
-          {question.explanation && <div className={styles.feedbackExplanation}><Lightbulb size={20} aria-hidden="true" /><div><h4>Explanation</h4><p>{question.explanation}</p></div></div>}
+          {question.explanation && <div className={styles.feedbackExplanation}><Lightbulb size={20} aria-hidden="true" /><div><h4>Explanation</h4><Markdown className={styles.feedbackProse}>{question.explanation}</Markdown></div></div>}
         </div>}
         {(saveError || state === "saving") && <p className={styles.saveStatus} role="status">{saveError ?? "Checking your answer…"}</p>}
         {submitted && attempt.result && <div className={styles.completion} role="status"><strong>{attempt.result.passed ? "Test passed!" : "Test complete — keep practicing!"}</strong><p>{attempt.result.percentage}% · {attempt.result.earnedPoints} of {attempt.result.totalPoints} points</p></div>}

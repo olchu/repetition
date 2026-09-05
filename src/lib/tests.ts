@@ -14,6 +14,9 @@ export type TestQuestionInput = {
   points?: number;
   options: TestOptionInput[];
   correctOptionId: string;
+  /** Markdown revealed on demand while the question is still open. */
+  hint?: string;
+  /** Markdown revealed once the answer has been checked. */
   explanation?: string;
 };
 
@@ -120,6 +123,7 @@ export async function createTestDraft(document: TestDocument) {
           position,
           text: question.text,
           points: question.points ?? 1,
+          hint: question.hint,
           explanation: question.explanation,
           options: {
             create: question.options.map((option, optionPosition) => ({

@@ -99,7 +99,13 @@
           "minLength": 1,
           "maxLength": 100
         },
+        "hint": {
+          "description": "Markdown. Nudge the child can reveal while the question is still open.",
+          "type": "string",
+          "maxLength": 5000
+        },
         "explanation": {
+          "description": "Markdown. Shown after the answer has been checked.",
           "type": "string",
           "maxLength": 5000
         }

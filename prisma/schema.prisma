@@ -126,6 +126,9 @@ model TestQuestion {
   position    Int
   text        String
   points      Int          @default(1)
+  /// Markdown shown on demand while the question is still open.
+  hint        String?
+  /// Markdown shown once the answer has been checked.
   explanation String?
   test        Test         @relation(fields: [testId], references: [id], onDelete: Cascade)
   options     TestOption[]

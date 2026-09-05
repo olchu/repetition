@@ -36,6 +36,7 @@ export async function GET(_request: Request, context: RouteContext) {
         id: question.externalId,
         text: question.text,
         points: question.points,
+        hint: question.hint,
         options: question.options.map((option) => ({
           id: option.externalId,
           text: option.text,

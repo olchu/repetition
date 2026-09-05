@@ -12,6 +12,11 @@
 .question { padding: clamp(20px, 2.3vw, 36px); border: 1px solid #fff; border-radius: 20px; background: rgba(255,255,255,0.9); box-shadow: 0 10px 30px #315f9510; }
 .questionNumber { margin-bottom: 12px; color: #0078ff; font-size: 13px; font-weight: 500; }
 .question h2 { font-size: clamp(23px, 2.1vw, 32px); line-height: 1.3; letter-spacing: -0.035em; font-weight: 800; }
+.hintBlock { margin-top: 16px; }
+.hintToggle { display: inline-flex; align-items: center; gap: 7px; min-height: 32px; padding: 0 12px; border: 1px solid #d7e4fb; border-radius: 99px; color: #2a54b8; background: #f2f7ff; font-size: 13px; font-weight: 700; cursor: pointer; transition: background 160ms ease, border-color 160ms ease; }
+.hintToggle:hover { background: #e7f1ff; border-color: #b9d2f7; }
+.hintToggle > svg { flex-shrink: 0; }
+.hint { margin-top: 10px; padding: 14px 16px; border-left: 3px solid #7fb4ff; border-radius: 4px 12px 12px 4px; color: #26407e; background: #f2f7ff; }
 .options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 28px; }
 .option { display: flex; align-items: center; gap: 16px; min-height: 80px; padding: 16px 18px; border: 1px solid #dfe8fa; border-radius: 14px; background: #fbfdff; color: #080d50; text-align: left; cursor: pointer; font-size: 17px; font-weight: 600; transition: background 160ms ease, border-color 160ms ease; }
 .option:hover:not(:disabled) { background: #f0faff; border-color: #8ddaf7; }
@@ -30,7 +35,8 @@
 .feedbackHeading { display: flex; align-items: center; gap: 14px; }
 .feedbackHeading > svg { flex-shrink: 0; }
 .feedbackHeading h3 { font-size: 17px; }
-.feedbackHeading p, .feedbackExplanation p { margin-top: 5px; color: #536da2; font-size: 14px; line-height: 1.5; }
+.feedbackHeading p { margin-top: 5px; color: #536da2; font-size: 14px; line-height: 1.5; }
+.feedbackProse { margin-top: 5px; color: #536da2; }
 .feedbackExplanation { display: flex; gap: 12px; margin-top: 16px; padding: 16px; border-radius: 12px; color: #080d50; background: #ffffffb3; }
 .feedbackExplanation > svg { flex-shrink: 0; color: #0078ff; }
 .feedbackExplanation h4 { font-size: 15px; }
@@ -77,4 +83,4 @@
   .attemptActions > .primaryAction { width: 100%; }
   .segments { gap: 4px; }
 }
-@media (prefers-reduced-motion: reduce) { .option { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .option, .hintToggle { transition: none; } }

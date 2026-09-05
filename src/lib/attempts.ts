@@ -67,6 +67,8 @@ export function serializeAttempt(attempt: AttemptWithTest) {
         id: question.externalId,
         text: question.text,
         points: question.points,
+        // The hint gives nothing away, so it travels with the open question.
+        hint: question.hint,
         options: question.options.map((option) => ({
           id: option.externalId,
           text: option.text,

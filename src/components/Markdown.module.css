@@ -1,0 +1,112 @@
+/* Prose for test hints and explanations. Colour is inherited so the same
+   markup reads correctly inside the green, red and amber feedback panels. */
+.prose {
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.prose > :first-child { margin-top: 0; }
+.prose > :last-child { margin-bottom: 0; }
+
+.prose p,
+.prose ul,
+.prose ol,
+.prose blockquote,
+.prose pre {
+  margin: 0 0 10px;
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4 {
+  margin: 14px 0 6px;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.prose ul,
+.prose ol {
+  padding-left: 20px;
+}
+
+.prose li {
+  margin-bottom: 4px;
+}
+
+.prose li::marker {
+  color: #7d93c4;
+}
+
+.prose a {
+  color: #0068e8;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.prose strong {
+  font-weight: 800;
+}
+
+.prose code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: #0b1a3c10;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.92em;
+}
+
+.prose pre {
+  padding: 12px 14px;
+  overflow-x: auto;
+  border-radius: 10px;
+  background: #0b1a3c0d;
+}
+
+.prose pre code {
+  padding: 0;
+  background: none;
+}
+
+.prose blockquote {
+  padding: 2px 0 2px 12px;
+  border-left: 3px solid #b9cdf0;
+  color: inherit;
+  opacity: 0.85;
+}
+
+.prose hr {
+  margin: 14px 0;
+  border: 0;
+  border-top: 1px solid #d9e3f5;
+}
+
+.prose img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 10px;
+}
+
+/* Wide tables scroll inside the panel instead of stretching the card. */
+.tableScroll {
+  margin: 0 0 10px;
+  overflow-x: auto;
+}
+
+.prose table {
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.prose th,
+.prose td {
+  padding: 7px 11px;
+  border: 1px solid #dce5f6;
+  text-align: left;
+}
+
+.prose th {
+  background: #0b1a3c08;
+  font-weight: 700;
+}
