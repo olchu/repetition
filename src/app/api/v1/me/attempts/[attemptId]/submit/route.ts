@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { findAttemptForChild, serializeAttempt } from "@/lib/attempts";
+import { readTestContent } from "@/lib/test-content";
 import { prisma } from "@/lib/prisma";
 
 type RouteContext = { params: Promise<{ attemptId: string }> };
@@ -29,13 +30,12 @@ export async function POST(_request: Request, context: RouteContext) {
     return NextResponse.json({ attempt: serializeAttempt(attempt) });
   }
 
-  const questions = attempt.assignment.test.questions;
+  const { questions } = readTestContent(attempt.assignment.test.content);
   const totalPoints = questions.reduce((total, question) => total + question.points, 0);
   const answersByQuestion = new Map(attempt.answers.map((answer) => [answer.questionId, answer.optionId]));
   const earnedPoints = questions.reduce((total, question) => {
     const selectedOptionId = answersByQuestion.get(question.id);
-    const correctOption = question.options.find((option) => option.isCorrect);
-    return total + (selectedOptionId === correctOption?.id ? question.points : 0);
+    return total + (selectedOptionId === question.correctOptionId ? question.points : 0);
   }, 0);
   const percentage = totalPoints === 0 ? 0 : Math.round((earnedPoints / totalPoints) * 10000) / 100;
   const passed = percentage >= attempt.assignment.test.passPercentage;

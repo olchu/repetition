@@ -48,7 +48,7 @@ export async function GET() {
           subject: true,
           grade: true,
           passPercentage: true,
-          _count: { select: { questions: true } },
+          questionCount: true,
         },
       },
       attempts: {
@@ -63,10 +63,8 @@ export async function GET() {
 
   for (const assignment of assignments) {
     const existing = testsById.get(assignment.test.id);
-    const { _count, ...testFields } = assignment.test;
     const test = existing ?? {
-      ...testFields,
-      questionCount: _count.questions,
+      ...assignment.test,
       attempts: [],
     };
     test.attempts.push(...assignment.attempts);

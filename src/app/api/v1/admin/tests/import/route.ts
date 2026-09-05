@@ -74,7 +74,7 @@ export async function POST(request: Request) {
         title: test.title,
         subject: test.subject.toLowerCase(),
         status: test.status.toLowerCase(),
-        questionCount: test.questions.length,
+        questionCount: test.questionCount,
         passPercentage: test.passPercentage,
       },
     },

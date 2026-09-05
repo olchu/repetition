@@ -1,7 +1,8 @@
 import Ajv2020, { ErrorObject } from "ajv/dist/2020";
 import testSchema from "../../docs/test.schema.json";
-import { Prisma, Subject } from "@prisma/client";
+import { Subject } from "@prisma/client";
 import { prisma } from "./prisma";
+import { buildTestContent, toJsonColumn } from "./test-content";
 
 export type TestOptionInput = {
   id: string;
@@ -106,6 +107,7 @@ export async function createTestDraft(document: TestDocument) {
   });
   const version = (latest?.version ?? 0) + 1;
   const subject = document.subject.toUpperCase() as Subject;
+  const content = buildTestContent(document.questions);
 
   return prisma.test.create({
     data: {
@@ -116,26 +118,8 @@ export async function createTestDraft(document: TestDocument) {
       subject,
       grade: document.grade,
       passPercentage: document.passPercentage ?? 70,
-      sourceJson: document as unknown as Prisma.InputJsonValue,
-      questions: {
-        create: document.questions.map((question, position) => ({
-          externalId: question.id,
-          position,
-          text: question.text,
-          points: question.points ?? 1,
-          hint: question.hint,
-          explanation: question.explanation,
-          options: {
-            create: question.options.map((option, optionPosition) => ({
-              externalId: option.id,
-              position: optionPosition,
-              text: option.text,
-              isCorrect: option.id === question.correctOptionId,
-            })),
-          },
-        })),
-      },
+      questionCount: content.questions.length,
+      content: toJsonColumn(content),
     },
-    include: { questions: { include: { options: true }, orderBy: { position: "asc" } } },
   });
 }

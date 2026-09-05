@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { findAccessibleAssignment } from "@/lib/attempts";
+import { readTestContent } from "@/lib/test-content";
 
 type RouteContext = { params: Promise<{ testId: string }> };
 
@@ -23,6 +24,8 @@ export async function GET(_request: Request, context: RouteContext) {
     );
   }
 
+  const { questions } = readTestContent(assignment.test.content);
+
   return NextResponse.json({
     test: {
       id: assignment.test.id,
@@ -31,14 +34,15 @@ export async function GET(_request: Request, context: RouteContext) {
       subject: assignment.test.subject.toLowerCase(),
       grade: assignment.test.grade,
       passPercentage: assignment.test.passPercentage,
-      questionCount: assignment.test.questions.length,
-      questions: assignment.test.questions.map((question) => ({
-        id: question.externalId,
+      questionCount: assignment.test.questionCount,
+      // Correct answers stay out of this payload; the hint does not give them away.
+      questions: questions.map((question) => ({
+        id: question.id,
         text: question.text,
         points: question.points,
         hint: question.hint,
         options: question.options.map((option) => ({
-          id: option.externalId,
+          id: option.id,
           text: option.text,
         })),
       })),

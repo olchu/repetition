@@ -30,7 +30,8 @@ export async function GET(request: Request) {
       status: true,
       createdAt: true,
       passPercentage: true,
-      _count: { select: { questions: true, assignments: true } },
+      questionCount: true,
+      _count: { select: { assignments: true } },
     },
     orderBy: [{ createdAt: "desc" }, { version: "desc" }],
   });
@@ -40,7 +41,6 @@ export async function GET(request: Request) {
       ...test,
       subject: test.subject.toLowerCase(),
       status: test.status.toLowerCase(),
-      questionCount: test._count.questions,
       assignmentCount: test._count.assignments,
       _count: undefined,
     })),

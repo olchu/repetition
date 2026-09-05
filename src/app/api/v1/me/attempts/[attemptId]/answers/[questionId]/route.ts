@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { findAttemptForChild } from "@/lib/attempts";
+import { readTestContent } from "@/lib/test-content";
 import { prisma } from "@/lib/prisma";
 
 type RouteContext = { params: Promise<{ attemptId: string; questionId: string }> };
@@ -36,8 +37,9 @@ export async function PUT(request: Request, context: RouteContext) {
 
   const body = (await request.json().catch(() => null)) as AnswerBody | null;
   const optionId = typeof body?.optionId === "string" ? body.optionId : "";
-  const question = attempt.assignment.test.questions.find((item) => item.externalId === questionId);
-  const option = question?.options.find((item) => item.externalId === optionId);
+  const { questions } = readTestContent(attempt.assignment.test.content);
+  const question = questions.find((item) => item.id === questionId);
+  const option = question?.options.find((item) => item.id === optionId);
 
   if (!question || !option) {
     return NextResponse.json(
@@ -47,15 +49,15 @@ export async function PUT(request: Request, context: RouteContext) {
   }
 
   await prisma.answer.upsert({
-    where: { attemptId_questionId: { attemptId, questionId: question.id } },
-    update: { optionId: option.id },
-    create: { attemptId, questionId: question.id, optionId: option.id },
+    where: { attemptId_questionId: { attemptId, questionId } },
+    update: { optionId },
+    create: { attemptId, questionId, optionId },
   });
 
   return NextResponse.json({
     answer: { questionId, optionId },
     feedback: {
-      correctOptionId: question.options.find((item) => item.isCorrect)?.externalId ?? null,
+      correctOptionId: question.correctOptionId,
       explanation: question.explanation,
     },
   });

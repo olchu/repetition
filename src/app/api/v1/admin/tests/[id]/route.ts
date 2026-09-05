@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
+import { readTestContent } from "@/lib/test-content";
 import { prisma } from "@/lib/prisma";
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -16,12 +17,6 @@ export async function GET(_request: Request, context: RouteContext) {
 
   const test = await prisma.test.findUnique({
     where: { id: (await context.params).id },
-    include: {
-      questions: {
-        include: { options: { orderBy: { position: "asc" } } },
-        orderBy: { position: "asc" },
-      },
-    },
   });
 
   if (!test) {
@@ -30,6 +25,8 @@ export async function GET(_request: Request, context: RouteContext) {
       { status: 404 },
     );
   }
+
+  const { questions } = readTestContent(test.content);
 
   return NextResponse.json({
     test: {
@@ -42,13 +39,18 @@ export async function GET(_request: Request, context: RouteContext) {
       grade: test.grade,
       passPercentage: test.passPercentage,
       status: test.status.toLowerCase(),
-      questions: test.questions.map((question) => ({
-        id: question.externalId,
+      questionCount: test.questionCount,
+      questions: questions.map((question) => ({
+        id: question.id,
         text: question.text,
         points: question.points,
         hint: question.hint,
         explanation: question.explanation,
-        options: question.options.map((option) => ({ id: option.externalId, text: option.text, isCorrect: option.isCorrect })),
+        options: question.options.map((option) => ({
+          id: option.id,
+          text: option.text,
+          isCorrect: option.id === question.correctOptionId,
+        })),
       })),
     },
   });

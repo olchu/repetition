@@ -1,21 +1,11 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "./prisma";
+import { readTestContent } from "./test-content";
 
 const attemptInclude = {
   answers: true,
   result: true,
-  assignment: {
-    include: {
-      test: {
-        include: {
-          questions: {
-            include: { options: true },
-            orderBy: { position: "asc" },
-          },
-        },
-      },
-    },
-  },
+  assignment: { include: { test: true } },
 } as const;
 
 export type AttemptWithTest = Prisma.AttemptGetPayload<{ include: typeof attemptInclude }>;
@@ -30,16 +20,7 @@ export async function findAccessibleAssignment(testId: string, childId: string) 
         { group: { members: { some: { childId } } } },
       ],
     },
-    include: {
-      test: {
-        include: {
-          questions: {
-            include: { options: true },
-            orderBy: { position: "asc" },
-          },
-        },
-      },
-    },
+    include: { test: true },
   });
 }
 
@@ -52,6 +33,8 @@ export async function findAttemptForChild(attemptId: string, childId: string) {
 
 export function serializeAttempt(attempt: AttemptWithTest) {
   const revealAnswers = attempt.status === "SUBMITTED";
+  const answeredQuestionIds = new Set(attempt.answers.map((answer) => answer.questionId));
+  const { questions } = readTestContent(attempt.assignment.test.content);
 
   return {
     id: attempt.id,
@@ -63,32 +46,27 @@ export function serializeAttempt(attempt: AttemptWithTest) {
       title: attempt.assignment.test.title,
       subject: attempt.assignment.test.subject.toLowerCase(),
       passPercentage: attempt.assignment.test.passPercentage,
-      questions: attempt.assignment.test.questions.map((question) => ({
-        id: question.externalId,
+      questions: questions.map((question) => ({
+        id: question.id,
         text: question.text,
         points: question.points,
         // The hint gives nothing away, so it travels with the open question.
         hint: question.hint,
         options: question.options.map((option) => ({
-          id: option.externalId,
+          id: option.id,
           text: option.text,
         })),
-        ...(revealAnswers || attempt.answers.some((answer) => answer.questionId === question.id)
+        ...(revealAnswers || answeredQuestionIds.has(question.id)
           ? {
-              correctOptionId: question.options.find((option) => option.isCorrect)?.externalId ?? null,
+              correctOptionId: question.correctOptionId,
               explanation: question.explanation,
             }
           : {}),
       })),
     },
     answers: attempt.answers.map((answer) => ({
-      questionId:
-        attempt.assignment.test.questions.find((question) => question.id === answer.questionId)?.externalId ??
-        answer.questionId,
-      optionId:
-        attempt.assignment.test.questions
-          .flatMap((question) => question.options)
-          .find((option) => option.id === answer.optionId)?.externalId ?? answer.optionId,
+      questionId: answer.questionId,
+      optionId: answer.optionId,
     })),
     result: attempt.result
       ? {
