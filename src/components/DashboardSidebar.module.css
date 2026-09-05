@@ -1,0 +1,226 @@
+/* Sticky so the brand, the decorative line and the user card stay in view while
+   the page content scrolls — otherwise the sidebar stretches to the content
+   height and its bottom half ends up below the fold.
+   The breakpoints below mirror the ones the surrounding page layout uses to
+   collapse its sidebar column (900px / 720px). */
+.sidebar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  height: 100svh;
+  flex-direction: column;
+  padding: 26px 18px 20px;
+  overflow: hidden;
+  color: #eaf1ff;
+  background:
+    radial-gradient(120% 60% at 15% 92%, rgba(66, 134, 255, 0.32), transparent 70%),
+    linear-gradient(180deg, #0d1b3e 0%, #0a1734 60%, #0b1a3c 100%);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 0 8px;
+}
+
+.brandMark {
+  display: block;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+}
+
+.brandMark svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.brandText {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.brandText strong {
+  color: #fff;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.brandText span {
+  color: rgba(207, 223, 255, 0.66);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 34px;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-height: 48px;
+  padding: 0 14px;
+  border-radius: 14px;
+  color: rgba(214, 228, 255, 0.78);
+  font-size: 15px;
+  font-weight: 600;
+  transition: color 160ms ease, background 160ms ease;
+}
+
+.navItem svg {
+  flex-shrink: 0;
+  color: rgba(150, 184, 250, 0.9);
+}
+
+a.navItem:hover {
+  color: #fff;
+  background: rgba(90, 145, 255, 0.14);
+}
+
+.navItemActive,
+a.navItemActive:hover {
+  color: #fff;
+  background: linear-gradient(120deg, rgba(74, 132, 255, 0.42), rgba(58, 205, 190, 0.22));
+  box-shadow: inset 0 0 0 1px rgba(140, 185, 255, 0.35);
+}
+
+.navItemActive svg {
+  color: #8fd0ff;
+}
+
+.navItem[aria-disabled="true"] {
+  color: rgba(196, 214, 250, 0.42);
+  cursor: default;
+}
+
+.navItem[aria-disabled="true"] svg {
+  color: rgba(140, 176, 240, 0.42);
+}
+
+.art {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin: auto 0 22px;
+  padding: 0 12px;
+  color: rgba(178, 199, 255, 0.62);
+  font-size: 15px;
+  font-style: italic;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.art svg {
+  flex-shrink: 0;
+  margin-bottom: 2px;
+  color: rgba(150, 178, 255, 0.6);
+}
+
+.userCard {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 12px;
+  border: 1px solid rgba(140, 178, 255, 0.18);
+  border-radius: 16px;
+  background: rgba(19, 38, 79, 0.72);
+}
+
+.avatar {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 50%;
+  color: #0b1a3c;
+  background: linear-gradient(135deg, #7de3c8, #6cb4ff);
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.userText {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.userText strong {
+  overflow: hidden;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.userText span {
+  color: rgba(196, 214, 250, 0.6);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+@media (max-width: 900px) {
+  .sidebar {
+    display: grid;
+    position: static;
+    height: auto;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 18px;
+  }
+
+  .nav {
+    flex-direction: row;
+    margin-top: 0;
+    overflow-x: auto;
+  }
+
+  .navItem {
+    min-height: 42px;
+    white-space: nowrap;
+  }
+
+  .art {
+    display: none;
+  }
+
+  .userCard {
+    border: 0;
+    background: none;
+  }
+
+  .userText {
+    display: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .sidebar {
+    grid-template-columns: auto auto;
+    justify-content: space-between;
+  }
+
+  .nav {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .navItem {
+    transition: none;
+  }
+}

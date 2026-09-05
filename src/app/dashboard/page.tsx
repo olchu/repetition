@@ -2,8 +2,21 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import {
+  ArrowRight,
+  BookOpen,
+  ChevronRight,
+  FileText,
+  FlaskConical,
+  Globe2,
+  Landmark,
+  LogOut,
+  Ruler,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { DashboardSidebar } from "@/components/DashboardSidebar";
 import { SignOutButton } from "@/components/SignOutButton";
-import styles from "./page.module.css";
+import styles from "./home.module.css";
 
 type SubjectSummary = {
   subject: string;
@@ -30,11 +43,20 @@ type DashboardData = {
   tests: DashboardTest[];
 };
 
-const subjectLabels: Record<string, string> = {
-  science: "Science",
-  geography: "Geography",
-  history: "History",
-  mathematics: "Mathematics",
+type SubjectTone = "science" | "geography" | "history" | "mathematics";
+
+const subjectMeta: Record<SubjectTone, { label: string; Icon: LucideIcon }> = {
+  science: { label: "Science", Icon: FlaskConical },
+  geography: { label: "Geography", Icon: Globe2 },
+  history: { label: "History", Icon: Landmark },
+  mathematics: { label: "Mathematics", Icon: Ruler },
+};
+
+const toneClass: Record<SubjectTone, string> = {
+  science: styles.toneScience,
+  geography: styles.toneGeography,
+  history: styles.toneHistory,
+  mathematics: styles.toneMathematics,
 };
 
 const statusLabels: Record<DashboardTest["status"], string> = {
@@ -43,6 +65,31 @@ const statusLabels: Record<DashboardTest["status"], string> = {
   completed: "Keep practicing",
   passed: "Passed",
 };
+
+const statusClass: Record<DashboardTest["status"], string> = {
+  not_started: styles.statusNotStarted,
+  in_progress: styles.statusInProgress,
+  completed: styles.statusCompleted,
+  passed: styles.statusPassed,
+};
+
+const actionLabels: Record<DashboardTest["status"], string> = {
+  not_started: "Start test",
+  in_progress: "Continue",
+  completed: "Try again",
+  passed: "Review",
+};
+
+function isSubjectTone(value: string): value is SubjectTone {
+  return value in subjectMeta;
+}
+
+function subjectLabel(subject: string) {
+  return isSubjectTone(subject) ? subjectMeta[subject].label : subject;
+}
+
+const RING_RADIUS = 52;
+const RING_LENGTH = 2 * Math.PI * RING_RADIUS;
 
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
@@ -84,10 +131,9 @@ export default function DashboardPage() {
     return (
       <main className={styles.statePage}>
         <div className={styles.stateCard}>
-          <span className={styles.brandSmall}>repetition</span>
           <h1>Your learning room is private.</h1>
           <p>Sign in as a child to see assigned tests and progress.</p>
-          <Link className={styles.primaryAction} href="/">Go to sign in</Link>
+          <Link className={styles.stateAction} href="/">Go to sign in</Link>
         </div>
       </main>
     );
@@ -97,10 +143,9 @@ export default function DashboardPage() {
     return (
       <main className={styles.statePage}>
         <div className={styles.stateCard}>
-          <span className={styles.brandSmall}>repetition</span>
           <h1>We couldn&apos;t load your progress.</h1>
           <p>The learning room is unavailable right now. Try again in a moment.</p>
-          <button className={styles.primaryAction} type="button" onClick={() => void loadDashboard()}>
+          <button className={styles.stateAction} type="button" onClick={() => void loadDashboard()}>
             Try again
           </button>
         </div>
@@ -110,95 +155,169 @@ export default function DashboardPage() {
 
   const passedCount = data.subjects.reduce((total, subject) => total + subject.passed, 0);
   const assignedCount = data.subjects.reduce((total, subject) => total + subject.assigned, 0);
+  const overall = assignedCount ? Math.round((passedCount / assignedCount) * 100) : 0;
+  const name = data.child.displayName;
 
   return (
-    <main className={styles.page}>
-      <header className={styles.header}>
-        <Link className={styles.brand} href="/" aria-label="Repetition home">
-          <span className={styles.brandMark} aria-hidden="true"><span /><span /><span /></span>
-          repetition
-        </Link>
-        <nav className={styles.nav} aria-label="Main navigation">
-          <SignOutButton className={styles.navLink} />
-        </nav>
-      </header>
+    <div className={styles.shell}>
+      <DashboardSidebar userName={name} active="home" />
 
-      <section className={styles.hero} aria-labelledby="dashboard-title">
-        <div>
-          <p className={styles.eyebrow}>Your learning room</p>
-          <h1 id="dashboard-title">Good to see you, {data.child.displayName}.</h1>
-          <p className={styles.heroCopy}>Keep going at your own pace. Every completed test adds up.</p>
+      <main className={styles.main}>
+        <div className={styles.topBar}>
+          <SignOutButton className={styles.signOut}>
+            <LogOut size={18} strokeWidth={2} aria-hidden="true" />
+            Sign out
+          </SignOutButton>
         </div>
-        <div className={styles.overallScore}>
-          <strong>{passedCount}<span>/{assignedCount}</span></strong>
-          <span>tests passed</span>
-        </div>
-      </section>
 
-      <section className={styles.subjectSection} aria-labelledby="subjects-title">
-        <div className={styles.sectionHeader}>
-          <h2 id="subjects-title">Your subjects</h2>
-          <span>{passedCount === assignedCount && assignedCount > 0 ? "Everything is complete" : "One step at a time"}</span>
-        </div>
-        <div className={styles.subjectGrid}>
-          {data.subjects.map((subject) => (
-            <article className={styles.subjectRow} key={subject.subject}>
-              <div className={styles.subjectHeading}>
-                <h3>{subjectLabels[subject.subject] ?? subject.subject}</h3>
-                <strong>{subject.progress}%</strong>
-              </div>
-              <div
-                className={styles.progressTrack}
-                role="progressbar"
-                aria-label={`${subjectLabels[subject.subject] ?? subject.subject} progress`}
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-valuenow={subject.progress}
-              >
-                <span style={{ width: `${subject.progress}%` }} />
-              </div>
-              <p>{subject.passed} of {subject.assigned} tests passed</p>
-              <Link className={styles.subjectLink} href={`/dashboard/subjects/${subject.subject}`}>View subject</Link>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className={styles.testsSection} aria-labelledby="tests-title">
-        <div className={styles.sectionHeader}>
-          <h2 id="tests-title">Assigned tests</h2>
-          <span>{data.tests.length} {data.tests.length === 1 ? "test" : "tests"}</span>
-        </div>
-        {data.tests.length === 0 ? (
-          <div className={styles.emptyState}>
-            <p>No tests assigned yet.</p>
-            <span>Your administrator will add the next one here.</span>
+        <section className={styles.hero} aria-labelledby="dashboard-title">
+          <div className={styles.heroText}>
+            <p className={styles.eyebrow}>Your learning room</p>
+            <h1 id="dashboard-title">
+              Good to see you,{" "}
+              <span className={styles.heroName}>{name}.</span>
+            </h1>
+            <p className={styles.heroCopy}>
+              Keep learning at your own pace. Every completed test helps you understand more and grow further.
+            </p>
           </div>
-        ) : (
-          <div className={styles.testList}>
-            {data.tests.map((test) => (
-              <article className={styles.testRow} key={test.id}>
-                <div className={styles.testTitle}>
-                  <span>{subjectLabels[test.subject] ?? test.subject}</span>
-                  <h3>{test.title}</h3>
-                </div>
-                <div className={styles.testMetric}>
-                  <strong>{test.latestPercentage !== null ? `${test.bestPercentage}%` : "—"}</strong>
-                  <span>best score</span>
-                </div>
-                <div className={`${styles.status} ${styles[`status_${test.status}`]}`}>
-                  <span className={styles.statusDot} aria-hidden="true" />
-                  {statusLabels[test.status]}
-                </div>
-                <Link className={styles.testAction} href={test.status === "in_progress" && test.inProgressAttemptId ? `/dashboard/attempts/${test.inProgressAttemptId}` : `/dashboard/tests/${test.id}`}>
-                  {test.status === "passed" ? "Review" : test.status === "in_progress" ? "Continue" : "Start"}
-                  <span aria-hidden="true">↗</span>
-                </Link>
-              </article>
-            ))}
+
+          <div className={styles.heroArt} aria-hidden="true" />
+
+          <aside className={styles.progressCard} aria-label="Overall progress">
+            <p className={styles.progressTitle}>Keep going!</p>
+            <div className={styles.ring}>
+              <svg viewBox="0 0 120 120" role="img" aria-label={`${overall}% overall progress`}>
+                <defs>
+                  <linearGradient id="ringGradient" x1="0" y1="1" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#4fe0c6" />
+                    <stop offset="100%" stopColor="#4a9bff" />
+                  </linearGradient>
+                </defs>
+                <circle className={styles.ringTrack} cx="60" cy="60" r={RING_RADIUS} />
+                <circle
+                  className={styles.ringValue}
+                  cx="60"
+                  cy="60"
+                  r={RING_RADIUS}
+                  stroke="url(#ringGradient)"
+                  strokeDasharray={RING_LENGTH}
+                  strokeDashoffset={RING_LENGTH * (1 - overall / 100)}
+                />
+              </svg>
+              <span className={styles.ringLabel}>
+                <strong>{overall}%</strong>
+                <span>overall</span>
+              </span>
+            </div>
+            <p className={styles.progressQuote}>&ldquo;One step at a time.&rdquo;</p>
+          </aside>
+        </section>
+
+        <section className={styles.section} aria-labelledby="subjects-title">
+          <div className={styles.sectionHeader}>
+            <h2 id="subjects-title">Your subjects</h2>
           </div>
-        )}
-      </section>
-    </main>
+          <div className={styles.subjectGrid}>
+            {data.subjects.map((subject) => {
+              const tone = isSubjectTone(subject.subject) ? subject.subject : null;
+              const Icon = tone ? subjectMeta[tone].Icon : BookOpen;
+
+              return (
+                <article
+                  className={`${styles.subjectCard} ${tone ? toneClass[tone] : ""}`}
+                  key={subject.subject}
+                >
+                  <div className={styles.subjectTop}>
+                    <span className={styles.subjectIcon} aria-hidden="true">
+                      <Icon size={22} strokeWidth={2} />
+                    </span>
+                    <h3>{subjectLabel(subject.subject)}</h3>
+                    <ChevronRight className={styles.subjectChevron} size={18} strokeWidth={2.2} aria-hidden="true" />
+                  </div>
+
+                  <p className={styles.subjectMeta}>
+                    <strong>{subject.progress}%</strong> complete
+                  </p>
+
+                  <div
+                    className={styles.track}
+                    role="progressbar"
+                    aria-label={`${subjectLabel(subject.subject)} progress`}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={subject.progress}
+                  >
+                    <span style={{ width: `${subject.progress}%` }} />
+                  </div>
+
+                  <Link className={styles.subjectAction} href={`/dashboard/subjects/${subject.subject}`}>
+                    Open subject
+                    <ArrowRight size={16} strokeWidth={2.2} aria-hidden="true" />
+                  </Link>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className={styles.panel} aria-labelledby="tests-title">
+          <div className={styles.panelHeader}>
+            <div>
+              <h2 id="tests-title">Assigned tests</h2>
+              <p>Your teacher has added these tests for you to review and build your understanding.</p>
+            </div>
+          </div>
+
+          {data.tests.length === 0 ? (
+            <div className={styles.empty}>
+              <p>No tests assigned yet.</p>
+              <span>Your administrator will add the next one here.</span>
+            </div>
+          ) : (
+            <div className={styles.table}>
+              <div className={styles.tableHead} role="presentation">
+                <span>Test name</span>
+                <span>Subject</span>
+                <span>Status</span>
+                <span />
+              </div>
+              {data.tests.map((test) => {
+                const tone = isSubjectTone(test.subject) ? test.subject : null;
+                const Icon = tone ? subjectMeta[tone].Icon : BookOpen;
+
+                return (
+                  <article className={styles.tableRow} key={test.id}>
+                    <span className={styles.testName}>
+                      <FileText className={styles.testIcon} size={18} strokeWidth={2} aria-hidden="true" />
+                      {test.title}
+                    </span>
+                    <span className={`${styles.subjectChip} ${tone ? toneClass[tone] : ""}`}>
+                      <Icon size={15} strokeWidth={2.2} aria-hidden="true" />
+                      {subjectLabel(test.subject)}
+                    </span>
+                    <span className={`${styles.status} ${statusClass[test.status]}`}>
+                      <span className={styles.statusDot} aria-hidden="true" />
+                      {statusLabels[test.status]}
+                    </span>
+                    <Link
+                      className={styles.rowAction}
+                      href={
+                        test.status === "in_progress" && test.inProgressAttemptId
+                          ? `/dashboard/attempts/${test.inProgressAttemptId}`
+                          : `/dashboard/tests/${test.id}`
+                      }
+                    >
+                      {actionLabels[test.status]}
+                      <ArrowRight size={16} strokeWidth={2.2} aria-hidden="true" />
+                    </Link>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      </main>
+    </div>
   );
 }
