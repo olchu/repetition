@@ -2,15 +2,36 @@
 
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useState } from "react";
+import { Markdown } from "@/components/Markdown";
 import { SignOutButton } from "@/components/SignOutButton";
 import styles from "./page.module.css";
 
 type Child = { id: string; login: string; displayName: string | null; grade: string | null; status: string };
 type Test = { id: string; title: string; subject: string; grade: string | null; status: string; version: number; stableId: string; createdAt: string; questionCount: number; assignmentCount: number; passPercentage: number };
-type Result = { attemptId: string; child: { displayName: string }; test: { title: string; subject: string }; percentage: number; passed: boolean; submittedAt: string | null };
+type Result = { attemptId: string; child: { id: string; displayName: string }; test: { id: string; title: string; subject: string }; percentage: number; passed: boolean; submittedAt: string | null };
 type Group = { id: string; name: string; status: string; memberCount: number; activeAssignmentCount: number };
 type AdminData = { children: Child[]; tests: Test[]; results: Result[]; groups: Group[] };
-type View = "overview" | "children" | "groups" | "tests" | "assignments";
+type AttemptOption = { id: string; text: string; isChosen: boolean; isCorrect: boolean };
+type AttemptQuestion = {
+  id: string;
+  text: string;
+  points: number;
+  earnedPoints: number;
+  answered: boolean;
+  isCorrect: boolean;
+  explanation: string | null;
+  options: AttemptOption[];
+};
+type AttemptDetail = {
+  id: string;
+  status: string;
+  submittedAt: string | null;
+  child: { displayName: string };
+  test: { title: string; subject: string; version: number; passPercentage: number };
+  result: { earnedPoints: number; totalPoints: number; percentage: number; passed: boolean } | null;
+  questions: AttemptQuestion[];
+};
+type View = "overview" | "children" | "groups" | "tests" | "assignments" | "results";
 type Notice = { tone: "success" | "error"; text: string } | null;
 
 const subjectLabels: Record<string, string> = { science: "Science", geography: "Geography", history: "History", mathematics: "Mathematics" };
@@ -26,9 +47,9 @@ async function getApiError(response: Response, fallback: string) {
 function AdminNavigation({ view, onChange }: { view: View; onChange: (view: View) => void }) {
   return (
     <nav className={styles.nav} aria-label="Admin navigation">
-      {(["overview", "children", "groups", "tests", "assignments"] as View[]).map((item) => (
+      {(["overview", "children", "groups", "tests", "assignments", "results"] as View[]).map((item) => (
         <button className={`${styles.navButton} ${view === item ? styles.navActive : ""}`} key={item} type="button" onClick={() => onChange(item)}>
-          {item === "overview" ? "Overview" : item === "children" ? "Children" : item === "groups" ? "Groups" : item === "tests" ? "Tests" : "Assignments"}
+          {item === "overview" ? "Overview" : item === "children" ? "Children" : item === "groups" ? "Groups" : item === "tests" ? "Tests" : item === "assignments" ? "Assignments" : "Results"}
         </button>
       ))}
       <SignOutButton className={styles.navLink} />
@@ -250,6 +271,124 @@ return (
   </section>
 ); }
 
+function ResultsExplorer({ childAccounts, tests, results }: { childAccounts: Child[]; tests: Test[]; results: Result[] }) {
+  const [childId, setChildId] = useState("");
+  const [testId, setTestId] = useState("");
+  const [detail, setDetail] = useState<AttemptDetail | null>(null);
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [notice, setNotice] = useState<Notice>(null);
+
+  const visible = results.filter((result) =>
+    (!childId || result.child.id === childId) && (!testId || result.test.id === testId));
+
+  async function openAttempt(attemptId: string) {
+    setLoadingId(attemptId);
+    setNotice(null);
+    const response = await fetch(`/api/v1/admin/attempts/${attemptId}`, { cache: "no-store" });
+    setLoadingId(null);
+    if (!response.ok) {
+      setNotice({ tone: "error", text: await getApiError(response, "Unable to load these answers.") });
+      return;
+    }
+    const payload = (await response.json()) as { attempt: AttemptDetail };
+    setDetail(payload.attempt);
+  }
+
+  return (
+    <section className={styles.controlSection} aria-labelledby="results-heading">
+      <div className={styles.controlHeader}>
+        <div><p className={styles.eyebrow}>Answers</p><h1 id="results-heading">Results</h1></div>
+        <span>{visible.length} of {results.length} submitted attempts</span>
+      </div>
+
+      <div className={styles.filters}>
+        <label>
+          Child
+          <select value={childId} onChange={(event) => { setChildId(event.target.value); setDetail(null); }}>
+            <option value="">All children</option>
+            {childAccounts.map((child) => <option key={child.id} value={child.id}>{child.displayName ?? child.login}</option>)}
+          </select>
+        </label>
+        <label>
+          Test
+          <select value={testId} onChange={(event) => { setTestId(event.target.value); setDetail(null); }}>
+            <option value="">All tests</option>
+            {tests.map((test) => <option key={test.id} value={test.id}>{test.title} · v{test.version}</option>)}
+          </select>
+        </label>
+      </div>
+
+      {notice && <p className={`${styles.notice} ${notice.tone === "error" ? styles.noticeError : ""}`} role="status">{notice.text}</p>}
+
+      {visible.length === 0 ? (
+        <p className={styles.empty}>No submitted attempts match these filters.</p>
+      ) : (
+        <div className={`${styles.controlList} ${styles.attemptList}`}>
+          <div className={styles.controlListHeader}><span>Child</span><span>Test</span><span>Submitted</span><span>Score</span><span /></div>
+          {visible.map((result) => (
+            <div className={styles.controlRow} key={result.attemptId}>
+              <div><strong>{result.child.displayName}</strong><span>{subjectLabels[result.test.subject] ?? result.test.subject}</span></div>
+              <span>{result.test.title}</span>
+              <span>{result.submittedAt ? new Date(result.submittedAt).toLocaleDateString() : "—"}</span>
+              <span className={result.passed ? styles.resultPassed : styles.resultKeep}>{result.percentage}% · {result.passed ? "Passed" : "Keep practicing"}</span>
+              <span className={styles.rowActions}>
+                <button className={styles.textButton} type="button" disabled={loadingId === result.attemptId} onClick={() => void openAttempt(result.attemptId)}>
+                  {loadingId === result.attemptId ? "Loading…" : "View answers"}
+                </button>
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {detail && (
+        <section className={styles.preview} aria-label="Attempt answers">
+          <div className={styles.sectionHeader}>
+            <div>
+              <span className={styles.meta}>{detail.child.displayName} · {subjectLabels[detail.test.subject] ?? detail.test.subject}</span>
+              <h2>{detail.test.title}</h2>
+            </div>
+            <button className={styles.textButton} type="button" onClick={() => setDetail(null)}>Close</button>
+          </div>
+          <p>
+            {detail.result
+              ? <>Scored <strong>{detail.result.percentage}%</strong> — {detail.result.earnedPoints} of {detail.result.totalPoints} points, pass mark {detail.test.passPercentage}%. </>
+              : <>Not submitted yet. </>}
+            Test version {detail.test.version}
+            {detail.submittedAt ? ` · ${new Date(detail.submittedAt).toLocaleString()}` : ""}
+          </p>
+
+          {detail.questions.map((question, index) => (
+            <article key={question.id}>
+              <span>{String(index + 1).padStart(2, "0")}</span>
+              <div>
+                <h3>{question.text}</h3>
+                <p className={question.answered ? (question.isCorrect ? styles.correctOption : styles.wrongOption) : styles.mutedAction}>
+                  {question.answered ? (question.isCorrect ? "Answered correctly" : "Answered incorrectly") : "Not answered"}
+                  {" · "}{question.earnedPoints} / {question.points} {question.points === 1 ? "point" : "points"}
+                </p>
+                <ul className={styles.answerList}>
+                  {question.options.map((option) => (
+                    <li
+                      className={option.isCorrect ? styles.correctOption : option.isChosen ? styles.wrongOption : undefined}
+                      key={option.id}
+                    >
+                      <span aria-hidden="true">{option.isCorrect ? "✓" : option.isChosen ? "✗" : "·"}</span>
+                      {option.text}
+                      {option.isChosen && <em className={styles.answerTag}>chose this</em>}
+                    </li>
+                  ))}
+                </ul>
+                {question.explanation && <div className={styles.answerExplanation}><Markdown>{question.explanation}</Markdown></div>}
+              </div>
+            </article>
+          ))}
+        </section>
+      )}
+    </section>
+  );
+}
+
 export default function AdminPage() {
   const [data, setData] = useState<AdminData | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "unauthorized" | "error">("loading");
@@ -296,11 +435,12 @@ export default function AdminPage() {
       {view === "groups" && <GroupsManager childAccounts={data.children} groups={data.groups} onRefresh={loadAdmin} />}
       {view === "tests" && <TestsManager tests={data.tests} onRefresh={loadAdmin} />}
       {view === "assignments" && <AssignmentManager childAccounts={data.children} groups={data.groups} tests={data.tests} onRefresh={loadAdmin} />}
+      {view === "results" && <ResultsExplorer childAccounts={data.children} tests={data.tests} results={data.results} />}
       {view === "overview" && <>
         <section className={styles.hero} aria-labelledby="admin-title"><div><p className={styles.eyebrow}>Administrator overview</p><h1 id="admin-title">Keep learning moving.</h1><p className={styles.heroCopy}>A clear view of who is practicing, what is ready, and where progress is building.</p></div><div className={styles.heroMark} aria-hidden="true">↗</div></section>
         <section className={styles.metrics} aria-label="Overview metrics"><article><span>Active children</span><strong>{activeChildren}</strong></article><article><span>Published tests</span><strong>{publishedTests}</strong></article><article><span>Average score</span><strong>{average}%</strong></article><article><span>Passed attempts</span><strong>{passedResults}</strong></article></section>
         <div className={styles.columns}><section className={styles.panel} aria-labelledby="tests-title"><div className={styles.sectionHeader}><h2 id="tests-title">Test library</h2><button className={styles.textButton} type="button" onClick={() => setView("tests")}>Manage tests</button></div>{data.tests.length === 0 ? <p className={styles.empty}>No tests uploaded yet.</p> : <div className={styles.list}>{data.tests.slice(0, 6).map((test) => <div className={styles.listRow} key={test.id}><div><span className={styles.meta}>{subjectLabels[test.subject] ?? test.subject}</span><h3>{test.title}</h3></div><span className={styles.detail}>{test.questionCount} questions<br />{test.assignmentCount ?? 0} assigned</span><span className={`${styles.pill} ${test.status === "published" ? styles.pillGood : ""}`}>{test.status}</span></div>)}</div>}</section><section className={styles.panel} aria-labelledby="children-title"><div className={styles.sectionHeader}><h2 id="children-title">Children</h2><button className={styles.textButton} type="button" onClick={() => setView("children")}>Manage children</button></div>{data.children.length === 0 ? <p className={styles.empty}>No child accounts yet.</p> : <div className={styles.list}>{data.children.slice(0, 6).map((child) => <div className={styles.listRow} key={child.id}><div><h3>{child.displayName ?? child.login}</h3><span className={styles.meta}>{child.login} · Grade {child.grade ?? "—"}</span></div><span className={`${styles.pill} ${child.status === "active" ? styles.pillGood : ""}`}>{child.status}</span></div>)}</div>}</section></div>
-        <section className={styles.panel} aria-labelledby="results-title"><div className={styles.sectionHeader}><h2 id="results-title">Recent results</h2><span>{data.results.length} submitted</span></div>{data.results.length === 0 ? <p className={styles.empty}>Completed attempts will appear here.</p> : <div className={styles.resultTable}><div className={styles.tableHeader}><span>Child</span><span>Test</span><span>Score</span><span>Status</span></div>{data.results.slice(0, 8).map((result) => <div className={styles.resultRow} key={result.attemptId}><span>{result.child.displayName}</span><span>{result.test.title}</span><strong>{result.percentage}%</strong><span className={result.passed ? styles.resultPassed : styles.resultKeep}>{result.passed ? "Passed" : "Keep practicing"}</span></div>)}</div>}</section>
+        <section className={styles.panel} aria-labelledby="results-title"><div className={styles.sectionHeader}><h2 id="results-title">Recent results</h2><button className={styles.textButton} type="button" onClick={() => setView("results")}>See all answers</button></div>{data.results.length === 0 ? <p className={styles.empty}>Completed attempts will appear here.</p> : <div className={styles.resultTable}><div className={styles.tableHeader}><span>Child</span><span>Test</span><span>Score</span><span>Status</span></div>{data.results.slice(0, 8).map((result) => <div className={styles.resultRow} key={result.attemptId}><span>{result.child.displayName}</span><span>{result.test.title}</span><strong>{result.percentage}%</strong><span className={result.passed ? styles.resultPassed : styles.resultKeep}>{result.passed ? "Passed" : "Keep practicing"}</span></div>)}</div>}</section>
       </>}
     </main>
   );
