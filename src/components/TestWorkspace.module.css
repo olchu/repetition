@@ -7,10 +7,12 @@
 }
 
 .main { min-width: 0; padding: 20px clamp(24px, 3vw, 50px) 36px; }
-.toolbar { display: flex; justify-content: flex-end; margin-bottom: 28px; }
+/* Sign out sits in its own row; pull the content up so the "Exit test" link
+   rides alongside it instead of leaving a tall empty band above the page. */
+.toolbar { display: flex; justify-content: flex-end; }
 .signOut { display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 14px; border: 1px solid #e2e8f5; border-radius: 10px; color: #16204a; background: #fff; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 6px 18px #182c5c0f; }
 .signOut:hover { background: #f5faff; }
-.columns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 25.3%); gap: 24px; }
+.columns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 25.3%); gap: 24px; margin-top: -32px; }
 .content { min-width: 0; }
 
 @media (max-width: 1100px) {

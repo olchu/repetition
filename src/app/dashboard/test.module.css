@@ -3,12 +3,12 @@
 .backLink:hover { color: #006cff; }
 .eyebrow { margin-bottom: 8px; color: #5673b0; font-size: 12px; font-weight: 700; letter-spacing: 0.11em; text-transform: uppercase; }
 .title, .detailPage h1, .attemptPage > h1 { font-size: clamp(28px, 2.8vw, 44px); font-weight: 800; letter-spacing: -0.045em; line-height: 1.15; overflow-wrap: anywhere; }
-.progressRow { display: flex; align-items: center; gap: 24px; margin: 28px 0 22px; }
+.progressRow { display: flex; align-items: center; gap: 20px; margin: 20px 0 18px; }
 .progressLabel { flex-shrink: 0; font-size: 13px; font-weight: 600; }
 .segments { display: flex; flex: 1; gap: 7px; min-width: 0; }
-.segment { flex: 1; min-width: 0; height: 8px; border-radius: 99px; background: #d9e6f8; }
+.segment { flex: 1; min-width: 0; height: 6px; border-radius: 999px; background: #d9e6f8; }
 .segmentAnswered { background: linear-gradient(90deg, #04c9df, #00aeef); }
-.segmentCurrent { outline: 2px solid #0087ef; outline-offset: 3px; }
+.segmentCurrent { background: #9cc4f2; box-shadow: 0 0 0 3px #0087ef26; }
 .question { padding: clamp(20px, 2.3vw, 36px); border: 1px solid #fff; border-radius: 20px; background: rgba(255,255,255,0.9); box-shadow: 0 10px 30px #315f9510; }
 .questionNumber { margin-bottom: 12px; color: #0078ff; font-size: 13px; font-weight: 500; }
 .question h2 { font-size: clamp(23px, 2.1vw, 32px); line-height: 1.3; letter-spacing: -0.035em; font-weight: 800; }
@@ -76,6 +76,5 @@
   .option { min-height: 64px; font-size: 15px; }
   .attemptActions > .primaryAction { width: 100%; }
   .segments { gap: 4px; }
-  .segmentCurrent { outline-offset: 1px; }
 }
 @media (prefers-reduced-motion: reduce) { .option { transition: none; } }
