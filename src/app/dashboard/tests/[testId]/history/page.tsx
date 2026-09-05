@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import styles from "../../../page.module.css";
+import styles from "../../../test.module.css";
 
 type History = {
   test: { id: string; title: string; subject: string };

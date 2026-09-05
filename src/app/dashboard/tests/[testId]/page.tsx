@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import styles from "../../page.module.css";
+import styles from "../../test.module.css";
 
 type Test = {
   id: string;

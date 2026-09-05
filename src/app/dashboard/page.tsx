@@ -175,7 +175,7 @@ export default function DashboardPage() {
             <p className={styles.eyebrow}>Your learning room</p>
             <h1 id="dashboard-title">
               Good to see you,{" "}
-              <span className={styles.heroName}>{name}.</span>
+              <span className={styles.heroName}><span className={styles.heroNameGradient}>{name}</span>.</span>
             </h1>
             <p className={styles.heroCopy}>
               Keep learning at your own pace. Every completed test helps you understand more and grow further.
@@ -223,6 +223,9 @@ export default function DashboardPage() {
             {data.subjects.map((subject) => {
               const tone = isSubjectTone(subject.subject) ? subject.subject : null;
               const Icon = tone ? subjectMeta[tone].Icon : BookOpen;
+              const hasTests = subject.assigned > 0;
+              const remaining = Math.max(0, subject.assigned - subject.passed);
+              const allPassed = hasTests && remaining === 0;
 
               return (
                 <article
@@ -235,12 +238,18 @@ export default function DashboardPage() {
                     </span>
                     <h3>{subjectLabel(subject.subject)}</h3>
                     <ChevronRight className={styles.subjectChevron} size={18} strokeWidth={2.2} aria-hidden="true" />
-                    <p className={styles.subjectMeta}>
-                      <strong>{subject.progress}%</strong> complete
+                    <p className={`${styles.subjectMeta} ${!hasTests ? styles.subjectWaiting : allPassed ? styles.subjectPassed : styles.subjectPending}`}>
+                      {!hasTests ? (
+                        "Waiting for tests"
+                      ) : allPassed ? (
+                        <><strong>100%</strong> · All tests passed</>
+                      ) : (
+                        <>{remaining} {remaining === 1 ? "test" : "tests"} to pass{subject.progress > 0 && <> · <strong>{subject.progress}%</strong></>}</>
+                      )}
                     </p>
                   </div>
 
-                  <div
+                  {hasTests ? <div
                     className={styles.track}
                     role="progressbar"
                     aria-label={`${subjectLabel(subject.subject)} progress`}
@@ -249,7 +258,7 @@ export default function DashboardPage() {
                     aria-valuenow={subject.progress}
                   >
                     <span style={{ width: `${subject.progress}%` }} />
-                  </div>
+                  </div> : <div className={styles.emptyTrack} aria-hidden="true" />}
 
                   <Link className={styles.subjectAction} href={`/dashboard/subjects/${subject.subject}`}>
                     Open subject

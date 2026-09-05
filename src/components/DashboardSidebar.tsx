@@ -57,7 +57,7 @@ export function DashboardSidebar({ userName, userRole = "Student", active = "hom
               {label}
             </Link>
           ) : (
-            <span className={className} key={section} aria-disabled="true">
+            <span className={className} key={section} aria-current={isActive ? "page" : undefined} aria-disabled={isActive ? undefined : true}>
               {icon}
               {label}
             </span>

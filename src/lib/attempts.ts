@@ -71,7 +71,7 @@ export function serializeAttempt(attempt: AttemptWithTest) {
           id: option.externalId,
           text: option.text,
         })),
-        ...(revealAnswers
+        ...(revealAnswers || attempt.answers.some((answer) => answer.questionId === question.id)
           ? {
               correctOptionId: question.options.find((option) => option.isCorrect)?.externalId ?? null,
               explanation: question.explanation,

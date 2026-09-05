@@ -52,5 +52,11 @@ export async function PUT(request: Request, context: RouteContext) {
     create: { attemptId, questionId: question.id, optionId: option.id },
   });
 
-  return NextResponse.json({ answer: { questionId, optionId } });
+  return NextResponse.json({
+    answer: { questionId, optionId },
+    feedback: {
+      correctOptionId: question.options.find((item) => item.isCorrect)?.externalId ?? null,
+      explanation: question.explanation,
+    },
+  });
 }
