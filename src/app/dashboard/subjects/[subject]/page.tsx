@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { subjectLabels as labels } from "@/lib/subjects";
 import { useCallback, useEffect, useState } from "react";
 import { TestActionsMenu } from "@/components/TestActionsMenu";
 import styles from "../../page.module.css";
@@ -9,7 +10,7 @@ type Test = { id: string; title: string; subject: string; status: "not_started" 
 type Dashboard = { subjects: Array<{ subject: string; assigned: number; passed: number; progress: number }>; tests: Test[] };
 type RouteContext = { params: Promise<{ subject: string }> };
 
-const labels: Record<string, string> = { science: "Science", geography: "Geography", history: "History", mathematics: "Mathematics" };
+
 
 export default function SubjectPage({ params }: RouteContext) {
   const [subject, setSubject] = useState("");
@@ -28,7 +29,12 @@ export default function SubjectPage({ params }: RouteContext) {
       setError(true);
       return;
     }
-    setDashboard((await response.json()) as Dashboard);
+    const data = (await response.json()) as Dashboard;
+    if (!data.subjects.some((item) => item.subject === requestedSubject)) {
+      setError(true);
+      return;
+    }
+    setDashboard(data);
   }, [params]);
 
   useEffect(() => {

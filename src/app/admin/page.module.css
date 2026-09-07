@@ -185,3 +185,7 @@
 @media (max-width: 760px) {
   .attemptList .controlRow { grid-template-columns: 1fr auto; }
 }
+
+.subjectEditor { margin-top: 12px; }
+.subjectEditor summary { cursor: pointer; font-size: 13px; }
+.subjectEditor fieldset { margin: 12px 0; padding: 12px; border: 1px solid var(--line); border-radius: 10px; }

@@ -1,3 +1,5 @@
+import { isSubjectList } from "@/lib/subjects";
+import type { Subject } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { AccountStatus, Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
@@ -8,6 +10,7 @@ type ChildUpdateBody = {
   displayName?: unknown;
   login?: unknown;
   grade?: unknown;
+  subjects?: unknown;
   password?: unknown;
   status?: unknown;
 };
@@ -19,7 +22,7 @@ function publicChild(child: {
   login: string;
   status: string;
   createdAt: Date;
-  childProfile: { displayName: string; grade: string } | null;
+  childProfile: { displayName: string; grade: string; subjects: Subject[] } | null;
 }) {
   return {
     id: child.id,
@@ -28,6 +31,7 @@ function publicChild(child: {
     displayName: child.childProfile?.displayName ?? null,
     grade: child.childProfile?.grade ?? null,
     createdAt: child.createdAt,
+    subjects: child.childProfile?.subjects?.map((subject) => subject.toLowerCase()) ?? [],
   };
 }
 
@@ -81,6 +85,10 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
 
   const body = (await request.json().catch(() => null)) as ChildUpdateBody | null;
+  if (body?.subjects !== undefined && !isSubjectList(body.subjects)) {
+    return NextResponse.json({ error: { code: "VALIDATION_ERROR", message: "Invalid subject list." } }, { status: 400 });
+  }
+  const subjects = body?.subjects === undefined ? undefined : (body.subjects as string[]).map((subject) => subject.toUpperCase() as Subject);
   const displayName = typeof body?.displayName === "string" ? body.displayName.trim() : undefined;
   const login = typeof body?.login === "string" ? normalizeLogin(body.login) : undefined;
   const grade = typeof body?.grade === "string" ? body.grade.trim() : undefined;
@@ -115,12 +123,13 @@ export async function PATCH(request: Request, context: RouteContext) {
         },
       });
 
-      if (displayName !== undefined || grade !== undefined) {
+      if (displayName !== undefined || grade !== undefined || subjects !== undefined) {
         await transaction.childProfile.update({
           where: { userId: id },
           data: {
             ...(displayName !== undefined ? { displayName } : {}),
             ...(grade !== undefined ? { grade } : {}),
+            ...(subjects !== undefined ? { subjects } : {}),
           },
         });
       }

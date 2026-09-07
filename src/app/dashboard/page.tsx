@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+import { subjects, isSubjectId, subjectLabels } from "@/lib/subjects";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -7,13 +9,8 @@ import {
   BookOpen,
   ChevronRight,
   FileText,
-  FlaskConical,
-  Globe2,
-  Landmark,
   LogOut,
-  Ruler,
 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 import { DashboardSidebar } from "@/components/DashboardSidebar";
 import { SignOutButton } from "@/components/SignOutButton";
 import { TestActionsMenu } from "@/components/TestActionsMenu";
@@ -48,13 +45,6 @@ type DashboardData = {
 
 type SubjectTone = "science" | "geography" | "history" | "mathematics";
 
-const subjectMeta: Record<SubjectTone, { label: string; Icon: LucideIcon }> = {
-  science: { label: "Science", Icon: FlaskConical },
-  geography: { label: "Geography", Icon: Globe2 },
-  history: { label: "History", Icon: Landmark },
-  mathematics: { label: "Mathematics", Icon: Ruler },
-};
-
 const toneClass: Record<SubjectTone, string> = {
   science: styles.toneScience,
   geography: styles.toneGeography,
@@ -76,12 +66,13 @@ const statusClass: Record<DashboardTest["status"], string> = {
   passed: styles.statusPassed,
 };
 
-function isSubjectTone(value: string): value is SubjectTone {
-  return value in subjectMeta;
+function subjectLabel(subject: string) {
+  return subjectLabels[subject] ?? subject;
 }
 
-function subjectLabel(subject: string) {
-  return isSubjectTone(subject) ? subjectMeta[subject].label : subject;
+function SubjectIcon({ subject, size }: { subject: string; size: number }) {
+  const icon = isSubjectId(subject) ? subjects[subject].icon : null;
+  return icon ? <Image src={icon} alt="" width={size} height={size} style={{ objectFit: "contain", maxWidth: "100%", height: "auto" }} /> : <BookOpen size={size} aria-hidden="true" />;
 }
 
 const RING_RADIUS = 52;
@@ -149,8 +140,8 @@ export default function DashboardPage() {
     );
   }
 
-  const passedCount = data.subjects.reduce((total, subject) => total + subject.passed, 0);
-  const assignedCount = data.subjects.reduce((total, subject) => total + subject.assigned, 0);
+  const passedCount = data.tests.filter((test) => test.status === "passed").length;
+  const assignedCount = data.tests.length;
   const overall = assignedCount ? Math.round((passedCount / assignedCount) * 100) : 0;
   const name = data.child.displayName;
 
@@ -215,10 +206,11 @@ export default function DashboardPage() {
           <div className={styles.sectionHeader}>
             <h2 id="subjects-title">Your subjects</h2>
           </div>
+          {data.subjects.length === 0 && <p>No subjects assigned yet.</p>}
           <div className={styles.subjectGrid}>
             {data.subjects.map((subject) => {
-              const tone = isSubjectTone(subject.subject) ? subject.subject : null;
-              const Icon = tone ? subjectMeta[tone].Icon : BookOpen;
+              const meta = isSubjectId(subject.subject) ? subjects[subject.subject] : null;
+              const tone = meta?.tone;
               const hasTests = subject.assigned > 0;
               const remaining = Math.max(0, subject.assigned - subject.passed);
               const allPassed = hasTests && remaining === 0;
@@ -230,7 +222,7 @@ export default function DashboardPage() {
                 >
                   <div className={styles.subjectTop}>
                     <span className={styles.subjectIcon} aria-hidden="true">
-                      <Icon size={24} strokeWidth={2} />
+                      <SubjectIcon subject={subject.subject} size={40} />
                     </span>
                     <h3>{subjectLabel(subject.subject)}</h3>
                     <ChevronRight className={styles.subjectChevron} size={18} strokeWidth={2.2} aria-hidden="true" />
@@ -270,28 +262,26 @@ export default function DashboardPage() {
           <div className={styles.panelHeader}>
             <div>
               <h2 id="tests-title">Assigned tests</h2>
-              <p>Your teacher has added these tests for you to review and build your understanding.</p>
             </div>
           </div>
 
-          {data.tests.length === 0 ? (
-            <div className={styles.empty}>
-              <p>No tests assigned yet.</p>
-              <span>Your administrator will add the next one here.</span>
+          <div className={styles.table}>
+            <div className={styles.tableHead} role="presentation">
+              <span>Test name</span>
+              <span>Subject</span>
+              <span>Questions</span>
+              <span>Pass mark</span>
+              <span>Status</span>
+              <span />
             </div>
-          ) : (
-            <div className={styles.table}>
-              <div className={styles.tableHead} role="presentation">
-                <span>Test name</span>
-                <span>Subject</span>
-                <span>Questions</span>
-                <span>Pass mark</span>
-                <span>Status</span>
-                <span />
+            {data.tests.length === 0 ? (
+              <div className={styles.emptyTable}>
+                <p>No tests assigned yet.</p>
+                <span>Your administrator will add the next one here.</span>
               </div>
-              {data.tests.map((test) => {
-                const tone = isSubjectTone(test.subject) ? test.subject : null;
-                const Icon = tone ? subjectMeta[tone].Icon : BookOpen;
+            ) : data.tests.map((test) => {
+                const meta = isSubjectId(test.subject) ? subjects[test.subject] : null;
+                const tone = meta?.tone;
 
                 return (
                   <article className={styles.tableRow} key={test.id}>
@@ -300,7 +290,7 @@ export default function DashboardPage() {
                       {test.title}
                     </span>
                     <span className={`${styles.subjectChip} ${tone ? toneClass[tone] : ""}`}>
-                      <Icon size={15} strokeWidth={2.2} aria-hidden="true" />
+                      <SubjectIcon subject={test.subject} size={20} />
                       {subjectLabel(test.subject)}
                     </span>
                     <span className={styles.cellNumber}>
@@ -325,8 +315,7 @@ export default function DashboardPage() {
                   </article>
                 );
               })}
-            </div>
-          )}
+          </div>
         </section>
       </main>
     </div>

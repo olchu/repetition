@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { subjectLabels, subjectIds } from "@/lib/subjects";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { Markdown } from "@/components/Markdown";
 import { SignOutButton } from "@/components/SignOutButton";
 import styles from "./page.module.css";
 
-type Child = { id: string; login: string; displayName: string | null; grade: string | null; status: string };
+type Child = { id: string; login: string; displayName: string | null; grade: string | null; status: string; subjects: string[] };
 type Test = { id: string; title: string; subject: string; grade: string | null; status: string; version: number; stableId: string; createdAt: string; questionCount: number; assignmentCount: number; passPercentage: number };
 type Result = { attemptId: string; child: { id: string; displayName: string }; test: { id: string; title: string; subject: string }; percentage: number; passed: boolean; submittedAt: string | null };
 type Group = { id: string; name: string; status: string; memberCount: number; activeAssignmentCount: number };
@@ -34,7 +35,7 @@ type AttemptDetail = {
 type View = "overview" | "children" | "groups" | "tests" | "assignments" | "results";
 type Notice = { tone: "success" | "error"; text: string } | null;
 
-const subjectLabels: Record<string, string> = { science: "Science", geography: "Geography", history: "History", mathematics: "Mathematics" };
+
 
 async function getApiError(response: Response, fallback: string) {
   const payload = (await response.json().catch(() => null)) as {
@@ -55,6 +56,37 @@ function AdminNavigation({ view, onChange }: { view: View; onChange: (view: View
       <SignOutButton className={styles.navLink} />
     </nav>
   );
+}
+
+function ChildSubjects({ child, onRefresh }: { child: Child; onRefresh: () => Promise<void> }) {
+  const [selected, setSelected] = useState(child.subjects);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
+  async function save(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSaving(true);
+    setMessage("");
+    try {
+      const response = await fetch(`/api/v1/admin/children/${child.id}`, {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subjects: selected }),
+      });
+      if (!response.ok) throw new Error(await getApiError(response, "Unable to save subjects."));
+      await onRefresh();
+      setMessage("Subjects saved.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to save subjects.");
+    } finally { setSaving(false); }
+  }
+  return <details className={styles.subjectEditor}><summary>Subjects ({child.subjects.length})</summary>
+    <form onSubmit={save}><fieldset disabled={saving}><legend>Subjects for {child.displayName ?? child.login}</legend>
+      <div className={styles.childChoices}>{subjectIds.map((id) => <label key={id}>
+        <input type="checkbox" checked={selected.includes(id)} onChange={(event) => setSelected((current) => event.target.checked ? [...current, id] : current.filter((item) => item !== id))} />
+        {subjectLabels[id]}
+      </label>)}</div></fieldset><button className={styles.textButton} disabled={saving} type="submit">{saving ? "Saving…" : "Save subjects"}</button>
+      {message && <p role="status">{message}</p>}
+    </form>
+  </details>;
 }
 
 function ChildrenManager({ childAccounts, onRefresh }: { childAccounts: Child[]; onRefresh: () => Promise<void> }) { const [form, setForm] = useState({ displayName: "", login: "", grade: "", password: "" });
@@ -100,7 +132,7 @@ return (
     {notice && <p className={`${styles.notice} ${notice.tone === "error" ? styles.noticeError : ""}`} role={notice.tone === "error" ? "alert" : "status"}>{notice.text}</p>}
     <div className={styles.controlList}>
       <div className={styles.controlListHeader}><span>Name</span><span>Grade</span><span>Status</span><span>Action</span></div>
-      {childAccounts.length === 0 ? <p className={styles.empty}>No child accounts yet.</p> : childAccounts.map((child) => <div className={styles.controlRow} key={child.id}><div><strong>{child.displayName ?? child.login}</strong><span>{child.login}</span></div><span>{child.grade ?? "—"}</span><span className={`${styles.pill} ${child.status === "active" ? styles.pillGood : ""}`}>{child.status}</span><button className={styles.textButton} type="button" onClick={() => void toggleStatus(child)}>{child.status === "active" ? "Block" : "Restore"}</button></div>)}
+      {childAccounts.length === 0 ? <p className={styles.empty}>No child accounts yet.</p> : childAccounts.map((child) => <div className={styles.controlRow} key={child.id}><div><strong>{child.displayName ?? child.login}</strong><span>{child.login}</span><ChildSubjects child={child} onRefresh={onRefresh} /></div><span>{child.grade ?? "—"}</span><span className={`${styles.pill} ${child.status === "active" ? styles.pillGood : ""}`}>{child.status}</span><button className={styles.textButton} type="button" onClick={() => void toggleStatus(child)}>{child.status === "active" ? "Block" : "Restore"}</button></div>)}
     </div>
   </section>
 ); }

@@ -34,10 +34,17 @@
     "subject": {
       "type": "string",
       "enum": [
-        "science",
+        "biology",
+        "chemistry",
         "geography",
-        "history",
-        "mathematics"
+        "ict",
+        "mathematics",
+        "physics",
+        "psychology",
+        "sociology",
+        "spanish",
+        "science",
+        "history"
       ]
     },
     "grade": {

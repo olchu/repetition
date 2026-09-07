@@ -3,7 +3,7 @@ import { Subject } from "@prisma/client";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-const subjectOrder: Subject[] = ["SCIENCE", "GEOGRAPHY", "HISTORY", "MATHEMATICS"];
+
 
 type DashboardTest = {
   id: string;
@@ -102,12 +102,8 @@ export async function GET() {
     };
   });
 
-  const summaries: Record<Subject, { assigned: number; passed: number }> = {
-    SCIENCE: { assigned: 0, passed: 0 },
-    GEOGRAPHY: { assigned: 0, passed: 0 },
-    HISTORY: { assigned: 0, passed: 0 },
-    MATHEMATICS: { assigned: 0, passed: 0 },
-  };
+  const subjectOrder = user.childProfile?.subjects ?? [];
+  const summaries = Object.fromEntries(Object.values(Subject).map((subject) => [subject, { assigned: 0, passed: 0 }]));
 
   for (const test of tests) {
     const subject = test.subject.toUpperCase() as Subject;

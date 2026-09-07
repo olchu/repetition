@@ -513,18 +513,33 @@
   color: #8c9ac1;
 }
 
+.empty,
+.emptyTable {
+  color: #16204a;
+}
+
 .empty {
   padding: 26px 0 10px;
   border-top: 1px solid #eef2fa;
 }
 
-.empty p {
+.emptyTable {
+  display: grid;
+  min-height: 138px;
+  place-content: center;
+  padding: 24px;
+  text-align: center;
+}
+
+.empty p,
+.emptyTable p {
   color: #16204a;
   font-size: 15px;
   font-weight: 700;
 }
 
-.empty span {
+.empty span,
+.emptyTable span {
   display: block;
   margin-top: 6px;
   color: #7b8ab5;

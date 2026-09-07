@@ -7,3 +7,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+## Предметы
+
+Справочник предметов и соответствующих иконок: `src/lib/subjects.ts`, описание: `docs/SUBJECTS.md`. Предметы назначаются ученику отдельно от тестов; на дашборде показываются только назначенные предметы.

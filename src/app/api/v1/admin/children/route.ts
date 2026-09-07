@@ -1,3 +1,5 @@
+import { isSubjectList } from "@/lib/subjects";
+import type { Subject } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
@@ -8,6 +10,7 @@ type CreateChildBody = {
   displayName?: unknown;
   login?: unknown;
   grade?: unknown;
+  subjects?: unknown;
   password?: unknown;
 };
 
@@ -16,7 +19,7 @@ function publicChild(child: {
   login: string;
   status: string;
   createdAt: Date;
-  childProfile: { displayName: string; grade: string } | null;
+  childProfile: { displayName: string; grade: string; subjects: Subject[] } | null;
 }) {
   return {
     id: child.id,
@@ -25,6 +28,7 @@ function publicChild(child: {
     displayName: child.childProfile?.displayName ?? null,
     grade: child.childProfile?.grade ?? null,
     createdAt: child.createdAt,
+    subjects: child.childProfile?.subjects?.map((subject) => subject.toLowerCase()) ?? [],
   };
 }
 
@@ -72,6 +76,10 @@ export async function POST(request: Request) {
   }
 
   const body = (await request.json().catch(() => null)) as CreateChildBody | null;
+  if (body?.subjects !== undefined && !isSubjectList(body.subjects)) {
+    return NextResponse.json({ error: { code: "VALIDATION_ERROR", message: "Invalid subject list." } }, { status: 400 });
+  }
+  const subjects = body?.subjects === undefined ? undefined : (body.subjects as string[]).map((subject) => subject.toUpperCase() as Subject);
   const login = typeof body?.login === "string" ? normalizeLogin(body.login) : "";
   const displayName = typeof body?.displayName === "string" ? body.displayName.trim() : "";
   const grade = typeof body?.grade === "string" ? body.grade.trim() : "";
@@ -96,7 +104,7 @@ export async function POST(request: Request) {
         role: "CHILD",
         login,
         passwordHash,
-        childProfile: { create: { displayName, grade } },
+        childProfile: { create: { displayName, grade, subjects: subjects ?? [] } },
       },
       include: { childProfile: true },
     });

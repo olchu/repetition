@@ -1,5 +1,6 @@
 import Ajv2020, { ErrorObject } from "ajv/dist/2020";
 import testSchema from "../../docs/test.schema.json";
+import type { SubjectId } from "./subjects";
 import { Subject } from "@prisma/client";
 import { prisma } from "./prisma";
 import { buildTestContent, toJsonColumn } from "./test-content";
@@ -26,7 +27,7 @@ export type TestDocument = {
   id: string;
   title: string;
   description?: string;
-  subject: "science" | "geography" | "history" | "mathematics";
+  subject: SubjectId;
   grade: string;
   passPercentage?: number;
   questions: TestQuestionInput[];

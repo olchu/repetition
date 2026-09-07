@@ -19,13 +19,8 @@ export async function GET(request: Request) {
   const groupId = params.get("groupId") || undefined;
   const subjectParam = params.get("subject")?.toUpperCase();
   const passedParam = params.get("passed");
-  const subject =
-    subjectParam === "SCIENCE" ||
-    subjectParam === "GEOGRAPHY" ||
-    subjectParam === "HISTORY" ||
-    subjectParam === "MATHEMATICS"
-      ? (subjectParam as Subject)
-      : undefined;
+  const subject = Object.values(Subject).includes(subjectParam as Subject)
+    ? subjectParam as Subject : undefined;
   const passed = passedParam === "true" ? true : passedParam === "false" ? false : undefined;
 
   const results = await prisma.result.findMany({
