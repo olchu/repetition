@@ -61,6 +61,7 @@ model User {
   groupMemberships  GroupMember[]
   assignments       Assignment[]    @relation("ChildAssignments")
   attempts          Attempt[]
+  rewards           TestReward[]
 
   @@index([role, status])
 }
@@ -159,8 +160,22 @@ model Attempt {
   child        User          @relation(fields: [childId], references: [id], onDelete: Restrict)
   answers      Answer[]
   result       Result?
+  hintQuestionIds String[] @default([])
+  reward       TestReward?
 
   @@index([childId, status])
+}
+
+model TestReward {
+  childId   String
+  stableId  String
+  attemptId String @unique
+  units     Int @default(0)
+  creditedAt DateTime?
+  child     User @relation(fields: [childId], references: [id], onDelete: Restrict)
+  attempt   Attempt @relation(fields: [attemptId], references: [id], onDelete: Restrict)
+
+  @@id([childId, stableId])
 }
 
 model Answer {

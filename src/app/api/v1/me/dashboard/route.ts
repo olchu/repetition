@@ -113,7 +113,13 @@ export async function GET() {
     }
   }
 
+  const rewards = await prisma.testReward.aggregate({
+    where: { childId: user.id, creditedAt: { not: null } },
+    _sum: { units: true },
+  });
+
   return NextResponse.json({
+    stars: (rewards._sum.units ?? 0) / 2,
     child: { id: user.id, displayName: user.childProfile?.displayName ?? user.login },
     subjects: subjectOrder.map((subject) => ({
       subject: subject.toLowerCase(),

@@ -38,6 +38,7 @@ type DashboardTest = {
 };
 
 type DashboardData = {
+  stars: number;
   child: { displayName: string };
   subjects: SubjectSummary[];
   tests: DashboardTest[];
@@ -164,6 +165,7 @@ export default function DashboardPage() {
 
       <main className={styles.main}>
         <div className={styles.topBar}>
+          <p className={styles.starBalance} aria-label={`${data.stars} stars earned`}>⭐ {data.stars} stars</p>
           <SignOutButton className={styles.signOut}>
             <LogOut size={18} strokeWidth={2} aria-hidden="true" />
             Sign out

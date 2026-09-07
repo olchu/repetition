@@ -20,34 +20,36 @@
   right: clamp(24px, 3vw, 50px);
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  gap: 16px;
 }
 
 .signOut {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  min-height: 36px;
-  padding: 0 14px;
-  border: 1px solid #e2e8f5;
-  border-radius: 10px;
-  color: #16204a;
-  background: #fff;
+  gap: 5px;
+  min-height: 28px;
+  padding: 4px 0;
+  border: 0;
+  color: #64748b;
+  background: transparent;
   cursor: pointer;
   font: inherit;
-  font-size: 13px;
-  font-weight: 700;
-  box-shadow: 0 6px 18px rgba(24, 44, 92, 0.06);
-  transition: border-color 160ms ease, box-shadow 160ms ease;
+  font-size: 12px;
+  font-weight: 400;
+  transition: color 160ms ease;
 }
 
 .signOut svg {
-  width: 16px;
-  height: 16px;  color: #4a7cf7;
+  width: 14px;
+  height: 14px;
+  color: currentColor;
 }
 
 .signOut:hover {
-  border-color: #c6d4ee;
-  box-shadow: 0 10px 24px rgba(24, 44, 92, 0.1);
+  color: #334155;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 /* Hero -------------------------------------------------------------------- */
@@ -118,6 +120,18 @@
   line-height: 1.35;
 }
 
+.starBalance {
+  display: inline-block;
+  margin: 0;
+  padding: 4px 10px;
+  white-space: nowrap;
+  border-radius: 12px;
+  color: #92400e;
+  background: #fff3cd;
+  font-size: 14px;
+  font-weight: 600;
+}
+
 /* The source is 4:3 with empty space above and below the artwork.
    Fill the wide slot to crop that space instead of shrinking the characters. */
 .heroArt {
@@ -139,8 +153,7 @@
   position: relative;
   display: flex;
   height: auto;
-  align-self: end;
-  margin-top: 0;
+  margin-top: 10px;
   flex-direction: column;
   padding: 0;
   overflow: hidden;

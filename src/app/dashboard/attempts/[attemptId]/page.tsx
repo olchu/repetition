@@ -14,11 +14,14 @@ type Question = {
   correctOptionId?: string | null;
   /** Markdown the child can reveal before answering. */
   hint?: string | null;
+  hasHint: boolean;
+  hintUsed: boolean;
   /** Markdown shown once the answer has been checked. */
   explanation?: string | null;
 };
 
 type Attempt = {
+  reward: { eligible: boolean; pendingStars: number; earnedStars: number };
   id: string;
   status: "in_progress" | "submitted";
   test: { id: string; title: string; subject: string; questions: Question[] };
@@ -53,7 +56,7 @@ export default function AttemptPage({ params }: RouteContext) {
       setAnswers(savedAnswers);
       setDrafts(savedAnswers);
       const nextQuestionIndex = payload.attempt.test.questions.findIndex((question) => !savedAnswers[question.id]);
-      setCurrentIndex(nextQuestionIndex === -1 ? 0 : nextQuestionIndex);
+      setCurrentIndex(payload.attempt.status === "submitted" ? 0 : nextQuestionIndex === -1 ? Math.max(0, payload.attempt.test.questions.length - 1) : nextQuestionIndex);
       setState("ready");
     } catch {
       setState("error");
@@ -76,14 +79,36 @@ export default function AttemptPage({ params }: RouteContext) {
         body: JSON.stringify({ optionId }),
       });
       if (!response.ok) throw new Error("Answer could not be saved");
-      const payload = (await response.json()) as { feedback: { correctOptionId: string | null; explanation: string | null } };
+      const payload = (await response.json()) as { reward: Attempt["reward"]; feedback: { correctOptionId: string | null; explanation: string | null; hintUsed: boolean } };
       setAnswers((current) => ({ ...current, [questionId]: optionId }));
       setAttempt((current) => current ? {
         ...current,
+        reward: payload.reward,
         test: { ...current.test, questions: current.test.questions.map((item) => item.id === questionId ? { ...item, ...payload.feedback } : item) },
       } : current);
     } catch {
       setSaveError("Your answer wasn’t saved. Please try again.");
+    } finally {
+      setState("ready");
+    }
+  }
+
+  async function toggleHint(question: Question) {
+    if (state !== "ready") return;
+    if (hintsShown[question.id]) {
+      setHintsShown((current) => ({ ...current, [question.id]: false }));
+      return;
+    }
+    setState("saving");
+    setSaveError(null);
+    try {
+      const response = await fetch(`/api/v1/me/attempts/${attemptId}/hints/${question.id}`, { method: "POST" });
+      if (!response.ok) throw new Error("Unable to open hint");
+      const hint = (await response.json()) as { hint: string; hintUsed: boolean };
+      setAttempt((current) => current ? { ...current, test: { ...current.test, questions: current.test.questions.map((item) => item.id === question.id ? { ...item, ...hint } : item) } } : current);
+      setHintsShown((current) => ({ ...current, [question.id]: true }));
+    } catch {
+      setSaveError("Your hint couldn’t be opened. Please try again.");
     } finally {
       setState("ready");
     }
@@ -126,6 +151,11 @@ export default function AttemptPage({ params }: RouteContext) {
       <header>
         <p className={styles.eyebrow}>{attempt.test.subject} test</p>
         <h1 className={styles.title}>{attempt.test.title}</h1>
+        <p className={styles.rewardStatus} role="status">
+          {attempt.reward.eligible
+            ? attempt.status === "submitted" ? `⭐ You earned ${attempt.reward.earnedStars} stars` : `⭐ ${attempt.reward.pendingStars} stars collected · Added to your balance when you submit`
+            : "Practice — no stars awarded"}
+        </p>
       </header>
       <div className={styles.progressRow}>
         <p className={styles.progressLabel}>Question {currentIndex + 1} of {attempt.test.questions.length}</p>
@@ -138,19 +168,21 @@ export default function AttemptPage({ params }: RouteContext) {
       <section className={styles.question} aria-labelledby="question-title">
         <p className={styles.questionNumber}>Question {currentIndex + 1}</p>
         <h2 id="question-title">{question.text}</h2>
-        {question.hint && (
+        {question.hasHint && (
           <div className={styles.hintBlock}>
             <button
               className={styles.hintToggle}
               type="button"
               aria-expanded={hintOpen}
               aria-controls={`hint-${question.id}`}
-              onClick={() => setHintsShown((current) => ({ ...current, [question.id]: !current[question.id] }))}
+              disabled={busy}
+              onClick={() => void toggleHint(question)}
             >
               <HelpCircle size={16} strokeWidth={2.2} aria-hidden="true" />
               {hintOpen ? "Hide hint" : "Show hint"}
+              {!checked && attempt.reward.eligible && " · Correct answer with hint: 0.5 ⭐"}
             </button>
-            {hintOpen && (
+            {hintOpen && question.hint && (
               <div className={styles.hint} id={`hint-${question.id}`}>
                 <Markdown>{question.hint}</Markdown>
               </div>
@@ -166,13 +198,14 @@ export default function AttemptPage({ params }: RouteContext) {
           ))}
         </div>
         {checked && <div className={`${styles.feedback} ${correct ? styles.feedbackCorrect : styles.feedbackWrong}`} role="status">
+          {attempt.reward.eligible && !submitted && <p>{correct ? `+${question.hintUsed ? 0.5 : 1} ⭐` : "0 ⭐"}</p>}
           <div className={styles.feedbackHeading}>
             {correct ? <Check size={24} aria-hidden="true" /> : <X size={24} aria-hidden="true" />}
             <div><h3>{correct ? "Correct!" : answers[question.id] ? "Not quite!" : "Not answered"}</h3><p>{correct ? "Well done! You got it right." : `The correct answer is ${correctOption?.text ?? "unavailable"}.`}</p></div>
           </div>
           {question.explanation && <div className={styles.feedbackExplanation}><Lightbulb size={20} aria-hidden="true" /><div><h4>Explanation</h4><Markdown className={styles.feedbackProse}>{question.explanation}</Markdown></div></div>}
         </div>}
-        {(saveError || state === "saving") && <p className={styles.saveStatus} role="status">{saveError ?? "Checking your answer…"}</p>}
+        {(saveError || state === "saving") && <p className={styles.saveStatus} role="status">{saveError ?? "Saving…"}</p>}
         {submitted && attempt.result && <div className={styles.completion} role="status"><strong>{attempt.result.passed ? "Test passed!" : "Test complete — keep practicing!"}</strong><p>{attempt.result.percentage}% · {attempt.result.earnedPoints} of {attempt.result.totalPoints} points</p></div>}
         <footer className={styles.attemptActions}>
           <div className={styles.secondaryActions}>

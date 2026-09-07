@@ -35,12 +35,12 @@ export async function GET(_request: Request, context: RouteContext) {
       grade: assignment.test.grade,
       passPercentage: assignment.test.passPercentage,
       questionCount: assignment.test.questionCount,
-      // Correct answers stay out of this payload; the hint does not give them away.
+      // Hint content is revealed only by the attempt hint endpoint.
       questions: questions.map((question) => ({
         id: question.id,
         text: question.text,
         points: question.points,
-        hint: question.hint,
+        hasHint: Boolean(question.hint),
         options: question.options.map((option) => ({
           id: option.id,
           text: option.text,

@@ -84,3 +84,9 @@
   .segments { gap: 4px; }
 }
 @media (prefers-reduced-motion: reduce) { .option, .hintToggle { transition: none; } }
+.rewardStatus {
+  margin: 12px 0;
+  color: #92400e;
+  font-size: 14px;
+  line-height: 1.5;
+}
