@@ -1,0 +1,219 @@
+/* The assigned-tests table shared by Home, a subject and the Tests section.
+   Subject colours come from the global [data-subject] palette. */
+.panel {
+  padding: 12px 18px 18px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 8px 22px rgba(24, 44, 92, 0.03);
+}
+
+.panelHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 12px;
+}
+
+.panelHeader h2 {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.table {
+  display: flex;
+  flex-direction: column;
+}
+
+.tableHead,
+.tableRow {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 0.5fr) minmax(0, 0.55fr) minmax(0, 0.85fr) 40px;
+  align-items: center;
+  gap: 14px;
+}
+
+/* Inside one subject the subject column would repeat the page title. */
+.withoutSubject .tableHead,
+.withoutSubject .tableRow {
+  grid-template-columns:
+    minmax(0, 1.9fr) minmax(0, 0.5fr) minmax(0, 0.55fr) minmax(0, 0.85fr) 40px;
+}
+
+.tableHead {
+  padding: 10px 14px;
+  border-radius: 12px;
+  color: #8c9ac1;
+  background: #f6f8fd;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* Questions / Pass mark: header and value both centred in their column. */
+.headNumber {
+  text-align: center;
+}
+
+.tableRow {
+  min-height: 48px;
+  padding: 0 14px;
+  border-bottom: 1px solid #eef2fa;
+}
+
+.tableRow:last-child {
+  border-bottom: 0;
+}
+
+.testName {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.testIcon {
+  flex-shrink: 0;
+  color: #6f97ee;
+}
+
+.subjectChip {
+  justify-self: start;
+  color: var(--subject-ink, var(--tone-ink));
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.status {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.statusDot {
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.statusNotStarted { color: #8c9ac1; }
+.statusInProgress { color: #c2761a; }
+.statusCompleted { color: #b0426a; }
+.statusPassed { color: #15803d; }
+
+.cellNumber {
+  display: inline-flex;
+  align-items: baseline;
+  justify-self: center;
+  gap: 5px;
+  color: #16204a;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.cellNumber b {
+  font-weight: inherit;
+}
+
+/* The column header carries the label on desktop; the word only earns its
+   place on mobile where the header row is hidden. */
+.cellNumber i {
+  display: none;
+  font-style: normal;
+  font-size: 12px;
+  font-weight: inherit;
+  color: #8c9ac1;
+}
+
+.rowMenu {
+  display: flex;
+  justify-content: flex-end;
+  justify-self: end;
+}
+
+.emptyTable {
+  display: grid;
+  min-height: 138px;
+  place-content: center;
+  padding: 24px;
+  color: #16204a;
+  text-align: center;
+}
+
+.emptyTable p {
+  color: #16204a;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.emptyTable span {
+  display: block;
+  margin-top: 6px;
+  color: #7b8ab5;
+  font-size: 14px;
+}
+
+@media (max-width: 720px) {
+  .panel {
+    padding: 18px;
+  }
+}
+
+/* Below this the table gets too cramped — stack each row into a card:
+   name + menu, then subject + status, then the question / pass-mark meta. */
+@media (max-width: 960px) {
+  .tableHead {
+    display: none;
+  }
+
+  .tableRow,
+  .withoutSubject .tableRow {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px 14px;
+    padding: 16px 0;
+  }
+
+  .testName {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .rowMenu {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .subjectChip {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .status {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: end;
+  }
+
+  .cellNumber {
+    grid-row: 3;
+    justify-self: start;
+  }
+
+  .cellNumber + .cellNumber {
+    justify-self: end;
+  }
+
+  .cellNumber i {
+    display: inline;
+  }
+}

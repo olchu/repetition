@@ -44,3 +44,57 @@ input {
   outline: 3px solid var(--coral);
   outline-offset: 3px;
 }
+
+/* Subject palette ---------------------------------------------------------
+   One source for the subject colours the whole learning room shares. A
+   component opts in with data-subject="<id>" and reads the variables:
+   --tone for the accent, --tone-ink / --tone-soft for the tone family, and
+   --subject-soft / --subject-ink where a subject has its own artwork tint.
+   Read them as var(--subject-soft, var(--tone-soft)) so subjects without a
+   dedicated tint fall back to their family. */
+[data-subject] {
+  --tone: #7c8db5;
+  --tone-ink: #475569;
+  --tone-soft: #eef2fa;
+}
+
+[data-subject="biology"],
+[data-subject="chemistry"],
+[data-subject="physics"],
+[data-subject="science"] {
+  --tone: #22c55e;
+  --tone-ink: #15803d;
+  --tone-soft: #e8f9ee;
+}
+
+[data-subject="geography"],
+[data-subject="spanish"] {
+  --tone: #00bfe7;
+  --tone-ink: #1d4ed8;
+  --tone-soft: #e8f1fe;
+}
+
+[data-subject="history"],
+[data-subject="psychology"],
+[data-subject="sociology"] {
+  --tone: #f59e0b;
+  --tone-ink: #b45309;
+  --tone-soft: #fdf3e2;
+}
+
+[data-subject="ict"],
+[data-subject="mathematics"] {
+  --tone: #ec4899;
+  --tone-ink: #be1858;
+  --tone-soft: #fdeaf3;
+}
+
+[data-subject="biology"] { --subject-soft: #d4f8df; --subject-ink: #15803d; }
+[data-subject="chemistry"] { --subject-soft: #d2f7e1; --subject-ink: #047857; }
+[data-subject="physics"] { --subject-soft: #dde0ff; --subject-ink: #4f46e5; }
+[data-subject="mathematics"] { --subject-soft: #ffd9e5; --subject-ink: #be185d; }
+[data-subject="ict"] { --subject-soft: #d2f3fb; --subject-ink: #0e7490; }
+[data-subject="geography"] { --subject-soft: #d6f1fa; --subject-ink: #0369a1; }
+[data-subject="spanish"] { --subject-soft: #ffe6c2; --subject-ink: #b45309; }
+[data-subject="psychology"] { --subject-soft: #e9deff; --subject-ink: #7e22ce; }
+[data-subject="sociology"] { --subject-soft: #d2f6ea; --subject-ink: #0f766e; }

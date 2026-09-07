@@ -1,51 +1,107 @@
 "use client";
 
+import { use, useState } from "react";
 import Link from "next/link";
-import { subjectLabels as labels } from "@/lib/subjects";
-import { useCallback, useEffect, useState } from "react";
-import { TestActionsMenu } from "@/components/TestActionsMenu";
-import styles from "../../page.module.css";
+import { ArrowLeft } from "lucide-react";
+import {
+  DashboardLoading,
+  DashboardShell,
+  DashboardStateCard,
+  DashboardUnauthorized,
+  DashboardUnavailable,
+  shellStyles,
+} from "@/components/DashboardShell";
+import { subjectLabel } from "@/components/SubjectCard";
+import { TestFilters } from "@/components/TestFilters";
+import { TestTable } from "@/components/TestTable";
+import { matchesFilter, type TestFilter } from "@/lib/student-progress";
+import { useStudentOverview } from "@/lib/use-student-overview";
+import styles from "../subjects.module.css";
 
-type Test = { id: string; title: string; subject: string; status: "not_started" | "in_progress" | "completed" | "passed"; attemptCount: number; inProgressAttemptId: string | null; bestPercentage: number; latestPercentage: number | null };
-type Dashboard = { subjects: Array<{ subject: string; assigned: number; passed: number; progress: number }>; tests: Test[] };
-type RouteContext = { params: Promise<{ subject: string }> };
+export default function SubjectPage({ params }: PageProps<"/dashboard/subjects/[subject]">) {
+  const { subject } = use(params);
+  const { data, error, isLoading, reload } = useStudentOverview();
+  const [filter, setFilter] = useState<TestFilter>("all");
 
+  if (isLoading) {
+    return <DashboardLoading label="Loading subject…" />;
+  }
 
+  if (error === "unauthorized") {
+    return <DashboardUnauthorized />;
+  }
 
-export default function SubjectPage({ params }: RouteContext) {
-  const [subject, setSubject] = useState("");
-  const [dashboard, setDashboard] = useState<Dashboard | null>(null);
-  const [error, setError] = useState(false);
+  if (error === "unavailable" || !data) {
+    return <DashboardUnavailable onRetry={() => void reload()} />;
+  }
 
-  const loadSubject = useCallback(async () => {
-    const { subject: requestedSubject } = await params;
-    if (!labels[requestedSubject]) {
-      setError(true);
-      return;
-    }
-    setSubject(requestedSubject);
-    const response = await fetch("/api/v1/me/dashboard", { cache: "no-store" });
-    if (!response.ok) {
-      setError(true);
-      return;
-    }
-    const data = (await response.json()) as Dashboard;
-    if (!data.subjects.some((item) => item.subject === requestedSubject)) {
-      setError(true);
-      return;
-    }
-    setDashboard(data);
-  }, [params]);
+  const summary = data.subjects.find((item) => item.subject === subject);
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => void loadSubject(), 0);
-    return () => window.clearTimeout(timer);
-  }, [loadSubject]);
+  // A subject the child is not assigned reveals nothing, whether it exists or
+  // not — the same answer either way.
+  if (!summary) {
+    return (
+      <DashboardStateCard
+        title="This subject is unavailable."
+        description="It is not one of your assigned subjects."
+        action={<Link className={shellStyles.stateAction} href="/dashboard/subjects">Back to subjects</Link>}
+      />
+    );
+  }
 
-  if (error) return <main className={styles.statePage}><div className={styles.stateCard}><h1>This subject is unavailable.</h1><Link className={styles.primaryAction} href="/dashboard">Back to progress</Link></div></main>;
-  if (!dashboard) return <main className={styles.statePage}>Loading subject…</main>;
+  const label = subjectLabel(subject);
+  const tests = data.tests.filter((test) => test.subject === subject);
+  const visible = tests.filter((test) => matchesFilter(test, filter));
 
-  const summary = dashboard.subjects.find((item) => item.subject === subject);
-  const tests = dashboard.tests.filter((test) => test.subject === subject);
-  return <main className={styles.detailPage}><Link className={styles.backLink} href="/dashboard">← Back to progress</Link><p className={styles.eyebrow}>Subject progress</p><h1>{labels[subject]}</h1><p className={styles.detailCopy}>{summary?.passed ?? 0} of {summary?.assigned ?? 0} tests passed — {summary?.progress ?? 0}% complete.</p><div className={styles.progressTrack} role="progressbar" aria-label={`${labels[subject]} progress`} aria-valuenow={summary?.progress ?? 0} aria-valuemin={0} aria-valuemax={100}><span style={{ width: `${summary?.progress ?? 0}%` }} /></div><div className={styles.subjectTestList}>{tests.length === 0 ? <p>No tests assigned for this subject yet.</p> : tests.map((test) => <article key={test.id}><div><h2>{test.title}</h2><span>{test.latestPercentage !== null ? `Best score ${test.bestPercentage}%` : "Not started"}</span></div><TestActionsMenu testId={test.id} attemptCount={test.attemptCount} inProgressAttemptId={test.inProgressAttemptId} /></article>)}</div></main>;
+  return (
+    <DashboardShell userName={data.child.displayName} stars={data.stars} active="subjects">
+      <Link className={shellStyles.backLink} href="/dashboard/subjects">
+        <ArrowLeft size={15} strokeWidth={2.4} aria-hidden="true" />
+        All subjects
+      </Link>
+
+      <header className={shellStyles.pageHead}>
+        <h1>{label}</h1>
+      </header>
+
+      <p className={styles.summary} data-subject={subject}>
+        <span><strong>{summary.assigned}</strong> assigned</span>
+        <span><strong>{summary.completed}</strong> completed</span>
+        <span><strong>{summary.passed}</strong> passed</span>
+      </p>
+
+      {summary.assigned > 0 && (
+        <div
+          className={styles.subjectProgress}
+          data-subject={subject}
+          role="progressbar"
+          aria-label={`${label} progress`}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={summary.progress}
+        >
+          <span style={{ width: `${summary.progress}%` }} />
+        </div>
+      )}
+
+      <TestTable
+        title="Tests"
+        tests={visible}
+        showSubject={false}
+        toolbar={tests.length > 0 ? <TestFilters value={filter} onChange={setFilter} tests={tests} /> : undefined}
+        empty={
+          tests.length === 0
+            ? { title: "No tests assigned yet.", hint: "Your administrator will add them here." }
+            : {
+                title: "Nothing matches this filter.",
+                hint: (
+                  <button className={shellStyles.backLink} type="button" onClick={() => setFilter("all")}>
+                    Show all tests
+                  </button>
+                ),
+              }
+        }
+      />
+    </DashboardShell>
+  );
 }

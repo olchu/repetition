@@ -1,0 +1,45 @@
+/* Segmented filter used above a test list. "Completed" and "In progress"
+   overlap on purpose — an unfinished retry belongs to both. */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.filter {
+  min-height: 30px;
+  padding: 0 12px;
+  border: 1px solid #e1e9f6;
+  border-radius: 999px;
+  color: #526da8;
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  transition: color 160ms ease, background 160ms ease, border-color 160ms ease;
+}
+
+.filter:hover {
+  color: #16204a;
+  border-color: #c9d8ef;
+}
+
+.filterActive,
+.filterActive:hover {
+  color: #fff;
+  border-color: #16204a;
+  background: #16204a;
+}
+
+.count {
+  margin-left: 6px;
+  font-weight: 600;
+  opacity: 0.7;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .filter {
+    transition: none;
+  }
+}

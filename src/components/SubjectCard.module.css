@@ -1,0 +1,164 @@
+/* One card, used by Home and by Subjects, so the two never drift apart.
+   Colours come from the global [data-subject] palette in globals.css. */
+.card {
+  display: flex;
+  flex-direction: column;
+  padding: 14px 16px 12px;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 8px 22px rgba(24, 44, 92, 0.04);
+}
+
+.top {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 26px;
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 3px 10px;
+}
+
+.icon {
+  display: grid;
+  grid-row: 1 / 3;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border-radius: 12px;
+  color: var(--tone);
+  background: var(--subject-soft, var(--tone-soft));
+}
+
+.top h3 {
+  min-width: 0;
+  flex: 1;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.chevron {
+  grid-column: 3;
+  grid-row: 1 / 3;
+  width: 26px;
+  height: 26px;
+  padding: 5px;
+  border-radius: 50%;
+  color: #080d58;
+  background: #f1f6fc;
+}
+
+.meta {
+  grid-column: 2;
+  grid-row: 2;
+  align-self: start;
+  color: #526da8;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.meta strong {
+  color: #16204a;
+  font-weight: 700;
+}
+
+.waiting {
+  color: #7b8ab5;
+}
+
+.pending::before,
+.passed::before {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 5px;
+  border-radius: 50%;
+  vertical-align: 1px;
+  content: "";
+}
+
+.pending::before {
+  background: #e7a323;
+}
+
+.passed::before {
+  background: #22c55e;
+}
+
+.passed {
+  color: #15803d;
+}
+
+.track {
+  height: 8px;
+  margin-top: 10px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: #eef2fa;
+}
+
+.track span {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: var(--tone);
+  transition: width 500ms ease;
+}
+
+/* Keeps the action row aligned with cards that do show a bar. */
+.emptyTrack {
+  height: 8px;
+  margin-top: 10px;
+}
+
+.action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 34px;
+  margin-top: 12px;
+  border-radius: 11px;
+  color: #082286;
+  background: var(--subject-soft, var(--tone-soft));
+  font-size: 12px;
+  font-weight: 700;
+  transition: filter 160ms ease;
+}
+
+.action svg {
+  width: 14px;
+  height: 14px;
+}
+
+.action:hover {
+  filter: brightness(0.96);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+
+@media (max-width: 1400px) {
+  .top { grid-template-columns: 40px minmax(0, 1fr) 24px; gap: 3px 8px; }
+  .icon { width: 44px; height: 44px; }
+  .top h3 { font-size: 13px; overflow-wrap: anywhere; }
+  .chevron { width: 24px; height: 24px; padding: 4px; }
+  .meta { font-size: 12px; }
+}
+
+@media (max-width: 1180px) {
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 720px) {
+  .grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .track span,
+  .action {
+    transition: none;
+  }
+}

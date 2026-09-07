@@ -1,0 +1,62 @@
+/* Subjects and a single subject: everything Home leaves out. */
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  margin: 0 0 22px;
+  color: #526da8;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.summary strong {
+  color: #16204a;
+  font-weight: 700;
+}
+
+.emptyPanel {
+  display: grid;
+  min-height: 180px;
+  place-content: center;
+  padding: 28px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 8px 22px rgba(24, 44, 92, 0.03);
+  text-align: center;
+}
+
+.emptyPanel p {
+  color: #16204a;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.emptyPanel span {
+  display: block;
+  margin-top: 6px;
+  color: #7b8ab5;
+  font-size: 14px;
+}
+
+.subjectProgress {
+  height: 8px;
+  max-width: 420px;
+  margin-bottom: 22px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: #e3ecf8;
+}
+
+.subjectProgress span {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: var(--tone);
+  transition: width 500ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .subjectProgress span {
+    transition: none;
+  }
+}

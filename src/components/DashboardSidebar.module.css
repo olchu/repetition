@@ -124,15 +124,6 @@ a.navItemActive:focus-visible {
   color: #8fd0ff;
 }
 
-.navItem[aria-disabled="true"] {
-  color: rgba(196, 214, 250, 0.42);
-  cursor: default;
-}
-
-.navItem[aria-disabled="true"] svg {
-  color: rgba(140, 176, 240, 0.42);
-}
-
 .art {
   display: flex;
   align-items: flex-end;

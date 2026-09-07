@@ -12,6 +12,7 @@
 - [Хранение тестов: реализация и открытые вопросы](docs/TEST-STORAGE.md)
 - [API и модель данных](docs/API-DRAFT.md)
 - [Экраны и критерии приёмки](docs/SCREENS.md)
+- [Пошаговый план разделов ученика: Subjects, Progress, Tests и Home](docs/STUDENT-NAVIGATION-PLAN.md)
 
 Документы описывают согласованный черновик первой версии и явно отмечают решения, которые ещё нужно принять до разработки.
 
@@ -48,4 +49,8 @@ SEED_ADMIN_PASSWORD="replace-this-password" npm run db:seed
 ```bash
 npm run lint
 npm run build
+node --test tests/overview.integration.cjs
+node --test tests/rewards.integration.cjs
 ```
+
+Оба теста запускают реальные обработчики API с тестовой авторизацией и PostgreSQL из `DATABASE_URL`, создают временные данные и удаляют их после проверки.

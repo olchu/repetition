@@ -1,0 +1,187 @@
+/* The learning room frame: sidebar, top bar and the content column every
+   section shares. Test and attempt pages have their own full-width workspace
+   and deliberately do not use this, so the frame is never drawn twice. */
+.shell {
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr);
+  min-height: 100svh;
+  color: #16204a;
+  background: #eef8fe;
+}
+
+.main {
+  position: relative;
+  min-width: 0;
+  padding: 50px clamp(24px, 3vw, 50px) 30px;
+}
+
+.topBar {
+  position: absolute;
+  top: 20px;
+  right: clamp(24px, 3vw, 50px);
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 16px;
+}
+
+.starBalance {
+  display: inline-block;
+  margin: 0;
+  padding: 4px 10px;
+  white-space: nowrap;
+  border-radius: 12px;
+  color: #92400e;
+  background: #fff3cd;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.signOut {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 28px;
+  padding: 4px 0;
+  border: 0;
+  color: #64748b;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 400;
+  transition: color 160ms ease;
+}
+
+.signOut svg {
+  width: 14px;
+  height: 14px;
+  color: currentColor;
+}
+
+.signOut:hover {
+  color: #334155;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Section heading shared by Subjects, Tests and Progress. */
+.pageHead {
+  margin-bottom: 22px;
+}
+
+.pageHead h1 {
+  color: #06094d;
+  font-size: clamp(28px, 3vw, 38px);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+}
+
+.pageHead p {
+  max-width: 560px;
+  margin-top: 8px;
+  color: #7489bc;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+/* Also used on a <button> that resets a filter, so it carries the reset. */
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 14px;
+  border: 0;
+  padding: 0;
+  color: #526da8;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.backLink:hover {
+  color: #16204a;
+}
+
+/* States ------------------------------------------------------------------ */
+
+.statePage {
+  display: grid;
+  min-height: 100svh;
+  place-items: center;
+  padding: 24px;
+  color: #16204a;
+  background: #eef8fe;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.stateCard {
+  width: min(100%, 440px);
+  padding: 34px;
+  border: 1px solid #e6ecf8;
+  border-radius: 26px;
+  background: #fff;
+  box-shadow: 0 12px 30px rgba(24, 44, 92, 0.07);
+}
+
+.stateCard h1 {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.stateCard p {
+  margin: 12px 0 24px;
+  color: #6f7ea9;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.stateAction {
+  display: inline-flex;
+  align-items: center;
+  min-height: 46px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 14px;
+  color: #fff;
+  background: #16204a;
+  cursor: pointer;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.stateAction:hover {
+  background: #24316b;
+}
+
+/* Responsive — mirrors the sidebar's own 900px / 720px collapse. */
+@media (max-width: 900px) {
+  .shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .main {
+    padding-top: 90px;
+  }
+}
+
+@media (max-width: 720px) {
+  .main {
+    padding: 86px 16px 36px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .signOut {
+    transition: none;
+  }
+}

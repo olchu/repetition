@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { BarChart3, BookOpen, FileText, Heart, House } from "lucide-react";
+import { BookOpen, Heart, House } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import logo from "../../public/images/logo.png";
 import styles from "./DashboardSidebar.module.css";
@@ -11,15 +11,14 @@ type NavEntry = {
   section: DashboardSection;
   label: string;
   Icon: LucideIcon;
-  /** Sections without a page yet render as plain text instead of a dead link. */
-  href: string | null;
+  /** A section appears here only once its page exists — an entry is added
+   *  together with the page it opens, so the menu never holds a dead link. */
+  href: string;
 };
 
 const navEntries: NavEntry[] = [
   { section: "home", label: "Home", Icon: House, href: "/dashboard" },
-  { section: "subjects", label: "Subjects", Icon: BookOpen, href: null },
-  { section: "tests", label: "Tests", Icon: FileText, href: null },
-  { section: "progress", label: "Progress", Icon: BarChart3, href: null },
+  { section: "subjects", label: "Subjects", Icon: BookOpen, href: "/dashboard/subjects" },
 ];
 
 type DashboardSidebarProps = {
@@ -48,19 +47,17 @@ export function DashboardSidebar({ userName, userRole = "Student", active = "hom
       <nav className={styles.nav} aria-label="Main navigation">
         {navEntries.map(({ section, label, Icon, href }) => {
           const isActive = section === active;
-          const className = `${styles.navItem} ${isActive ? styles.navItemActive : ""}`;
-          const icon = <Icon size={20} strokeWidth={2} aria-hidden="true" />;
 
-          return href ? (
-            <Link className={className} href={href} key={section} aria-current={isActive ? "page" : undefined}>
-              {icon}
+          return (
+            <Link
+              className={`${styles.navItem} ${isActive ? styles.navItemActive : ""}`}
+              href={href}
+              key={section}
+              aria-current={isActive ? "page" : undefined}
+            >
+              <Icon size={20} strokeWidth={2} aria-hidden="true" />
               {label}
             </Link>
-          ) : (
-            <span className={className} key={section} aria-current={isActive ? "page" : undefined} aria-disabled={isActive ? undefined : true}>
-              {icon}
-              {label}
-            </span>
           );
         })}
       </nav>
