@@ -48,9 +48,12 @@ export default function AttemptPage({ params }: RouteContext) {
         return;
       }
       const payload = (await response.json()) as { attempt: Attempt };
+      const savedAnswers = Object.fromEntries(payload.attempt.answers.map((answer) => [answer.questionId, answer.optionId]));
       setAttempt(payload.attempt);
-      setAnswers(Object.fromEntries(payload.attempt.answers.map((answer) => [answer.questionId, answer.optionId])));
-      setDrafts(Object.fromEntries(payload.attempt.answers.map((answer) => [answer.questionId, answer.optionId])));
+      setAnswers(savedAnswers);
+      setDrafts(savedAnswers);
+      const nextQuestionIndex = payload.attempt.test.questions.findIndex((question) => !savedAnswers[question.id]);
+      setCurrentIndex(nextQuestionIndex === -1 ? 0 : nextQuestionIndex);
       setState("ready");
     } catch {
       setState("error");

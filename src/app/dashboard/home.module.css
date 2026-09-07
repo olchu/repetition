@@ -224,6 +224,21 @@
   margin-bottom: 10px;
 }
 
+.seeAll {
+  border: 0;
+  padding: 0;
+  color: #4a7cf7;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.seeAll:hover {
+  color: #245bd5;
+}
+
 .sectionHeader h2 {
   font-size: 20px;
   font-weight: 700;
@@ -241,7 +256,7 @@
   flex-direction: column;
   padding: 14px 16px 12px;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.88);
+  background: #fff;
   box-shadow: 0 8px 22px rgba(24, 44, 92, 0.04);
 }
 
@@ -259,10 +274,20 @@
   width: 44px;
   height: 44px;
   place-items: center;
-  border-radius: 11px;
+  border-radius: 12px;
   color: var(--tone);
-  background: var(--tone-soft);
+  background: var(--subject-soft, var(--tone-soft));
 }
+
+.iconBiology { --subject-soft: #D4F8DF; --subject-ink: #15803d; }
+.iconChemistry { --subject-soft: #D2F7E1; --subject-ink: #047857; }
+.iconPhysics { --subject-soft: #DDE0FF; --subject-ink: #4f46e5; }
+.iconMathematics { --subject-soft: #FFD9E5; --subject-ink: #be185d; }
+.iconIct { --subject-soft: #D2F3FB; --subject-ink: #0e7490; }
+.iconGeography { --subject-soft: #D6F1FA; --subject-ink: #0369a1; }
+.iconSpanish { --subject-soft: #FFE6C2; --subject-ink: #b45309; }
+.iconPsychology { --subject-soft: #E9DEFF; --subject-ink: #7e22ce; }
+.iconSociology { --subject-soft: #D2F6EA; --subject-ink: #0f766e; }
 
 .subjectTop h3 {
   min-width: 0;
@@ -322,7 +347,7 @@
   margin-top: 12px;
   border-radius: 11px;
   color: #082286;
-  background: var(--tone-soft);
+  background: var(--subject-soft, var(--tone-soft));
   font-size: 12px;
   font-weight: 700;
   transition: filter 160ms ease;
@@ -416,12 +441,6 @@
   text-transform: uppercase;
 }
 
-/* The subject cell is a pill with its own inner padding; nudge the header
-   label over by the same amount so it sits above the pill's icon. */
-.tableHead > span:nth-child(2) {
-  padding-left: 11px;
-}
-
 /* Questions / Pass mark: header and value both centred in their column. */
 .tableHead > span:nth-child(3),
 .tableHead > span:nth-child(4) {
@@ -453,14 +472,8 @@
 }
 
 .subjectChip {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
   justify-self: start;
-  padding: 6px 11px;
-  border-radius: 99px;
-  color: var(--tone-ink);
-  background: var(--tone-soft);
+  color: var(--subject-ink, var(--tone-ink));
   font-size: 13px;
   font-weight: 600;
 }
@@ -494,7 +507,11 @@
   gap: 5px;
   color: #16204a;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 400;
+}
+
+.cellNumber b {
+  font-weight: inherit;
 }
 
 .rowMenu {
@@ -509,7 +526,7 @@
   display: none;
   font-style: normal;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: inherit;
   color: #8c9ac1;
 }
 
@@ -609,7 +626,7 @@
   .heroText h1 { font-size: clamp(40px, 4.2vw, 60px); }
   .heroCopy { max-width: 340px; }
   .subjectTop { grid-template-columns: 40px minmax(0, 1fr) 24px; gap: 3px 8px; }
-  .subjectIcon { width: 40px; height: 40px; }
+  .subjectIcon { width: 44px; height: 44px; }
   .subjectTop h3 { font-size: 13px; overflow-wrap: anywhere; }
   .subjectChevron { width: 24px; height: 24px; padding: 4px; }
   .subjectMeta { font-size: 12px; }

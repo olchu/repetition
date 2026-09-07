@@ -75,6 +75,18 @@ function SubjectIcon({ subject, size }: { subject: string; size: number }) {
   return icon ? <Image src={icon} alt="" width={size} height={size} style={{ objectFit: "contain", maxWidth: "100%", height: "auto" }} /> : <BookOpen size={size} aria-hidden="true" />;
 }
 
+const subjectIconClass: Record<string, string> = {
+  biology: styles.iconBiology,
+  chemistry: styles.iconChemistry,
+  physics: styles.iconPhysics,
+  mathematics: styles.iconMathematics,
+  ict: styles.iconIct,
+  geography: styles.iconGeography,
+  spanish: styles.iconSpanish,
+  psychology: styles.iconPsychology,
+  sociology: styles.iconSociology,
+};
+
 const RING_RADIUS = 52;
 const RING_LENGTH = 2 * Math.PI * RING_RADIUS;
 
@@ -82,6 +94,7 @@ export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [error, setError] = useState<"unauthorized" | "unavailable" | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showAllSubjects, setShowAllSubjects] = useState(false);
 
   const loadDashboard = useCallback(async () => {
     setIsLoading(true);
@@ -204,11 +217,20 @@ export default function DashboardPage() {
 
         <section className={styles.section} aria-labelledby="subjects-title">
           <div className={styles.sectionHeader}>
-            <h2 id="subjects-title">Your subjects</h2>
+            <h2 id="subjects-title">Subjects</h2>
+            {data.subjects.length > 4 && (
+              <button
+                className={styles.seeAll}
+                type="button"
+                onClick={() => setShowAllSubjects((current) => !current)}
+              >
+                {showAllSubjects ? "Show less" : "See all"}
+              </button>
+            )}
           </div>
           {data.subjects.length === 0 && <p>No subjects assigned yet.</p>}
           <div className={styles.subjectGrid}>
-            {data.subjects.map((subject) => {
+            {(showAllSubjects ? data.subjects : data.subjects.slice(0, 4)).map((subject) => {
               const meta = isSubjectId(subject.subject) ? subjects[subject.subject] : null;
               const tone = meta?.tone;
               const hasTests = subject.assigned > 0;
@@ -217,12 +239,12 @@ export default function DashboardPage() {
 
               return (
                 <article
-                  className={`${styles.subjectCard} ${tone ? toneClass[tone] : ""}`}
+                  className={`${styles.subjectCard} ${tone ? toneClass[tone] : ""} ${subjectIconClass[subject.subject] ?? ""}`}
                   key={subject.subject}
                 >
                   <div className={styles.subjectTop}>
-                    <span className={styles.subjectIcon} aria-hidden="true">
-                      <SubjectIcon subject={subject.subject} size={40} />
+                    <span className={`${styles.subjectIcon} ${subjectIconClass[subject.subject] ?? ""}`} aria-hidden="true">
+                      <SubjectIcon subject={subject.subject} size={34} />
                     </span>
                     <h3>{subjectLabel(subject.subject)}</h3>
                     <ChevronRight className={styles.subjectChevron} size={18} strokeWidth={2.2} aria-hidden="true" />
@@ -289,8 +311,7 @@ export default function DashboardPage() {
                       <FileText className={styles.testIcon} size={18} strokeWidth={2} aria-hidden="true" />
                       {test.title}
                     </span>
-                    <span className={`${styles.subjectChip} ${tone ? toneClass[tone] : ""}`}>
-                      <SubjectIcon subject={test.subject} size={20} />
+                    <span className={`${styles.subjectChip} ${tone ? toneClass[tone] : ""} ${subjectIconClass[test.subject] ?? ""}`}>
                       {subjectLabel(test.subject)}
                     </span>
                     <span className={styles.cellNumber}>
