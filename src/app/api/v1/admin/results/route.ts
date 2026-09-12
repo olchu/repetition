@@ -42,7 +42,7 @@ export async function GET(request: Request) {
           assignment: {
             select: {
               id: true,
-              test: { select: { id: true, title: true, subject: true, version: true } },
+              test: { select: { id: true, stableId: true, title: true, subject: true, version: true } },
             },
           },
         },

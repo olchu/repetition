@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
-import { isAnswerCorrect } from "@/lib/grading";
-import { readTestContent } from "@/lib/test-content";
-import { prisma } from "@/lib/prisma";
+import { findAttemptForAdmin, reviewAttemptQuestions } from "@/lib/attempt-review";
 
 type RouteContext = { params: Promise<{ attemptId: string }> };
 
@@ -22,15 +20,7 @@ export async function GET(_request: Request, context: RouteContext) {
   }
 
   const { attemptId } = await context.params;
-  const attempt = await prisma.attempt.findUnique({
-    where: { id: attemptId },
-    include: {
-      answers: true,
-      result: true,
-      child: { select: { id: true, login: true, childProfile: { select: { displayName: true } } } },
-      assignment: { include: { test: { include: { subject: true } } } },
-    },
-  });
+  const attempt = await findAttemptForAdmin(attemptId);
 
   if (!attempt) {
     return NextResponse.json(
@@ -38,9 +28,6 @@ export async function GET(_request: Request, context: RouteContext) {
       { status: 404 },
     );
   }
-
-  const { questions } = readTestContent(attempt.assignment.test.content);
-  const answersByQuestion = new Map(attempt.answers.map((answer) => [answer.questionId, answer]));
 
   return NextResponse.json({
     attempt: {
@@ -68,19 +55,19 @@ export async function GET(_request: Request, context: RouteContext) {
             passed: attempt.result.passed,
           }
         : null,
-      questions: questions.map((question) => {
-        const answer = answersByQuestion.get(question.id);
+      questions: reviewAttemptQuestions(attempt).map(({ question, answer, isCorrect, hintUsed, earnedPoints }) => {
         const chosenOptionId = answer?.optionId ?? null;
-        const isCorrect = isAnswerCorrect(question, answer);
 
         return {
           id: question.id,
           type: question.type,
           text: question.text,
           points: question.points,
-          earnedPoints: isCorrect ? question.points : 0,
-          answered: answer !== undefined,
+          earnedPoints,
+          answered: answer !== null,
           isCorrect,
+          /** The child opened the hint before answering. */
+          hintUsed,
           chosenOptionId,
           correctOptionId: question.type === "choice" ? question.correctOptionId : null,
           /** What the child typed for an input question. */

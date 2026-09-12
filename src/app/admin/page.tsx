@@ -10,7 +10,7 @@ import styles from "./page.module.css";
 
 type Child = { id: string; login: string; displayName: string | null; grade: string | null; status: string; subjects: string[] };
 type Test = { id: string; title: string; subject: string; grade: string | null; status: string; version: number; stableId: string; createdAt: string; questionCount: number; assignmentCount: number; passPercentage: number };
-type Result = { attemptId: string; child: { id: string; displayName: string }; test: { id: string; title: string; subject: string; version: number }; percentage: number; passed: boolean; submittedAt: string | null };
+type Result = { attemptId: string; child: { id: string; displayName: string }; test: { id: string; stableId: string; title: string; subject: string; version: number }; percentage: number; passed: boolean; submittedAt: string | null };
 type Group = { id: string; name: string; status: string; memberCount: number; activeAssignmentCount: number };
 type AdminData = { children: Child[]; tests: Test[]; publishedTestCount: number; results: Result[]; groups: Group[] };
 type TestPagination = { page: number; pageSize: number; totalItems: number; totalPages: number };
@@ -27,6 +27,8 @@ type AttemptQuestion = {
   earnedPoints: number;
   answered: boolean;
   isCorrect: boolean;
+  /** The child opened the hint before answering. */
+  hintUsed: boolean;
   explanation: string | null;
   options: AttemptOption[];
 };
@@ -414,6 +416,7 @@ function ResultsExplorer({ childAccounts, results }: { childAccounts: Child[]; r
   const [notice, setNotice] = useState<Notice>(null);
   const tests = [...new Map(results.map((result) => [result.test.id, result.test])).values()]
     .sort((first, second) => first.title.localeCompare(second.title));
+  const selectedTest = tests.find((test) => test.id === testId);
 
   const visible = results.filter((result) =>
     (!childId || result.child.id === childId) && (!testId || result.test.id === testId));
@@ -455,6 +458,15 @@ function ResultsExplorer({ childAccounts, results }: { childAccounts: Child[]; r
         </label>
       </div>
 
+      {childId && selectedTest && (
+        <div className={styles.filterActions}>
+          <a className={styles.textButton} href={`/api/v1/admin/results/report?${new URLSearchParams({ childId, stableId: selectedTest.stableId })}`} download>
+            Download all attempts (JSON)
+          </a>
+          <span className={styles.meta}>Every submitted attempt of this test by this child, all versions</span>
+        </div>
+      )}
+
       {notice && <p className={`${styles.notice} ${notice.tone === "error" ? styles.noticeError : ""}`} role="status">{notice.text}</p>}
 
       {visible.length === 0 ? (
@@ -485,7 +497,10 @@ function ResultsExplorer({ childAccounts, results }: { childAccounts: Child[]; r
               <span className={styles.meta}>{detail.child.displayName} · {subjectLabels[detail.test.subject] ?? detail.test.subject}</span>
               <h2>{detail.test.title}</h2>
             </div>
-            <button className={styles.textButton} type="button" onClick={() => setDetail(null)}>Close</button>
+            <span className={styles.rowActions}>
+              <a className={styles.textButton} href={`/api/v1/admin/attempts/${detail.id}/report`} download>Download JSON</a>
+              <button className={styles.textButton} type="button" onClick={() => setDetail(null)}>Close</button>
+            </span>
           </div>
           <p>
             {detail.result
@@ -503,6 +518,7 @@ function ResultsExplorer({ childAccounts, results }: { childAccounts: Child[]; r
                 <p className={question.answered ? (question.isCorrect ? styles.correctOption : styles.wrongOption) : styles.mutedAction}>
                   {question.answered ? (question.isCorrect ? "Answered correctly" : "Answered incorrectly") : "Not answered"}
                   {" · "}{question.earnedPoints} / {question.points} {question.points === 1 ? "point" : "points"}
+                  {question.hintUsed && " · hint used"}
                 </p>
                 {question.type === "input" ? (
                   <ul className={styles.answerList}>
