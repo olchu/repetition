@@ -1,0 +1,141 @@
+/* A set of tests on Tests, drawn like the subject cards. The [data-subject]
+   palette tints it when the set has one subject; the fallbacks are neutral. */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 8px 22px rgba(24, 44, 92, 0.04);
+}
+
+.top {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+
+.icon {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border-radius: 14px;
+  color: var(--tone, #3b6cf0);
+  background: var(--subject-soft, var(--tone-soft, #eaf1ff));
+}
+
+.top h3 {
+  color: #16204a;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+
+.subjects {
+  margin-top: 3px;
+  color: #7b8ab5;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.description {
+  display: -webkit-box;
+  margin-top: 10px;
+  overflow: hidden;
+  color: #526da8;
+  font-size: 13px;
+  line-height: 1.4;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: 12px;
+  color: #526da8;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.counts strong {
+  color: #16204a;
+  font-weight: 800;
+}
+
+.inProgress {
+  color: #c2761a;
+  font-weight: 600;
+}
+
+.newCount {
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+.track {
+  height: 8px;
+  margin-top: 10px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: #eef2fa;
+}
+
+.track span {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: var(--tone, #3b6cf0);
+  transition: width 500ms ease;
+}
+
+/* Pushed to the bottom so cards with and without a description line up. */
+.action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 40px;
+  margin-top: auto;
+  border-radius: 11px;
+  color: #082286;
+  background: var(--subject-soft, var(--tone-soft, #eaf1ff));
+  font-size: 13px;
+  font-weight: 700;
+  transition: filter 160ms ease;
+}
+
+.track + .action {
+  margin-top: 14px;
+}
+
+.action:hover {
+  filter: brightness(0.96);
+}
+
+@media (max-width: 1180px) {
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 720px) {
+  .grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .track span,
+  .action {
+    transition: none;
+  }
+}

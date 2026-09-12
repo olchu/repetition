@@ -41,9 +41,16 @@
   color: var(--subject-ink, var(--tone-ink, #16204a));
 }
 
+/* Links to the set's page. */
 .set {
   color: #8c9ac1;
   overflow-wrap: anywhere;
+}
+
+.set:hover {
+  color: #4a7cf7;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .newBadge {

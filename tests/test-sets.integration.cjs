@@ -93,6 +93,11 @@ test('test sets group tests by stableId, move between sets and assign in one go'
     assert.equal((await sets.GET()).status, 403, 'children cannot read sets');
     const setOf = async () => Object.fromEntries((await (await dashboard()).json()).tests.map((item) => [item.stableId, item.set?.name ?? null]));
     assert.deepEqual(await setOf(), { [`${fixture}-a`]: `${fixture} Week 1`, [`${fixture}-b`]: `${fixture} Week 2` });
+    // The child's set cards count only the tests assigned to them.
+    assert.deepEqual(
+      (await (await dashboard()).json()).sets.map((set) => [set.name, set.description, set.subjects, set.assigned, set.notStarted, set.passed, set.progress]),
+      [[`${fixture} Week 1`, 'About fractions', ['mathematics'], 1, 1, 0, 0], [`${fixture} Week 2`, 'About fractions', ['mathematics'], 1, 1, 0, 0]],
+    );
 
     currentUser = admin;
     assert.equal((await setTest.DELETE(null, context({ id: week2.id, stableId: `${fixture}-b` }))).status, 204);
@@ -104,6 +109,7 @@ test('test sets group tests by stableId, move between sets and assign in one go'
 
     currentUser = child;
     assert.deepEqual(await setOf(), { [`${fixture}-a`]: null, [`${fixture}-b`]: null }, 'tests stay assigned when their set goes, just ungrouped');
+    assert.deepEqual((await (await dashboard()).json()).sets, [], 'no set cards are left');
   } finally {
     await prisma.testSet.deleteMany({ where: { id: { in: setIds } } });
     await prisma.testSetItem.deleteMany({ where: { stableId: { startsWith: fixture } } });

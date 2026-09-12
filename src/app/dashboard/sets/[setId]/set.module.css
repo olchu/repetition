@@ -1,0 +1,196 @@
+/* One set: intro with the progress summary, the tests to pick up, and the full
+   table. A set of one subject wears its colours through the shell's
+   [data-subject]; the fallbacks keep a mixed set neutral. */
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 40%);
+  align-items: end;
+  gap: 24px;
+  margin-bottom: 26px;
+}
+
+.intro {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 20px;
+}
+
+.badge {
+  display: grid;
+  width: 96px;
+  height: 96px;
+  place-items: center;
+  border-radius: 24px;
+  color: var(--tone, #3b6cf0);
+  background: var(--subject-soft, var(--tone-soft, #eaf1ff));
+}
+
+.eyebrow {
+  color: #8c9ac1;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.intro h1 {
+  margin-top: 4px;
+  color: #06094d;
+  font-size: clamp(34px, 3.6vw, 50px);
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+}
+
+.introCopy {
+  max-width: 460px;
+  margin-top: 8px;
+  color: #7489bc;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.summary {
+  padding: 16px 20px 18px;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 8px 22px rgba(24, 44, 92, 0.04);
+}
+
+.summaryTop {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.summaryTop h2 {
+  color: #16204a;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.summaryShare {
+  color: #7489bc;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.summaryShare strong {
+  color: #16204a;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.bar {
+  height: 8px;
+  margin-top: 10px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: #edf1f8;
+}
+
+.bar span {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: var(--tone, #3b6cf0);
+  transition: width 500ms ease;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.stat {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #8c9ac1;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.stat svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.stat dd {
+  color: #16204a;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.statCompleted svg { color: #15803d; }
+.statInProgress svg { color: #b45309; }
+.statNotStarted svg { color: #5b6b8c; }
+
+.section {
+  margin-bottom: 28px;
+}
+
+.sectionHeader {
+  margin-bottom: 14px;
+}
+
+.sectionHeader h2 {
+  color: #06094d;
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+}
+
+.sectionHeader p {
+  margin-top: 4px;
+  color: #7489bc;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.emptyPanel {
+  display: grid;
+  min-height: 130px;
+  place-content: center;
+  padding: 28px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 8px 22px rgba(24, 44, 92, 0.03);
+  text-align: center;
+}
+
+.emptyPanel p {
+  color: #16204a;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.emptyPanel span {
+  display: block;
+  margin-top: 6px;
+  color: #7b8ab5;
+  font-size: 14px;
+}
+
+@media (max-width: 1100px) {
+  .hero { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 720px) {
+  .intro { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .badge { width: 72px; height: 72px; border-radius: 20px; }
+  .stats { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bar span { transition: none; }
+}

@@ -267,6 +267,13 @@
   font-weight: 600;
 }
 
+/* A set's title opens the set's own page. */
+.setTitle a:hover {
+  color: #4a7cf7;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .testGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

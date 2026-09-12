@@ -58,11 +58,29 @@ export type StudentSubjectSummary = {
   progress: number;
 };
 
+/** A set as the child sees it: only the tests assigned to them count. */
+export type StudentSetSummary = {
+  id: string;
+  name: string;
+  description: string | null;
+  /** Subjects of its tests, so a card can say what the set covers. */
+  subjects: string[];
+  assigned: number;
+  completed: number;
+  passed: number;
+  inProgress: number;
+  notStarted: number;
+  /** Share of its tests that are passed, as a whole percent. */
+  progress: number;
+};
+
 export type StudentOverview = {
   stars: number;
   child: { id: string; displayName: string };
   /** Every subject assigned to the child, including ones without tests. */
   subjects: StudentSubjectSummary[];
+  /** Sets holding at least one of the child's tests, ordered by name. */
+  sets: StudentSetSummary[];
   tests: StudentTest[];
 };
 
@@ -146,4 +164,28 @@ export function groupBySet(tests: readonly StudentTest[]): TestGroup[] {
 
   return [...groups.values()].sort((a, b) =>
     a.set === null ? 1 : b.set === null ? -1 : a.set.name.localeCompare(b.set.name, undefined, { numeric: true }));
+}
+
+/** One summary per set, counted from the same rows every list shows. */
+export function summarizeSets(
+  tests: readonly StudentTest[],
+  descriptions: ReadonlyMap<string, string | null>,
+): StudentSetSummary[] {
+  return groupBySet(tests).flatMap(({ set, tests: own }) => {
+    if (!set) return [];
+    const passed = own.filter((test) => test.passed).length;
+
+    return [{
+      id: set.id,
+      name: set.name,
+      description: descriptions.get(set.id) ?? null,
+      subjects: [...new Set(own.map((test) => test.subject))],
+      assigned: own.length,
+      completed: own.filter((test) => test.completed).length,
+      passed,
+      inProgress: own.filter((test) => test.inProgressAttemptId !== null).length,
+      notStarted: own.filter((test) => matchesFilter(test, "not_started")).length,
+      progress: own.length ? Math.round((passed / own.length) * 100) : 0,
+    }];
+  });
 }

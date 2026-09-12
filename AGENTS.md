@@ -18,7 +18,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## Наборы тестов
 
-Администратор объединяет тесты в наборы (`TestSet`, членство по `stableId`, тест максимум в одном наборе): `docs/TEST-SETS.md`. Списки ученика группируются `groupBySet` из `src/lib/student-progress.ts`; карточки тестов — `src/components/TestCard.tsx`.
+Администратор объединяет тесты в наборы (`TestSet`, членство по `stableId`, тест максимум в одном наборе): `docs/TEST-SETS.md`. Списки ученика группируются `groupBySet` из `src/lib/student-progress.ts`, сводка наборов — `summarizeSets`; карточки тестов — `src/components/TestCard.tsx`, карточки наборов — `SetCard.tsx`, страница набора — `src/app/dashboard/sets/[setId]`.
 
 ## Награды
 

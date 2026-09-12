@@ -82,7 +82,25 @@
 
 .groups {
   display: grid;
-  gap: 18px;
+  gap: 24px;
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 14px;
+  color: #06094d;
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+}
+
+.sectionTitle span {
+  color: #8c9ac1;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0;
 }
 
 .emptyPanel {

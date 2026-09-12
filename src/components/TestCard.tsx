@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import Link from "next/link";
 import type { StudentTest } from "@/lib/student-progress";
 import { useSubjectLabel } from "./SubjectsProvider";
 import { TestActionButton } from "./TestActionButton";
@@ -43,20 +44,23 @@ type TestCardProps = {
   test: StudentTest;
   /** On Home, where cards from every subject sit together. */
   showSubject?: boolean;
+  /** Off on the set's own page, where the name would only repeat the title. */
+  showSet?: boolean;
 };
 
-/** A test to pick up: the Home widgets and a subject's "Continue learning". */
-export function TestCard({ test, showSubject = false }: TestCardProps) {
+/** A test to pick up: the Home widgets, a subject's and a set's "Continue learning". */
+export function TestCard({ test, showSubject = false, showSet = true }: TestCardProps) {
   const subjectLabel = useSubjectLabel();
   const progress = cardProgress(test);
   const isNew = !test.completed && test.inProgressAttemptId === null;
+  const set = showSet ? test.set : null;
 
   return (
     <article className={styles.card} data-subject={showSubject ? test.subject : undefined}>
-      {(showSubject || test.set || isNew) && (
+      {(showSubject || set || isNew) && (
         <p className={styles.context}>
           {showSubject && <span className={styles.subject}>{subjectLabel(test.subject)}</span>}
-          {test.set && <span className={styles.set}>{test.set.name}</span>}
+          {set && <Link className={styles.set} href={`/dashboard/sets/${set.id}`}>{set.name}</Link>}
           {isNew && <span className={styles.newBadge}>New</span>}
         </p>
       )}

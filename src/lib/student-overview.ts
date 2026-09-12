@@ -2,6 +2,7 @@ import { prisma } from "./prisma";
 import {
   byAttention,
   statusOf,
+  summarizeSets,
   summarizeSubjects,
   type StudentOverview,
   type StudentTest,
@@ -150,6 +151,11 @@ async function collectAssignedTests(childId: string): Promise<AssignedTest[]> {
 /** Everything the learning room shows about one child. */
 export async function loadStudentOverview(child: OverviewChild): Promise<StudentOverview> {
   const tests = (await collectAssignedTests(child.id)).map((row) => row.test);
+  const setIds = [...new Set(tests.flatMap((test) => (test.set ? [test.set.id] : [])))];
+  const setDescriptions = new Map(
+    (await prisma.testSet.findMany({ where: { id: { in: setIds } }, select: { id: true, description: true } }))
+      .map((set) => [set.id, set.description]),
+  );
 
   // Rewards outlive their assignment, so the balance is read on its own.
   const rewards = await prisma.testReward.aggregate({
@@ -161,6 +167,7 @@ export async function loadStudentOverview(child: OverviewChild): Promise<Student
     stars: (rewards._sum.units ?? 0) / 2,
     child: { id: child.id, displayName: child.displayName },
     subjects: summarizeSubjects(child.subjects, tests),
+    sets: summarizeSets(tests, setDescriptions),
     tests,
   };
 }

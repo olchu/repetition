@@ -203,7 +203,7 @@ export default function SubjectPage({ params }: PageProps<"/dashboard/subjects/[
               <section key={group.set?.id ?? "no-set"} aria-label={showSetTitles ? group.set?.name ?? "Other tests" : undefined}>
                 {showSetTitles && (
                   <h3 className={styles.setTitle}>
-                    {group.set?.name ?? "Other tests"}
+                    {group.set ? <Link href={`/dashboard/sets/${group.set.id}`}>{group.set.name}</Link> : "Other tests"}
                     <span>{group.tests.length}</span>
                   </h3>
                 )}
