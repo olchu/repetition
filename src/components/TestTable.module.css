@@ -1,4 +1,4 @@
-/* The assigned-tests table shared by Home, a subject and the Tests section.
+/* The assigned-tests table shared by the Tests section and a set's page.
    Subject colours come from the global [data-subject] palette. */
 .panel {
   padding: 12px 18px 18px;
@@ -80,6 +80,27 @@
 .testIcon {
   flex-shrink: 0;
   color: #6f97ee;
+}
+
+/* Title, and under it the set's name when the list mixes sets. */
+.testTitle {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.setLink {
+  justify-self: start;
+  color: #8c9ac1;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.setLink:hover {
+  color: #4a7cf7;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .subjectChip {

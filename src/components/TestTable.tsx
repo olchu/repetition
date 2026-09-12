@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import Link from "next/link";
 import { FileText } from "lucide-react";
 import type { StudentTest, StudentTestStatus } from "@/lib/student-progress";
 import { useSubjectLabel } from "./SubjectsProvider";
@@ -26,13 +27,15 @@ type TestTableProps = {
   tests: readonly StudentTest[];
   /** Hidden inside a single subject, where it would repeat the page title. */
   showSubject?: boolean;
+  /** The set's name under each title, linking to the set; for lists that mix sets. */
+  showSet?: boolean;
   /** Filters or links that belong next to the heading. */
   toolbar?: ReactNode;
   /** Shown instead of rows; word it for why the list came back empty. */
   empty: { title: string; hint: ReactNode };
 };
 
-export function TestTable({ title, tests, showSubject = true, toolbar, empty }: TestTableProps) {
+export function TestTable({ title, tests, showSubject = true, showSet = false, toolbar, empty }: TestTableProps) {
   const subjectLabel = useSubjectLabel();
   const headingId = `test-table-${title.replace(/\W+/g, "-").toLowerCase()}`;
 
@@ -66,7 +69,12 @@ export function TestTable({ title, tests, showSubject = true, toolbar, empty }: 
             <article className={styles.tableRow} key={test.stableId} data-subject={test.subject}>
               <span className={styles.testName}>
                 <FileText className={styles.testIcon} size={18} strokeWidth={2} aria-hidden="true" />
-                {test.title}
+                <span className={styles.testTitle}>
+                  {test.title}
+                  {showSet && test.set && (
+                    <Link className={styles.setLink} href={`/dashboard/sets/${test.set.id}`}>{test.set.name}</Link>
+                  )}
+                </span>
               </span>
               {showSubject && <span className={styles.subjectChip}>{subjectLabel(test.subject)}</span>}
               <span className={styles.cellNumber}>
