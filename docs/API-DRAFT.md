@@ -58,7 +58,7 @@
 | Метод | Endpoint | Назначение |
 | --- | --- | --- |
 | `POST` | `/admin/tests/import` | Загрузка multipart JSON-файла и валидация. |
-| `GET` | `/admin/tests` | Список тестов с фильтрами по статусу и предмету. |
+| `GET` | `/admin/tests` | Серверный список тестов: поиск по названию (`search`), фильтры `status` и `grade`, пагинация через `page` и `pageSize` (не более 50 записей). |
 | `GET` | `/admin/tests/:id` | Метаданные, предпросмотр и версии теста. |
 | `POST` | `/admin/tests/:id/publish` | Публикация черновика. |
 | `POST` | `/admin/tests/:id/archive` | Архивирование теста. |
