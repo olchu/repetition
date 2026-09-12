@@ -7,7 +7,7 @@ const attemptInclude = {
   answers: true,
   result: true,
   reward: true,
-  assignment: { include: { test: true } },
+  assignment: { include: { test: { include: { subject: true } } } },
 } as const;
 
 export type AttemptWithTest = Prisma.AttemptGetPayload<{ include: typeof attemptInclude }>;
@@ -22,7 +22,7 @@ export async function findAccessibleAssignment(testId: string, childId: string) 
         { group: { members: { some: { childId } } } },
       ],
     },
-    include: { test: true },
+    include: { test: { include: { subject: true } } },
   });
 }
 
@@ -51,7 +51,7 @@ export function serializeAttempt(attempt: AttemptWithTest) {
     test: {
       id: attempt.assignment.test.id,
       title: attempt.assignment.test.title,
-      subject: attempt.assignment.test.subject.toLowerCase(),
+      subject: attempt.assignment.test.subject.slug,
       passPercentage: attempt.assignment.test.passPercentage,
       questions: questions.map((question) => ({
         id: question.id,

@@ -36,7 +36,7 @@ export async function GET(_request: Request, context: RouteContext) {
   });
 
   return NextResponse.json({
-    test: { id: assignment.test.id, title: assignment.test.title, subject: assignment.test.subject.toLowerCase() },
+    test: { id: assignment.test.id, title: assignment.test.title, subject: assignment.test.subject.slug },
     attempts: attempts.map((attempt) => ({
       id: attempt.id,
       submittedAt: attempt.submittedAt,

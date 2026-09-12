@@ -8,7 +8,8 @@ import {
   DashboardUnauthorized,
   DashboardUnavailable,
 } from "@/components/DashboardShell";
-import { SubjectCard, subjectCardStyles, subjectLabel } from "@/components/SubjectCard";
+import { SubjectCard, subjectCardStyles } from "@/components/SubjectCard";
+import { useSubjectLabel } from "@/components/SubjectsProvider";
 import type { StudentSubjectSummary } from "@/lib/student-progress";
 import { useStudentOverview } from "@/lib/use-student-overview";
 import styles from "./subjects.module.css";
@@ -26,7 +27,7 @@ const RING_LENGTH = 2 * Math.PI * RING_RADIUS;
 
 /** The administrator's order is the default; the others are the child's own
  *  way of looking at the same list. */
-function sortSubjects(subjects: readonly StudentSubjectSummary[], order: SortOrder) {
+function sortSubjects(subjects: readonly StudentSubjectSummary[], order: SortOrder, subjectLabel: (slug: string) => string) {
   if (order === "assigned") return [...subjects];
   if (order === "name") {
     return [...subjects].sort((a, b) => subjectLabel(a.subject).localeCompare(subjectLabel(b.subject)));
@@ -37,6 +38,7 @@ function sortSubjects(subjects: readonly StudentSubjectSummary[], order: SortOrd
 /** Every subject assigned to the child — including ones the administrator has
  *  not put tests in yet, which stay visible so the child knows they exist. */
 export default function SubjectsPage() {
+  const subjectLabel = useSubjectLabel();
   const { data, error, isLoading, reload } = useStudentOverview();
   const [order, setOrder] = useState<SortOrder>("assigned");
 
@@ -131,7 +133,7 @@ export default function SubjectsPage() {
         </div>
       ) : (
         <div className={subjectCardStyles.gridWide}>
-          {sortSubjects(data.subjects, order).map((subject) => (
+          {sortSubjects(data.subjects, order, subjectLabel).map((subject) => (
             <SubjectCard
               key={subject.subject}
               summary={subject}

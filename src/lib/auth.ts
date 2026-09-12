@@ -1,3 +1,4 @@
+import { childProfileInclude } from "@/lib/subject-catalog";
 import { createHash, randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
 import { prisma } from "./prisma";
@@ -45,7 +46,7 @@ export async function getCurrentUser() {
 
   const session = await prisma.session.findUnique({
     where: { tokenHash: hashToken(token) },
-    include: { user: { include: { childProfile: true } } },
+    include: { user: { include: { childProfile: { include: childProfileInclude } } } },
   });
 
   if (!session) {

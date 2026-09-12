@@ -1,5 +1,7 @@
 "use client";
 
+import { useSubjectLabel } from "@/components/SubjectsProvider";
+
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { ArrowLeft, ArrowRight, Check, ChevronsRight, HelpCircle, Lightbulb, X } from "lucide-react";
@@ -32,6 +34,7 @@ type Attempt = {
 type RouteContext = { params: Promise<{ attemptId: string }> };
 
 export default function AttemptPage({ params }: RouteContext) {
+  const subjectLabel = useSubjectLabel();
   const [attempt, setAttempt] = useState<Attempt | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [drafts, setDrafts] = useState<Record<string, string>>({});
@@ -149,7 +152,7 @@ export default function AttemptPage({ params }: RouteContext) {
     <main className={styles.attemptPage}>
       <Link className={styles.backLink} href="/dashboard"><ArrowLeft size={14} aria-hidden="true" />Exit test</Link>
       <header>
-        <p className={styles.eyebrow}>{attempt.test.subject} test</p>
+        <p className={styles.eyebrow}>{subjectLabel(attempt.test.subject)} test</p>
         <h1 className={styles.title}>{attempt.test.title}</h1>
         <p className={styles.rewardStatus} role="status">
           {attempt.reward.eligible

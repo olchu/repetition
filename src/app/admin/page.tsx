@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { subjectLabels, subjectIds } from "@/lib/subjects";
+import { useSubjects } from "@/components/SubjectsProvider";
+import { SubjectManager } from "@/components/SubjectManager";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { Markdown } from "@/components/Markdown";
 import { SignOutButton } from "@/components/SignOutButton";
@@ -34,7 +35,7 @@ type AttemptDetail = {
   result: { earnedPoints: number; totalPoints: number; percentage: number; passed: boolean } | null;
   questions: AttemptQuestion[];
 };
-type View = "overview" | "children" | "groups" | "tests" | "assignments" | "results";
+type View = "subjects" | "overview" | "children" | "groups" | "tests" | "assignments" | "results";
 type Notice = { tone: "success" | "error"; text: string } | null;
 
 
@@ -50,9 +51,9 @@ async function getApiError(response: Response, fallback: string) {
 function AdminNavigation({ view, onChange }: { view: View; onChange: (view: View) => void }) {
   return (
     <nav className={styles.nav} aria-label="Admin navigation">
-      {(["overview", "children", "groups", "tests", "assignments", "results"] as View[]).map((item) => (
+      {(["overview", "children", "groups", "subjects", "tests", "assignments", "results"] as View[]).map((item) => (
         <button className={`${styles.navButton} ${view === item ? styles.navActive : ""}`} key={item} type="button" onClick={() => onChange(item)}>
-          {item === "overview" ? "Overview" : item === "children" ? "Children" : item === "groups" ? "Groups" : item === "tests" ? "Tests" : item === "assignments" ? "Assignments" : "Results"}
+          {item === "overview" ? "Overview" : item === "children" ? "Children" : item === "groups" ? "Groups" : item === "subjects" ? "Subjects" : item === "tests" ? "Tests" : item === "assignments" ? "Assignments" : "Results"}
         </button>
       ))}
       <SignOutButton className={styles.navLink} />
@@ -61,6 +62,7 @@ function AdminNavigation({ view, onChange }: { view: View; onChange: (view: View
 }
 
 function ChildSubjects({ child, onRefresh }: { child: Child; onRefresh: () => Promise<void> }) {
+  const { subjects: catalog, subjectLabels } = useSubjects();
   const [selected, setSelected] = useState(child.subjects);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -82,7 +84,7 @@ function ChildSubjects({ child, onRefresh }: { child: Child; onRefresh: () => Pr
   }
   return <details className={styles.subjectEditor}><summary>Subjects ({child.subjects.length})</summary>
     <form onSubmit={save}><fieldset disabled={saving}><legend>Subjects for {child.displayName ?? child.login}</legend>
-      <div className={styles.childChoices}>{subjectIds.map((id) => <label key={id}>
+      <div className={styles.childChoices}>{catalog.filter((item) => !item.archived || selected.includes(item.slug)).map(({ slug: id }) => <label key={id}>
         <input type="checkbox" checked={selected.includes(id)} onChange={(event) => setSelected((current) => event.target.checked ? [...current, id] : current.filter((item) => item !== id))} />
         {subjectLabels[id]}
       </label>)}</div></fieldset><button className={styles.textButton} disabled={saving} type="submit">{saving ? "Saving…" : "Save subjects"}</button>
@@ -175,12 +177,14 @@ function GroupsManager({ childAccounts, groups, onRefresh }: { childAccounts: Ch
 }
 
 function TestsManager({ onRefresh }: { onRefresh: () => Promise<void> }) {
+  const { subjects: catalog, subjectLabels } = useSubjects();
   const [tests, setTests] = useState<Test[]>([]);
   const [pagination, setPagination] = useState<TestPagination>({ page: 1, pageSize: 10, totalItems: 0, totalPages: 1 });
   const [grades, setGrades] = useState<string[]>([]);
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [grade, setGrade] = useState("");
+  const [subjectId, setSubjectId] = useState("");
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [notice, setNotice] = useState<Notice>(null);
@@ -192,6 +196,7 @@ function TestsManager({ onRefresh }: { onRefresh: () => Promise<void> }) {
     const params = new URLSearchParams({ page: String(page), pageSize: "10" });
     if (search) params.set("search", search);
     if (grade) params.set("grade", grade);
+    if (subjectId) params.set("subjectId", subjectId);
 
     try {
       const response = await fetch(`/api/v1/admin/tests?${params}`, { cache: "no-store", signal });
@@ -208,7 +213,7 @@ function TestsManager({ onRefresh }: { onRefresh: () => Promise<void> }) {
     } finally {
       if (!signal?.aborted) setIsLoading(false);
     }
-  }, [grade, page, search]);
+  }, [grade, page, search, subjectId]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -235,6 +240,7 @@ function TestsManager({ onRefresh }: { onRefresh: () => Promise<void> }) {
     setSearchInput("");
     setSearch("");
     setGrade("");
+    setSubjectId("");
     setPage(1);
   }
 
@@ -308,11 +314,12 @@ function TestsManager({ onRefresh }: { onRefresh: () => Promise<void> }) {
       <form className={styles.testFilters} onSubmit={applySearch} role="search">
         <label>Search by title<input type="search" value={searchInput} onChange={(event) => setSearchInput(event.target.value)} placeholder="Enter test title" /></label>
         <label>Grade<select value={grade} onChange={(event) => { setGrade(event.target.value); setPage(1); }}><option value="">All grades</option>{grades.map((item) => <option value={item} key={item}>{item}</option>)}</select></label>
-        <div className={styles.filterActions}><button className={styles.action} type="submit">Search</button><button className={styles.textButton} type="button" onClick={clearFilters} disabled={!search && !grade}>Clear</button></div>
+        <label>Subject<select value={subjectId} onChange={(event) => { setSubjectId(event.target.value); setPage(1); }}><option value="">All subjects</option>{catalog.map((item) => <option value={item.id} key={item.id}>{item.name}{item.archived ? " (archived)" : ""}</option>)}</select></label>
+        <div className={styles.filterActions}><button className={styles.action} type="submit">Search</button><button className={styles.textButton} type="button" onClick={clearFilters} disabled={!searchInput && !grade && !subjectId}>Clear</button></div>
       </form>
       <div className={styles.controlList}>
         <div className={styles.controlListHeader}><span>Test</span><span>Subject</span><span>Status</span><span>Action</span></div>
-        {isLoading && tests.length === 0 ? <p className={styles.empty}>Loading tests…</p> : tests.length === 0 ? <p className={styles.empty}>{search || grade ? "No tests match these filters." : "No tests uploaded yet."}</p> : tests.map((test) => <div className={styles.controlRow} key={test.id}><div><strong>{test.title}</strong><span>{test.stableId} · v{test.version} · Grade {test.grade ?? "—"} · {test.questionCount} questions</span></div><span>{subjectLabels[test.subject] ?? test.subject}</span><span className={`${styles.pill} ${test.status === "published" ? styles.pillGood : ""}`}>{test.status}</span><span className={styles.rowActions}><button className={styles.textButton} type="button" onClick={() => void previewTest(test)}>Preview</button>{test.status === "draft" && <><button className={styles.textButton} type="button" onClick={() => void publishTest(test)}>Publish</button><button className={styles.textButton} type="button" onClick={() => void deleteTest(test)}>Delete</button></>}{test.status === "published" && <button className={styles.textButton} type="button" onClick={() => void archiveTest(test)}>Archive</button>}{test.status === "archived" && <><button className={styles.textButton} type="button" onClick={() => void restoreTest(test)}>Restore</button><button className={styles.textButton} type="button" onClick={() => void deleteTest(test)}>Delete</button></>}</span></div>)}
+        {isLoading && tests.length === 0 ? <p className={styles.empty}>Loading tests…</p> : tests.length === 0 ? <p className={styles.empty}>{search || grade || subjectId ? "No tests match these filters." : "No tests uploaded yet."}</p> : tests.map((test) => <div className={styles.controlRow} key={test.id}><div><strong>{test.title}</strong><span>{test.stableId} · v{test.version} · Grade {test.grade ?? "—"} · {test.questionCount} questions</span></div><span>{subjectLabels[test.subject] ?? test.subject}</span><span className={`${styles.pill} ${test.status === "published" ? styles.pillGood : ""}`}>{test.status}</span><span className={styles.rowActions}><button className={styles.textButton} type="button" onClick={() => void previewTest(test)}>Preview</button>{test.status === "draft" && <><button className={styles.textButton} type="button" onClick={() => void publishTest(test)}>Publish</button><button className={styles.textButton} type="button" onClick={() => void deleteTest(test)}>Delete</button></>}{test.status === "published" && <button className={styles.textButton} type="button" onClick={() => void archiveTest(test)}>Archive</button>}{test.status === "archived" && <><button className={styles.textButton} type="button" onClick={() => void restoreTest(test)}>Restore</button><button className={styles.textButton} type="button" onClick={() => void deleteTest(test)}>Delete</button></>}</span></div>)}
       </div>
       {pagination.totalItems > 0 && <nav className={styles.pagination} aria-label="Test list pages"><button className={styles.textButton} type="button" disabled={pagination.page <= 1 || isLoading} onClick={() => setPage((current) => Math.max(1, current - 1))}>Previous</button><span>Page {pagination.page} of {pagination.totalPages} · {pagination.totalItems} tests</span><button className={styles.textButton} type="button" disabled={pagination.page >= pagination.totalPages || isLoading} onClick={() => setPage((current) => Math.min(pagination.totalPages, current + 1))}>Next</button></nav>}
       {preview && <section className={styles.preview} aria-label="Test preview"><div className={styles.sectionHeader}><div><span className={styles.meta}>{subjectLabels[preview.subject] ?? preview.subject}</span><h2>{preview.title}</h2></div><button className={styles.textButton} type="button" onClick={() => setPreview(null)}>Close preview</button></div><p>Pass at {preview.passPercentage}%</p>{preview.questions.map((question, index) => <article key={question.id}><span>0{index + 1}</span><div><h3>{question.text}</h3>{question.options.map((option) => <p className={option.isCorrect ? styles.correctOption : ""} key={option.id}>{option.isCorrect ? "✓ " : ""}{option.text}</p>)}</div></article>)}</section>}
@@ -321,6 +328,7 @@ function TestsManager({ onRefresh }: { onRefresh: () => Promise<void> }) {
 }
 
 function AssignmentManager({ childAccounts, groups, onRefresh }: { childAccounts: Child[]; groups: Group[]; onRefresh: () => Promise<void> }) {
+  const { subjectLabels } = useSubjects();
   const [testId, setTestId] = useState("");
   const [target, setTarget] = useState<"children" | "group">("children");
   const [groupId, setGroupId] = useState("");
@@ -394,6 +402,7 @@ return (
 ); }
 
 function ResultsExplorer({ childAccounts, results }: { childAccounts: Child[]; results: Result[] }) {
+  const { subjectLabels } = useSubjects();
   const [childId, setChildId] = useState("");
   const [testId, setTestId] = useState("");
   const [detail, setDetail] = useState<AttemptDetail | null>(null);
@@ -514,6 +523,7 @@ function ResultsExplorer({ childAccounts, results }: { childAccounts: Child[]; r
 }
 
 export default function AdminPage() {
+  const { subjectLabels } = useSubjects();
   const [data, setData] = useState<AdminData | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "unauthorized" | "error">("loading");
   const [view, setView] = useState<View>("overview");
@@ -556,6 +566,7 @@ export default function AdminPage() {
       <header className={styles.header}><Link className={styles.brand} href="/" aria-label="Repetition home"><span className={styles.brandMark} aria-hidden="true"><span /><span /><span /></span>repetition</Link><AdminNavigation view={view} onChange={setView} /></header>
       {view === "children" && <ChildrenManager childAccounts={data.children} onRefresh={loadAdmin} />}
       {view === "groups" && <GroupsManager childAccounts={data.children} groups={data.groups} onRefresh={loadAdmin} />}
+      {view === "subjects" && <SubjectManager />}
       {view === "tests" && <TestsManager onRefresh={loadAdmin} />}
       {view === "assignments" && <AssignmentManager childAccounts={data.children} groups={data.groups} onRefresh={loadAdmin} />}
       {view === "results" && <ResultsExplorer childAccounts={data.children} results={data.results} />}

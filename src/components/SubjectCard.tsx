@@ -4,18 +4,15 @@ import type { ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, BookOpen, ChevronRight } from "lucide-react";
-import { isSubjectId, subjectLabels, subjects } from "@/lib/subjects";
+import { useSubjectLabel, useSubjects } from "./SubjectsProvider";
 import type { StudentSubjectSummary } from "@/lib/student-progress";
 import styles from "./SubjectCard.module.css";
 
 export { styles as subjectCardStyles };
 
-export function subjectLabel(subject: string) {
-  return subjectLabels[subject] ?? subject;
-}
-
 export function SubjectIcon({ subject, size }: { subject: string; size: number }) {
-  const icon = isSubjectId(subject) ? subjects[subject].icon : null;
+  const { subjects } = useSubjects();
+  const icon = subjects.find((item) => item.slug === subject)?.icon;
 
   return icon ? (
     <Image src={icon} alt="" width={size} height={size} style={{ objectFit: "contain", maxWidth: "100%", height: "auto" }} />
@@ -36,6 +33,7 @@ type SubjectCardProps = {
  *  action, progress bar over passed tests. A subject with no tests still
  *  belongs on the grid, so the bar is replaced by an empty band. */
 export function SubjectCard({ summary, meta, variant = "compact" }: SubjectCardProps) {
+  const subjectLabel = useSubjectLabel();
   const label = subjectLabel(summary.subject);
   const wide = variant === "wide";
 

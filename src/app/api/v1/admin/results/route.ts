@@ -1,4 +1,3 @@
-import { Subject } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -17,10 +16,9 @@ export async function GET(request: Request) {
   const childId = params.get("childId") || undefined;
   const testId = params.get("testId") || undefined;
   const groupId = params.get("groupId") || undefined;
-  const subjectParam = params.get("subject")?.toUpperCase();
+  const subjectParam = params.get("subject");
   const passedParam = params.get("passed");
-  const subject = Object.values(Subject).includes(subjectParam as Subject)
-    ? subjectParam as Subject : undefined;
+  const subject = subjectParam ? { slug: subjectParam } : undefined;
   const passed = passedParam === "true" ? true : passedParam === "false" ? false : undefined;
 
   const results = await prisma.result.findMany({
@@ -63,7 +61,7 @@ export async function GET(request: Request) {
       },
       test: {
         ...result.attempt.assignment.test,
-        subject: result.attempt.assignment.test.subject.toLowerCase(),
+        subject: result.attempt.assignment.test.subject.slug,
       },
       earnedPoints: result.earnedPoints,
       totalPoints: result.totalPoints,

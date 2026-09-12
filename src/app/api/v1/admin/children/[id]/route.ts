@@ -1,5 +1,5 @@
+import { childProfileInclude, resolveChildSubjects } from "@/lib/subject-catalog";
 import { isSubjectList } from "@/lib/subjects";
-import type { Subject } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { AccountStatus, Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
@@ -22,7 +22,7 @@ function publicChild(child: {
   login: string;
   status: string;
   createdAt: Date;
-  childProfile: { displayName: string; grade: string; subjects: Subject[] } | null;
+  childProfile: { displayName: string; grade: string; subjects: { subject: { slug: string } }[] } | null;
 }) {
   return {
     id: child.id,
@@ -31,14 +31,14 @@ function publicChild(child: {
     displayName: child.childProfile?.displayName ?? null,
     grade: child.childProfile?.grade ?? null,
     createdAt: child.createdAt,
-    subjects: child.childProfile?.subjects?.map((subject) => subject.toLowerCase()) ?? [],
+    subjects: child.childProfile?.subjects?.map((subject) => subject.subject.slug) ?? [],
   };
 }
 
 async function getChild(id: string) {
   return prisma.user.findFirst({
     where: { id, role: "CHILD" },
-    include: { childProfile: true },
+    include: { childProfile: { include: childProfileInclude } },
   });
 }
 
@@ -88,7 +88,8 @@ export async function PATCH(request: Request, context: RouteContext) {
   if (body?.subjects !== undefined && !isSubjectList(body.subjects)) {
     return NextResponse.json({ error: { code: "VALIDATION_ERROR", message: "Invalid subject list." } }, { status: 400 });
   }
-  const subjects = body?.subjects === undefined ? undefined : (body.subjects as string[]).map((subject) => subject.toUpperCase() as Subject);
+  const subjects = body?.subjects === undefined ? undefined : await resolveChildSubjects(body.subjects as string[], child.childProfile?.subjects.map((item) => item.subject.slug) ?? []);
+  if (subjects === null) return NextResponse.json({ error: { message: "Unknown or archived subject." } }, { status: 422 });
   const displayName = typeof body?.displayName === "string" ? body.displayName.trim() : undefined;
   const login = typeof body?.login === "string" ? normalizeLogin(body.login) : undefined;
   const grade = typeof body?.grade === "string" ? body.grade.trim() : undefined;
@@ -129,14 +130,24 @@ export async function PATCH(request: Request, context: RouteContext) {
           data: {
             ...(displayName !== undefined ? { displayName } : {}),
             ...(grade !== undefined ? { grade } : {}),
-            ...(subjects !== undefined ? { subjects } : {}),
           },
         });
       }
 
+      if (subjects !== undefined) {
+        await transaction.childSubject.deleteMany({ where: { childId: id, subjectId: { notIn: subjects.map((item) => item.subjectId) } } });
+        for (const item of subjects) {
+          await transaction.childSubject.upsert({
+            where: { childId_subjectId: { childId: id, subjectId: item.subjectId } },
+            create: { childId: id, ...item },
+            update: { sortOrder: item.sortOrder },
+          });
+        }
+      }
+
       return transaction.user.findUniqueOrThrow({
         where: { id },
-        include: { childProfile: true },
+        include: { childProfile: { include: childProfileInclude } },
       });
     });
 

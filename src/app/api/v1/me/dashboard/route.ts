@@ -16,7 +16,7 @@ export async function GET() {
     await loadStudentOverview({
       id: user.id,
       displayName: user.childProfile?.displayName ?? user.login,
-      subjects: (user.childProfile?.subjects ?? []).map((subject) => subject.toLowerCase()),
+      subjects: (user.childProfile?.subjects ?? []).map((item) => item.subject.slug),
     }),
   );
 }

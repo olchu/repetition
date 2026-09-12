@@ -1,7 +1,5 @@
 import Ajv2020, { ErrorObject } from "ajv/dist/2020";
 import testSchema from "../../docs/test.schema.json";
-import type { SubjectId } from "./subjects";
-import { Subject } from "@prisma/client";
 import { prisma } from "./prisma";
 import { buildTestContent, toJsonColumn } from "./test-content";
 
@@ -27,7 +25,7 @@ export type TestDocument = {
   id: string;
   title: string;
   description?: string;
-  subject: SubjectId;
+  subject: string;
   grade: string;
   passPercentage?: number;
   questions: TestQuestionInput[];
@@ -107,7 +105,8 @@ export async function createTestDraft(document: TestDocument) {
     select: { version: true },
   });
   const version = (latest?.version ?? 0) + 1;
-  const subject = document.subject.toUpperCase() as Subject;
+  const subject = await prisma.subject.findUnique({ where: { slug: document.subject } });
+  if (!subject || subject.archived) throw new UnknownSubjectError();
   const content = buildTestContent(document.questions);
 
   return prisma.test.create({
@@ -116,11 +115,16 @@ export async function createTestDraft(document: TestDocument) {
       version,
       title: document.title,
       description: document.description,
-      subject,
+      subjectId: subject.id,
       grade: document.grade,
       passPercentage: document.passPercentage ?? 70,
       questionCount: content.questions.length,
       content: toJsonColumn(content),
     },
+    include: { subject: true },
   });
+}
+
+export class UnknownSubjectError extends Error {
+  constructor() { super("The subject is unknown or archived. Choose an active subject from the catalog."); }
 }

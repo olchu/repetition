@@ -82,7 +82,9 @@
 .createForm h2, .uploadForm h2, .assignmentForm legend { font-family: var(--font-jakarta), sans-serif; font-size: 21px; font-weight: 600; letter-spacing: -0.05em; }
 .formGrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; margin: 26px 0; }
 .formGrid label, .assignmentForm > label { display: flex; flex-direction: column; gap: 8px; color: var(--ink); font-size: 12px; font-weight: 700; }
-.formGrid input, .assignmentForm select { min-height: 46px; padding: 0 12px; border: 1px solid var(--line); border-radius: 3px; color: var(--ink); background: var(--paper); outline: none; font: inherit; font-size: 14px; }
+.formGrid input, .formGrid select, .assignmentForm select { min-height: 46px; padding: 0 12px; border: 1px solid var(--line); border-radius: 3px; color: var(--ink); background: var(--paper); outline: none; font: inherit; font-size: 14px; }
+.formGrid input[type="checkbox"] { min-height: auto; }
+.formGrid input[type="color"] { width: 100%; padding: 5px; }
 .formGrid input:focus, .assignmentForm select:focus { border-color: var(--ink); box-shadow: 0 0 0 3px rgba(16, 44, 58, 0.1); }
 .action { gap: 18px; }
 .action span { color: var(--acid); font-size: 17px; }
@@ -119,7 +121,7 @@
 .gradeHint { margin-top: 12px; color: var(--muted); font-size: 11px; line-height: 1.4; }
 
 .controlRow .rowActions { display: flex; flex-wrap: wrap; gap: 10px 18px; }
-.testFilters { display: grid; grid-template-columns: minmax(260px, 1fr) minmax(150px, 0.35fr) auto; gap: 18px; align-items: end; margin-top: 28px; }
+.testFilters { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(100px, 0.4fr) minmax(150px, 0.6fr) auto; gap: 18px; align-items: end; margin-top: 28px; }
 .testFilters label { display: flex; flex-direction: column; gap: 8px; color: var(--ink); font-size: 12px; font-weight: 700; }
 .testFilters input, .testFilters select { min-height: 46px; padding: 0 12px; border: 1px solid var(--line); border-radius: 3px; color: var(--ink); background: var(--paper-bright); outline: none; font: inherit; font-size: 13px; }
 .testFilters input:focus, .testFilters select:focus { border-color: var(--ink); box-shadow: 0 0 0 3px rgba(16, 44, 58, 0.1); }

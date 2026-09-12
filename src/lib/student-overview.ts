@@ -95,7 +95,7 @@ export async function loadStudentOverview(child: OverviewChild): Promise<Student
       id: group.test.id,
       stableId: group.test.stableId,
       title: group.test.title,
-      subject: group.test.subject.toLowerCase(),
+      subject: group.test.subject.slug,
       grade: group.test.grade,
       passPercentage: group.test.passPercentage,
       questionCount: group.test.questionCount,

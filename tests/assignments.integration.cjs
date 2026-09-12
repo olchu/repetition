@@ -68,7 +68,7 @@ test('mixed-grade groups can receive any published test', async () => {
         stableId: fixture,
         version: 1,
         title: fixture,
-        subject: 'MATHEMATICS',
+        subject: { connect: { slug: 'mathematics' } },
         grade: '5',
         status: 'PUBLISHED',
         content: { questions: [] },

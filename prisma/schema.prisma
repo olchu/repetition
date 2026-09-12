@@ -18,18 +18,32 @@ enum AccountStatus {
   BLOCKED
 }
 
-enum Subject {
-  BIOLOGY
-  CHEMISTRY
-  ICT
-  PHYSICS
-  PSYCHOLOGY
-  SOCIOLOGY
-  SPANISH
-  SCIENCE
-  GEOGRAPHY
-  HISTORY
-  MATHEMATICS
+model Subject {
+  id String @id @default(cuid())
+  slug String @unique
+  name String
+  icon String?
+  color String
+  backgroundColor String
+  textColor String
+  sortOrder Int @default(0)
+  archived Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  tests Test[]
+  children ChildSubject[]
+}
+
+model ChildSubject {
+  childId String
+  subjectId String
+  sortOrder Int @default(0)
+  assignedAt DateTime @default(now())
+  child ChildProfile @relation(fields: [childId], references: [userId], onDelete: Cascade)
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+
+  @@id([childId, subjectId])
+  @@index([subjectId])
 }
 
 enum TestStatus {
@@ -69,7 +83,7 @@ model User {
 model ChildProfile {
   userId      String   @id
   displayName String
-  subjects    Subject[] @default([])
+  subjects    ChildSubject[]
   grade       String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -114,7 +128,8 @@ model Test {
   version        Int
   title          String
   description    String?
-  subject        Subject
+  subjectId      String
+  subject        Subject @relation(fields: [subjectId], references: [id], onDelete: Restrict)
   grade          String?
   passPercentage Int          @default(70)
   status         TestStatus   @default(DRAFT)
@@ -128,7 +143,7 @@ model Test {
   assignments    Assignment[]
 
   @@unique([stableId, version])
-  @@index([subject, status])
+  @@index([subjectId, status])
 }
 
 model Assignment {

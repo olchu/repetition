@@ -17,6 +17,7 @@ export async function GET(_request: Request, context: RouteContext) {
 
   const test = await prisma.test.findUnique({
     where: { id: (await context.params).id },
+    include: { subject: true },
   });
 
   if (!test) {
@@ -35,7 +36,7 @@ export async function GET(_request: Request, context: RouteContext) {
       version: test.version,
       title: test.title,
       description: test.description,
-      subject: test.subject.toLowerCase(),
+      subject: test.subject.slug,
       grade: test.grade,
       passPercentage: test.passPercentage,
       status: test.status.toLowerCase(),

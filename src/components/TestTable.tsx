@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import { FileText } from "lucide-react";
 import type { StudentTest, StudentTestStatus } from "@/lib/student-progress";
-import { subjectLabel } from "./SubjectCard";
+import { useSubjectLabel } from "./SubjectsProvider";
 import { TestActionsMenu } from "./TestActionsMenu";
 import styles from "./TestTable.module.css";
 
@@ -33,6 +33,7 @@ type TestTableProps = {
 };
 
 export function TestTable({ title, tests, showSubject = true, toolbar, empty }: TestTableProps) {
+  const subjectLabel = useSubjectLabel();
   const headingId = `test-table-${title.replace(/\W+/g, "-").toLowerCase()}`;
 
   return (

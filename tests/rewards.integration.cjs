@@ -38,10 +38,10 @@ test('first-attempt rewards, hint persistence, immutable answers, retries and co
   const fixture = `reward-test-${randomUUID()}`;
   let child;
   try {
-    child = await prisma.user.create({ data: { login: fixture, role: 'CHILD', passwordHash: 'not-a-login-hash', childProfile: { create: { displayName: 'Reward fixture', grade: '5' } } }, include: { childProfile: true } });
+    child = await prisma.user.create({ data: { login: fixture, role: 'CHILD', passwordHash: 'not-a-login-hash', childProfile: { create: { displayName: 'Reward fixture', grade: '5' } } }, include: { childProfile: { include: { subjects: { include: { subject: true }, orderBy: { sortOrder: 'asc' } } } } } });
     currentUser = child;
     const questions = ['q1', 'q2', 'q3', 'q4'].map((id) => ({ id, text: id, points: 5, hint: 'A useful hint', options: [{ id: 'a', text: 'Correct' }, { id: 'b', text: 'Wrong' }], correctOptionId: 'a' }));
-    const testRecord = await prisma.test.create({ data: { stableId: fixture, version: 1, title: fixture, subject: 'MATHEMATICS', grade: '5', status: 'PUBLISHED', questionCount: 4, content: buildTestContent(questions) } });
+    const testRecord = await prisma.test.create({ data: { stableId: fixture, version: 1, title: fixture, subject: { connect: { slug: 'mathematics' } }, grade: '5', status: 'PUBLISHED', questionCount: 4, content: buildTestContent(questions) } });
     const assignment = await prisma.assignment.create({ data: { childId: child.id, testId: testRecord.id } });
     const testContext = context({ testId: testRecord.id });
     const starts = await Promise.all(Array.from({ length: 3 }, () => start(null, testContext).then((response) => response.json())));
@@ -86,7 +86,7 @@ test('first-attempt rewards, hint persistence, immutable answers, retries and co
     assert.equal((await (await dashboard()).json()).stars, 1.5);
     await prisma.assignment.update({ where: { id: assignment.id }, data: { status: 'CANCELLED' } });
     assert.equal((await (await dashboard()).json()).stars, 1.5, 'cancelled assignments preserve balance');
-    const nextVersion = await prisma.test.create({ data: { stableId: fixture, version: 2, title: fixture, subject: 'MATHEMATICS', status: 'PUBLISHED', content: buildTestContent(questions) } });
+    const nextVersion = await prisma.test.create({ data: { stableId: fixture, version: 2, title: fixture, subject: { connect: { slug: 'mathematics' } }, status: 'PUBLISHED', content: buildTestContent(questions) } });
     await prisma.assignment.create({ data: { childId: child.id, testId: nextVersion.id } });
     const versionAttempt = await (await start(null, context({ testId: nextVersion.id }))).json();
     assert.equal(versionAttempt.attempt.reward.eligible, false, 'new version must not reset rewards');

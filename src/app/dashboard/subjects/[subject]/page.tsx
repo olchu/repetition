@@ -11,7 +11,8 @@ import {
   DashboardUnavailable,
   shellStyles,
 } from "@/components/DashboardShell";
-import { SubjectIcon, subjectLabel } from "@/components/SubjectCard";
+import { SubjectIcon } from "@/components/SubjectCard";
+import { useSubjectLabel } from "@/components/SubjectsProvider";
 import { TestActionButton } from "@/components/TestActionButton";
 import { TestActionsMenu } from "@/components/TestActionsMenu";
 import { TestFilters } from "@/components/TestFilters";
@@ -70,6 +71,7 @@ function pickUpProgress(test: StudentTest) {
 }
 
 export default function SubjectPage({ params }: PageProps<"/dashboard/subjects/[subject]">) {
+  const subjectLabel = useSubjectLabel();
   const { subject } = use(params);
   const { data, error, isLoading, reload } = useStudentOverview();
   const [filter, setFilter] = useState<TestFilter>("all");

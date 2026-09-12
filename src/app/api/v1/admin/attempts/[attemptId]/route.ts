@@ -27,7 +27,7 @@ export async function GET(_request: Request, context: RouteContext) {
       answers: true,
       result: true,
       child: { select: { id: true, login: true, childProfile: { select: { displayName: true } } } },
-      assignment: { include: { test: true } },
+      assignment: { include: { test: { include: { subject: true } } } },
     },
   });
 
@@ -55,7 +55,7 @@ export async function GET(_request: Request, context: RouteContext) {
       test: {
         id: attempt.assignment.test.id,
         title: attempt.assignment.test.title,
-        subject: attempt.assignment.test.subject.toLowerCase(),
+        subject: attempt.assignment.test.subject.slug,
         version: attempt.assignment.test.version,
         passPercentage: attempt.assignment.test.passPercentage,
       },

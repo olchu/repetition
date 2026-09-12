@@ -55,10 +55,16 @@
 
 ### Тесты
 
+Справочник: `GET /subjects` доступен авторизованным пользователям и возвращает
+метаданные предметов (включая архивные для истории) и список доступных иконок.
+Администратор создаёт предмет через `POST /admin/subjects` и редактирует через
+`PATCH /admin/subjects/:id`. Поля: slug, name, icon, color, backgroundColor, textColor,
+sortOrder, archived. Slug после создания неизменяем; удаление не предоставляется.
+
 | Метод | Endpoint | Назначение |
 | --- | --- | --- |
 | `POST` | `/admin/tests/import` | Загрузка multipart JSON-файла и валидация. |
-| `GET` | `/admin/tests` | Серверный список тестов: поиск по названию (`search`), фильтры `status` и `grade`, пагинация через `page` и `pageSize` (не более 50 записей). |
+| `GET` | `/admin/tests` | Серверный список тестов: поиск по названию (`search`), фильтры `status`, `grade`, `subjectId`, пагинация через `page` и `pageSize` (не более 50 записей на страницу). |
 | `GET` | `/admin/tests/:id` | Метаданные, предпросмотр и версии теста. |
 | `POST` | `/admin/tests/:id/publish` | Публикация черновика. |
 | `POST` | `/admin/tests/:id/archive` | Архивирование теста. |
@@ -98,8 +104,9 @@
 - `children_profiles`: `user_id`, `display_name`, `grade`;
 - `groups`: `id`, `name`, `status`;
 - `group_members`: `group_id`, `child_id`;
-- `subjects`: фиксированный seed-справочник либо enum;
-- `tests`: `id`, `stable_id`, `version`, `title`, `description`, `subject`, `grade`, `pass_percentage`, `status`, `question_count`, `content`, timestamps;
+- `Subject`: `id`, `slug`, `name`, `icon`, `color`, `backgroundColor`, `textColor`, `sortOrder`, `archived`, timestamps;
+- `ChildSubject`: `childId`, `subjectId`, `sortOrder`, `assignedAt`; составной первичный ключ и внешние ключи;
+- `tests`: `id`, `stable_id`, `version`, `title`, `description`, `subjectId` (FK), `grade`, `pass_percentage`, `status`, `question_count`, `content`, timestamps;
 - `assignments`: `id`, `test_id`, `child_id` или `group_id`, `status`, timestamps;
 - `attempts`: `id`, `assignment_id`, `child_id`, `test_version`, `status`, `started_at`, `submitted_at`;
 - `answers`: `attempt_id`, `question_id`, `option_id`;

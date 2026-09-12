@@ -21,11 +21,13 @@ export async function GET(request: Request) {
       : undefined;
   const search = searchParams.get("search")?.trim().slice(0, 100) ?? "";
   const grade = searchParams.get("grade")?.trim().slice(0, 50) ?? "";
+  const subjectId = searchParams.get("subjectId")?.trim();
   const requestedPage = Number.parseInt(searchParams.get("page") ?? "1", 10);
   const requestedPageSize = Number.parseInt(searchParams.get("pageSize") ?? "10", 10);
   const pageSize = Number.isFinite(requestedPageSize) ? Math.min(Math.max(requestedPageSize, 1), 50) : 10;
   const unpaginated = searchParams.get("all") === "true";
   const where: Prisma.TestWhereInput = {
+    ...(subjectId ? { subjectId } : {}),
     ...(status ? { status } : {}),
     ...(search ? { title: { contains: search, mode: "insensitive" } } : {}),
     ...(grade ? { grade } : {}),
@@ -65,7 +67,7 @@ export async function GET(request: Request) {
   return NextResponse.json({
     tests: tests.map((test) => ({
       ...test,
-      subject: test.subject.toLowerCase(),
+      subject: test.subject.slug,
       status: test.status.toLowerCase(),
       assignmentCount: test._count.assignments,
       _count: undefined,

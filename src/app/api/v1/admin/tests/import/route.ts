@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createTestDraft, validateTestDocument } from "@/lib/tests";
+import { createTestDraft, validateTestDocument, UnknownSubjectError } from "@/lib/tests";
 import { getCurrentUser } from "@/lib/auth";
 
 const MAX_IMPORT_BYTES = 1_000_000;
@@ -63,7 +63,13 @@ export async function POST(request: Request) {
     );
   }
 
-  const test = await createTestDraft(validation.value);
+  let test;
+  try {
+    test = await createTestDraft(validation.value);
+  } catch (error) {
+    if (error instanceof UnknownSubjectError) return NextResponse.json({ error: { code: "UNKNOWN_SUBJECT", message: error.message } }, { status: 422 });
+    throw error;
+  }
 
   return NextResponse.json(
     {
@@ -72,7 +78,7 @@ export async function POST(request: Request) {
         stableId: test.stableId,
         version: test.version,
         title: test.title,
-        subject: test.subject.toLowerCase(),
+        subject: test.subject.slug,
         status: test.status.toLowerCase(),
         questionCount: test.questionCount,
         passPercentage: test.passPercentage,

@@ -36,15 +36,15 @@ test('one test counted once across versions and assignments', async () => {
     child = await prisma.user.create({
       data: {
         login: fixture, role: 'CHILD', passwordHash: 'x',
-        childProfile: { create: { displayName: 'Overview fixture', grade: '5', subjects: ['MATHEMATICS', 'BIOLOGY'] } },
+        childProfile: { create: { displayName: 'Overview fixture', grade: '5', subjects: { create: ['mathematics', 'biology'].map((slug, sortOrder) => ({ subject: { connect: { slug } }, sortOrder })) } } },
       },
-      include: { childProfile: true },
+      include: { childProfile: { include: { subjects: { include: { subject: true }, orderBy: { sortOrder: 'asc' } } } } },
     });
     currentUser = child;
 
     const questions = [{ id: 'q1', text: 'q1', points: 1, options: [{ id: 'a', text: 'A' }, { id: 'b', text: 'B' }], correctOptionId: 'a' }];
-    const v1 = await prisma.test.create({ data: { stableId: fixture, version: 1, title: fixture, subject: 'MATHEMATICS', grade: '5', status: 'PUBLISHED', questionCount: 1, content: buildTestContent(questions) } });
-    const v2 = await prisma.test.create({ data: { stableId: fixture, version: 2, title: `${fixture} v2`, subject: 'MATHEMATICS', grade: '5', status: 'PUBLISHED', questionCount: 1, content: buildTestContent(questions) } });
+    const v1 = await prisma.test.create({ data: { stableId: fixture, version: 1, title: fixture, subject: { connect: { slug: 'mathematics' } }, grade: '5', status: 'PUBLISHED', questionCount: 1, content: buildTestContent(questions) } });
+    const v2 = await prisma.test.create({ data: { stableId: fixture, version: 2, title: `${fixture} v2`, subject: { connect: { slug: 'mathematics' } }, grade: '5', status: 'PUBLISHED', questionCount: 1, content: buildTestContent(questions) } });
 
     group = await prisma.group.create({ data: { name: fixture, members: { create: { childId: child.id } } } });
     await prisma.assignment.create({ data: { childId: child.id, testId: v1.id } });

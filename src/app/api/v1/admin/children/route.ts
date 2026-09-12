@@ -1,5 +1,5 @@
+import { childProfileInclude, resolveChildSubjects } from "@/lib/subject-catalog";
 import { isSubjectList } from "@/lib/subjects";
-import type { Subject } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
@@ -19,7 +19,7 @@ function publicChild(child: {
   login: string;
   status: string;
   createdAt: Date;
-  childProfile: { displayName: string; grade: string; subjects: Subject[] } | null;
+  childProfile: { displayName: string; grade: string; subjects: { subject: { slug: string } }[] } | null;
 }) {
   return {
     id: child.id,
@@ -28,7 +28,7 @@ function publicChild(child: {
     displayName: child.childProfile?.displayName ?? null,
     grade: child.childProfile?.grade ?? null,
     createdAt: child.createdAt,
-    subjects: child.childProfile?.subjects?.map((subject) => subject.toLowerCase()) ?? [],
+    subjects: child.childProfile?.subjects?.map((subject) => subject.subject.slug) ?? [],
   };
 }
 
@@ -58,7 +58,7 @@ export async function GET(request: Request) {
         },
       },
     },
-    include: { childProfile: true },
+    include: { childProfile: { include: childProfileInclude } },
     orderBy: { createdAt: "desc" },
   });
 
@@ -79,7 +79,8 @@ export async function POST(request: Request) {
   if (body?.subjects !== undefined && !isSubjectList(body.subjects)) {
     return NextResponse.json({ error: { code: "VALIDATION_ERROR", message: "Invalid subject list." } }, { status: 400 });
   }
-  const subjects = body?.subjects === undefined ? undefined : (body.subjects as string[]).map((subject) => subject.toUpperCase() as Subject);
+  const subjects = body?.subjects === undefined ? undefined : await resolveChildSubjects(body.subjects as string[]);
+  if (subjects === null) return NextResponse.json({ error: { message: "Unknown or archived subject." } }, { status: 422 });
   const login = typeof body?.login === "string" ? normalizeLogin(body.login) : "";
   const displayName = typeof body?.displayName === "string" ? body.displayName.trim() : "";
   const grade = typeof body?.grade === "string" ? body.grade.trim() : "";
@@ -104,9 +105,9 @@ export async function POST(request: Request) {
         role: "CHILD",
         login,
         passwordHash,
-        childProfile: { create: { displayName, grade, subjects: subjects ?? [] } },
+        childProfile: { create: { displayName, grade, subjects: { create: subjects ?? [] } } },
       },
-      include: { childProfile: true },
+      include: { childProfile: { include: childProfileInclude } },
     });
 
     return NextResponse.json({ child: publicChild(child) }, { status: 201 });

@@ -20,7 +20,7 @@ const prisma = {
         stableId: 'algebra-advanced',
         version: 1,
         title: 'Algebra Advanced',
-        subject: 'MATHEMATICS',
+        subject: { slug: 'mathematics' },
         grade: '5',
         status: 'DRAFT',
         createdAt: new Date('2026-01-02T00:00:00.000Z'),

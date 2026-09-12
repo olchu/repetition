@@ -31,7 +31,7 @@ export async function GET(_request: Request, context: RouteContext) {
       id: assignment.test.id,
       title: assignment.test.title,
       description: assignment.test.description,
-      subject: assignment.test.subject.toLowerCase(),
+      subject: assignment.test.subject.slug,
       grade: assignment.test.grade,
       passPercentage: assignment.test.passPercentage,
       questionCount: assignment.test.questionCount,
