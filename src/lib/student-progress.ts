@@ -35,6 +35,8 @@ export type StudentTest = {
   attemptCount: number;
   /** Set while a first try or a retry is unfinished. */
   inProgressAttemptId: string | null;
+  /** Answers saved in that unfinished attempt — "where you left off". */
+  inProgressAnswered: number | null;
   bestPercentage: number;
   latestPercentage: number | null;
   latestSubmittedAt: string | null;

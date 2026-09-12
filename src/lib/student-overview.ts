@@ -45,7 +45,7 @@ export async function loadStudentOverview(child: OverviewChild): Promise<Student
       },
       attempts: {
         where: { childId: child.id },
-        include: { result: true },
+        include: { result: true, _count: { select: { answers: true } } },
         orderBy: { startedAt: "desc" },
       },
     },
@@ -83,10 +83,12 @@ export async function loadStudentOverview(child: OverviewChild): Promise<Student
     const attempts = [...group.attempts].sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime());
     const submitted = attempts.filter((attempt) => attempt.result !== null);
     const latest = submitted[0] ?? null;
+    const unfinished = attempts.find((attempt) => attempt.status === "IN_PROGRESS") ?? null;
     const facts = {
       completed: submitted.length > 0,
       passed: submitted.some((attempt) => attempt.result?.passed === true),
-      inProgressAttemptId: attempts.find((attempt) => attempt.status === "IN_PROGRESS")?.id ?? null,
+      inProgressAttemptId: unfinished?.id ?? null,
+      inProgressAnswered: unfinished?._count.answers ?? null,
     };
 
     return {

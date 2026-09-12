@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { History, MoreHorizontal, Play, RotateCcw } from "lucide-react";
+import { useStartAttempt } from "@/lib/use-start-attempt";
 import styles from "./TestActionsMenu.module.css";
 
 type TestActionsMenuProps = {
@@ -17,8 +18,7 @@ export function TestActionsMenu({ testId, attemptCount, inProgressAttemptId }: T
   const router = useRouter();
   const rootRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { start, busy, error } = useStartAttempt(testId);
 
   useEffect(() => {
     if (!open) return;
@@ -37,21 +37,6 @@ export function TestActionsMenu({ testId, attemptCount, inProgressAttemptId }: T
       document.removeEventListener("keydown", onKeyDown);
     };
   }, [open]);
-
-  async function startAttempt() {
-    if (busy) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const response = await fetch(`/api/v1/me/tests/${testId}/attempts`, { method: "POST" });
-      if (!response.ok) throw new Error("start failed");
-      const payload = (await response.json()) as { attempt: { id: string } };
-      router.push(`/dashboard/attempts/${payload.attempt.id}`);
-    } catch {
-      setError("Couldn’t start the test. Try again.");
-      setBusy(false);
-    }
-  }
 
   const hasHistory = attemptCount > 0;
 
@@ -86,7 +71,7 @@ export function TestActionsMenu({ testId, attemptCount, inProgressAttemptId }: T
               role="menuitem"
               className={styles.item}
               disabled={busy}
-              onClick={() => void startAttempt()}
+              onClick={() => void start()}
             >
               {hasHistory
                 ? <RotateCcw size={15} strokeWidth={2.2} aria-hidden="true" />

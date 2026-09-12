@@ -7,6 +7,9 @@
   --muted: #6b756f;
   --acid: #d7f24a;
   --coral: #ff8e6e;
+  /* Reserved for one headline word per page — the child's name on Home, the
+     subject on its own page. */
+  --brand-gradient: linear-gradient(135deg, #43e5c0 0%, #16c6df 48%, #168cf0 100%);
 }
 
 * {

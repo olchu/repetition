@@ -12,17 +12,34 @@
 .main {
   position: relative;
   min-width: 0;
-  padding: 50px clamp(24px, 3vw, 50px) 30px;
+  /* Clears the absolutely positioned top bar. */
+  padding: 76px clamp(24px, 3vw, 50px) 40px;
 }
 
+/* Spans the content column so a section can put a back link on the left
+   without moving the stars and Sign out. Absolute, so Home's hero keeps
+   starting at the top of the column. */
 .topBar {
   position: absolute;
-  top: 20px;
+  top: 18px;
+  left: clamp(24px, 3vw, 50px);
   right: clamp(24px, 3vw, 50px);
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
   gap: 16px;
+}
+
+.topBarLeading {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+}
+
+.topBarActions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
 
 .starBalance {
@@ -40,29 +57,30 @@
 .signOut {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  min-height: 28px;
-  padding: 4px 0;
-  border: 0;
-  color: #64748b;
-  background: transparent;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 18px;
+  border: 1px solid #e3ecf8;
+  border-radius: 13px;
+  color: #16204a;
+  background: #fff;
   cursor: pointer;
   font: inherit;
-  font-size: 12px;
-  font-weight: 400;
-  transition: color 160ms ease;
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 4px 14px rgba(24, 44, 92, 0.05);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
 }
 
 .signOut svg {
-  width: 14px;
-  height: 14px;
-  color: currentColor;
+  width: 17px;
+  height: 17px;
+  color: #4a7cf7;
 }
 
 .signOut:hover {
-  color: #334155;
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  border-color: #c9d8ef;
+  box-shadow: 0 6px 18px rgba(24, 44, 92, 0.09);
 }
 
 /* Section heading shared by Subjects, Tests and Progress. */
@@ -92,7 +110,6 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 14px;
   border: 0;
   padding: 0;
   color: #526da8;

@@ -26,24 +26,32 @@ export function SubjectIcon({ subject, size }: { subject: string; size: number }
 
 type SubjectCardProps = {
   summary: StudentSubjectSummary;
-  /** The one line under the title; sections word it for their own purpose. */
+  /** The line under the title; sections word it for their own purpose. */
   meta: ReactNode;
+  /** "compact" packs four across on Home; "wide" fills the Subjects grid. */
+  variant?: "compact" | "wide";
 };
 
 /** A subject as Home and Subjects both draw it: white card, tinted icon and
  *  action, progress bar over passed tests. A subject with no tests still
  *  belongs on the grid, so the bar is replaced by an empty band. */
-export function SubjectCard({ summary, meta }: SubjectCardProps) {
+export function SubjectCard({ summary, meta, variant = "compact" }: SubjectCardProps) {
   const label = subjectLabel(summary.subject);
+  const wide = variant === "wide";
 
   return (
-    <article className={styles.card} data-subject={summary.subject}>
+    <article
+      className={`${styles.card} ${wide ? styles.cardWide : ""}`}
+      data-subject={summary.subject}
+    >
       <div className={styles.top}>
         <span className={styles.icon} aria-hidden="true">
-          <SubjectIcon subject={summary.subject} size={34} />
+          <SubjectIcon subject={summary.subject} size={wide ? 40 : 34} />
         </span>
         <h3>{label}</h3>
-        <ChevronRight className={styles.chevron} size={18} strokeWidth={2.2} aria-hidden="true" />
+        {/* The whole card links onward; the chevron only hints at it, and the
+            wider card is legible enough without it. */}
+        {!wide && <ChevronRight className={styles.chevron} size={18} strokeWidth={2.2} aria-hidden="true" />}
         {meta}
       </div>
 

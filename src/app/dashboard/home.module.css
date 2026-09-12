@@ -54,7 +54,12 @@
   /* Leave room for glyph overhang with the heading’s negative tracking. */
   padding-right: 0.08em;
   margin-right: -0.08em;
-  background: linear-gradient(135deg, #43e5c0 0%, #16c6df 48%, #168cf0 100%);
+  /* The clipped background is this box, and a line-height under 1 leaves the
+     descenders outside it. The padding grows the box; the margin takes the
+     space back so the line metrics don't move. */
+  padding-bottom: 0.18em;
+  margin-bottom: -0.18em;
+  background: var(--brand-gradient);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;

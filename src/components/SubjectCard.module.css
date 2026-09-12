@@ -140,8 +140,50 @@
   gap: 18px;
 }
 
+/* Three across, so each card has room for its counts and share. */
+.gridWide {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.cardWide {
+  padding: 16px 18px 16px;
+}
+
+.cardWide .top {
+  grid-template-columns: 54px minmax(0, 1fr);
+  gap: 4px 14px;
+}
+
+.cardWide .icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 15px;
+}
+
+.cardWide h3 {
+  font-size: 16px;
+}
+
+.cardWide .meta {
+  grid-column: 2;
+}
+
+.cardWide .track,
+.cardWide .emptyTrack {
+  margin-top: 14px;
+}
+
+.cardWide .action {
+  min-height: 40px;
+  font-size: 13px;
+}
+
 @media (max-width: 1400px) {
   .top { grid-template-columns: 40px minmax(0, 1fr) 24px; gap: 3px 8px; }
+  .cardWide .top { grid-template-columns: 50px minmax(0, 1fr); gap: 4px 12px; }
+  .cardWide .icon { width: 50px; height: 50px; }
   .icon { width: 44px; height: 44px; }
   .top h3 { font-size: 13px; overflow-wrap: anywhere; }
   .chevron { width: 24px; height: 24px; padding: 4px; }
@@ -149,11 +191,13 @@
 }
 
 @media (max-width: 1180px) {
-  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid,
+  .gridWide { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 720px) {
-  .grid { grid-template-columns: minmax(0, 1fr); }
+  .grid,
+  .gridWide { grid-template-columns: minmax(0, 1fr); }
 }
 
 @media (prefers-reduced-motion: reduce) {
