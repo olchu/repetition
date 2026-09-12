@@ -18,7 +18,11 @@ type TestListPayload = { tests: Test[]; pagination: TestPagination; filters: { g
 type AttemptOption = { id: string; text: string; isChosen: boolean; isCorrect: boolean };
 type AttemptQuestion = {
   id: string;
+  type: "choice" | "input";
   text: string;
+  /** What the child typed for an input question. */
+  value: string | null;
+  correctAnswers: string[];
   points: number;
   earnedPoints: number;
   answered: boolean;
@@ -189,7 +193,7 @@ function TestsManager({ onRefresh }: { onRefresh: () => Promise<void> }) {
   const [isLoading, setIsLoading] = useState(true);
   const [notice, setNotice] = useState<Notice>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [preview, setPreview] = useState<{ title: string; subject: string; passPercentage: number; questions: Array<{ id: string; text: string; options: Array<{ id: string; text: string; isCorrect: boolean }> }> } | null>(null);
+  const [preview, setPreview] = useState<{ title: string; subject: string; passPercentage: number; questions: Array<{ id: string; type: "choice" | "input"; text: string; options: Array<{ id: string; text: string; isCorrect: boolean }>; correctAnswers: string[] }> } | null>(null);
 
   const loadTests = useCallback(async (signal?: AbortSignal) => {
     setIsLoading(true);
@@ -322,7 +326,7 @@ function TestsManager({ onRefresh }: { onRefresh: () => Promise<void> }) {
         {isLoading && tests.length === 0 ? <p className={styles.empty}>Loading tests…</p> : tests.length === 0 ? <p className={styles.empty}>{search || grade || subjectId ? "No tests match these filters." : "No tests uploaded yet."}</p> : tests.map((test) => <div className={styles.controlRow} key={test.id}><div><strong>{test.title}</strong><span>{test.stableId} · v{test.version} · Grade {test.grade ?? "—"} · {test.questionCount} questions</span></div><span>{subjectLabels[test.subject] ?? test.subject}</span><span className={`${styles.pill} ${test.status === "published" ? styles.pillGood : ""}`}>{test.status}</span><span className={styles.rowActions}><button className={styles.textButton} type="button" onClick={() => void previewTest(test)}>Preview</button>{test.status === "draft" && <><button className={styles.textButton} type="button" onClick={() => void publishTest(test)}>Publish</button><button className={styles.textButton} type="button" onClick={() => void deleteTest(test)}>Delete</button></>}{test.status === "published" && <button className={styles.textButton} type="button" onClick={() => void archiveTest(test)}>Archive</button>}{test.status === "archived" && <><button className={styles.textButton} type="button" onClick={() => void restoreTest(test)}>Restore</button><button className={styles.textButton} type="button" onClick={() => void deleteTest(test)}>Delete</button></>}</span></div>)}
       </div>
       {pagination.totalItems > 0 && <nav className={styles.pagination} aria-label="Test list pages"><button className={styles.textButton} type="button" disabled={pagination.page <= 1 || isLoading} onClick={() => setPage((current) => Math.max(1, current - 1))}>Previous</button><span>Page {pagination.page} of {pagination.totalPages} · {pagination.totalItems} tests</span><button className={styles.textButton} type="button" disabled={pagination.page >= pagination.totalPages || isLoading} onClick={() => setPage((current) => Math.min(pagination.totalPages, current + 1))}>Next</button></nav>}
-      {preview && <section className={styles.preview} aria-label="Test preview"><div className={styles.sectionHeader}><div><span className={styles.meta}>{subjectLabels[preview.subject] ?? preview.subject}</span><h2>{preview.title}</h2></div><button className={styles.textButton} type="button" onClick={() => setPreview(null)}>Close preview</button></div><p>Pass at {preview.passPercentage}%</p>{preview.questions.map((question, index) => <article key={question.id}><span>0{index + 1}</span><div><h3>{question.text}</h3>{question.options.map((option) => <p className={option.isCorrect ? styles.correctOption : ""} key={option.id}>{option.isCorrect ? "✓ " : ""}{option.text}</p>)}</div></article>)}</section>}
+      {preview && <section className={styles.preview} aria-label="Test preview"><div className={styles.sectionHeader}><div><span className={styles.meta}>{subjectLabels[preview.subject] ?? preview.subject}</span><h2>{preview.title}</h2></div><button className={styles.textButton} type="button" onClick={() => setPreview(null)}>Close preview</button></div><p>Pass at {preview.passPercentage}%</p>{preview.questions.map((question, index) => <article key={question.id}><span>0{index + 1}</span><div><h3>{question.text}</h3>{question.options.map((option) => <p className={option.isCorrect ? styles.correctOption : ""} key={option.id}>{option.isCorrect ? "✓ " : ""}{option.text}</p>)}{question.type === "input" && <p className={styles.correctOption}>✓ Typed answer: {question.correctAnswers.join(" · ")}</p>}</div></article>)}</section>}
     </section>
   );
 }
@@ -500,18 +504,35 @@ function ResultsExplorer({ childAccounts, results }: { childAccounts: Child[]; r
                   {question.answered ? (question.isCorrect ? "Answered correctly" : "Answered incorrectly") : "Not answered"}
                   {" · "}{question.earnedPoints} / {question.points} {question.points === 1 ? "point" : "points"}
                 </p>
-                <ul className={styles.answerList}>
-                  {question.options.map((option) => (
-                    <li
-                      className={option.isCorrect ? styles.correctOption : option.isChosen ? styles.wrongOption : undefined}
-                      key={option.id}
-                    >
-                      <span aria-hidden="true">{option.isCorrect ? "✓" : option.isChosen ? "✗" : "·"}</span>
-                      {option.text}
-                      {option.isChosen && <em className={styles.answerTag}>chose this</em>}
+                {question.type === "input" ? (
+                  <ul className={styles.answerList}>
+                    {question.value !== null && (
+                      <li className={question.isCorrect ? styles.correctOption : styles.wrongOption}>
+                        <span aria-hidden="true">{question.isCorrect ? "✓" : "✗"}</span>
+                        {question.value}
+                        <em className={styles.answerTag}>typed this</em>
+                      </li>
+                    )}
+                    <li className={styles.correctOption}>
+                      <span aria-hidden="true">✓</span>
+                      {question.correctAnswers.join(" · ")}
+                      <em className={styles.answerTag}>accepted</em>
                     </li>
-                  ))}
-                </ul>
+                  </ul>
+                ) : (
+                  <ul className={styles.answerList}>
+                    {question.options.map((option) => (
+                      <li
+                        className={option.isCorrect ? styles.correctOption : option.isChosen ? styles.wrongOption : undefined}
+                        key={option.id}
+                      >
+                        <span aria-hidden="true">{option.isCorrect ? "✓" : option.isChosen ? "✗" : "·"}</span>
+                        {option.text}
+                        {option.isChosen && <em className={styles.answerTag}>chose this</em>}
+                      </li>
+                    ))}
+                  </ul>
+                )}
                 {question.explanation && <div className={styles.answerExplanation}><Markdown>{question.explanation}</Markdown></div>}
               </div>
             </article>

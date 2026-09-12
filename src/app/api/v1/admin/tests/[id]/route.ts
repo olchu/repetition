@@ -43,15 +43,19 @@ export async function GET(_request: Request, context: RouteContext) {
       questionCount: test.questionCount,
       questions: questions.map((question) => ({
         id: question.id,
+        type: question.type,
         text: question.text,
         points: question.points,
         hint: question.hint,
         explanation: question.explanation,
-        options: question.options.map((option) => ({
-          id: option.id,
-          text: option.text,
-          isCorrect: option.id === question.correctOptionId,
-        })),
+        options: question.type === "choice"
+          ? question.options.map((option) => ({
+              id: option.id,
+              text: option.text,
+              isCorrect: option.id === question.correctOptionId,
+            }))
+          : [],
+        correctAnswers: question.type === "input" ? question.correctAnswers : [],
       })),
     },
   });

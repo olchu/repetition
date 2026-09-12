@@ -198,8 +198,11 @@ model Answer {
   /// Author's question id from the test document ("q1"), not a database id.
   /// Test versions are immutable, so the reference stays valid for good.
   questionId String
-  /// Author's option id from the test document ("a").
-  optionId  String
+  /// Author's option id from the test document ("a"); set for choice questions.
+  optionId  String?
+  /// What the child typed, trimmed; set for input questions. Exactly one of
+  /// `optionId` and `value` is present (CHECK constraint in the migration).
+  value     String?
   updatedAt DateTime @updatedAt
   attempt   Attempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
 

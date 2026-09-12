@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
+import { isAnswerCorrect } from "@/lib/grading";
 import { readTestContent } from "@/lib/test-content";
 import { prisma } from "@/lib/prisma";
 
@@ -39,7 +40,7 @@ export async function GET(_request: Request, context: RouteContext) {
   }
 
   const { questions } = readTestContent(attempt.assignment.test.content);
-  const chosenByQuestion = new Map(attempt.answers.map((answer) => [answer.questionId, answer.optionId]));
+  const answersByQuestion = new Map(attempt.answers.map((answer) => [answer.questionId, answer]));
 
   return NextResponse.json({
     attempt: {
@@ -68,26 +69,33 @@ export async function GET(_request: Request, context: RouteContext) {
           }
         : null,
       questions: questions.map((question) => {
-        const chosenOptionId = chosenByQuestion.get(question.id) ?? null;
-        const isCorrect = chosenOptionId !== null && chosenOptionId === question.correctOptionId;
+        const answer = answersByQuestion.get(question.id);
+        const chosenOptionId = answer?.optionId ?? null;
+        const isCorrect = isAnswerCorrect(question, answer);
 
         return {
           id: question.id,
+          type: question.type,
           text: question.text,
           points: question.points,
           earnedPoints: isCorrect ? question.points : 0,
-          answered: chosenOptionId !== null,
+          answered: answer !== undefined,
           isCorrect,
           chosenOptionId,
-          correctOptionId: question.correctOptionId,
+          correctOptionId: question.type === "choice" ? question.correctOptionId : null,
+          /** What the child typed for an input question. */
+          value: answer?.value ?? null,
+          correctAnswers: question.type === "input" ? question.correctAnswers : [],
           hint: question.hint,
           explanation: question.explanation,
-          options: question.options.map((option) => ({
-            id: option.id,
-            text: option.text,
-            isChosen: option.id === chosenOptionId,
-            isCorrect: option.id === question.correctOptionId,
-          })),
+          options: question.type === "choice"
+            ? question.options.map((option) => ({
+                id: option.id,
+                text: option.text,
+                isChosen: option.id === chosenOptionId,
+                isCorrect: option.id === question.correctOptionId,
+              }))
+            : [],
         };
       }),
     },

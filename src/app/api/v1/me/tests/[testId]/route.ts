@@ -38,13 +38,13 @@ export async function GET(_request: Request, context: RouteContext) {
       // Hint content is revealed only by the attempt hint endpoint.
       questions: questions.map((question) => ({
         id: question.id,
+        type: question.type,
         text: question.text,
         points: question.points,
         hasHint: Boolean(question.hint),
-        options: question.options.map((option) => ({
-          id: option.id,
-          text: option.text,
-        })),
+        options: question.type === "choice"
+          ? question.options.map((option) => ({ id: option.id, text: option.text }))
+          : [],
       })),
     },
   });

@@ -8,17 +8,28 @@ export type TestOptionInput = {
   text: string;
 };
 
-export type TestQuestionInput = {
+type TestQuestionBase = {
   id: string;
   text: string;
   points?: number;
-  options: TestOptionInput[];
-  correctOptionId: string;
   /** Markdown revealed on demand while the question is still open. */
   hint?: string;
   /** Markdown revealed once the answer has been checked. */
   explanation?: string;
 };
+
+export type TestChoiceQuestionInput = TestQuestionBase & {
+  type?: "choice";
+  options: TestOptionInput[];
+  correctOptionId: string;
+};
+
+export type TestInputQuestionInput = TestQuestionBase & {
+  type: "input";
+  correctAnswers: string[];
+};
+
+export type TestQuestionInput = TestChoiceQuestionInput | TestInputQuestionInput;
 
 export type TestDocument = {
   schemaVersion: "1.0";
@@ -75,6 +86,8 @@ export function validateTestDocument(input: unknown):
   }
 
   document.questions.forEach((question, questionIndex) => {
+    if (question.type === "input") return;
+
     const optionIds = question.options.map((option) => option.id);
     const optionDuplicates = duplicateIds(optionIds);
 

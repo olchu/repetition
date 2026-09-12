@@ -62,16 +62,31 @@
       "additionalProperties": false,
       "required": [
         "id",
-        "text",
-        "options",
-        "correctOptionId"
+        "text"
       ],
+      "if": {
+        "required": ["type"],
+        "properties": { "type": { "const": "input" } }
+      },
+      "then": {
+        "required": ["correctAnswers"],
+        "properties": { "options": false, "correctOptionId": false }
+      },
+      "else": {
+        "required": ["options", "correctOptionId"],
+        "properties": { "correctAnswers": false }
+      },
       "properties": {
         "id": {
           "type": "string",
           "pattern": "^[a-zA-Z0-9_-]+$",
           "minLength": 1,
           "maxLength": 100
+        },
+        "type": {
+          "description": "\"choice\": pick one of the options. \"input\": type the answer into a field.",
+          "enum": ["choice", "input"],
+          "default": "choice"
         },
         "text": {
           "type": "string",
@@ -95,6 +110,17 @@
           "type": "string",
           "minLength": 1,
           "maxLength": 100
+        },
+        "correctAnswers": {
+          "description": "Accepted answers of an input question; the first is shown as the correct one. Case, extra spaces and the decimal separator (2.3 = 2,3) are ignored, numbers compare by value.",
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 20,
+          "items": {
+            "type": "string",
+            "pattern": "\\S",
+            "maxLength": 200
+          }
         },
         "hint": {
           "description": "Markdown. Nudge the child can reveal while the question is still open.",

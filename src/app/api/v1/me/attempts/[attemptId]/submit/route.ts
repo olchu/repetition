@@ -4,6 +4,7 @@ import { findAttemptForChild, serializeAttempt } from "@/lib/attempts";
 import { readTestContent } from "@/lib/test-content";
 import { withChildAttemptLock } from "@/lib/attempt-lock";
 import { rewardUnits } from "@/lib/rewards";
+import { isAnswerCorrect } from "@/lib/grading";
 
 type RouteContext = { params: Promise<{ attemptId: string }> };
 
@@ -34,11 +35,11 @@ export async function POST(_request: Request, context: RouteContext) {
 
     const { questions } = readTestContent(attempt.assignment.test.content);
     const totalPoints = questions.reduce((total, question) => total + question.points, 0);
-    const answersByQuestion = new Map(attempt.answers.map((answer) => [answer.questionId, answer.optionId]));
-    const earnedPoints = questions.reduce((total, question) => {
-      const selectedOptionId = answersByQuestion.get(question.id);
-      return total + (selectedOptionId === question.correctOptionId ? question.points : 0);
-    }, 0);
+    const answersByQuestion = new Map(attempt.answers.map((answer) => [answer.questionId, answer]));
+    const earnedPoints = questions.reduce(
+      (total, question) => total + (isAnswerCorrect(question, answersByQuestion.get(question.id)) ? question.points : 0),
+      0,
+    );
     const percentage = totalPoints === 0 ? 0 : Math.round((earnedPoints / totalPoints) * 10000) / 100;
     const passed = percentage >= attempt.assignment.test.passPercentage;
 

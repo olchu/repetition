@@ -13,17 +13,31 @@ export type StoredOption = {
   text: string;
 };
 
-export type StoredQuestion = {
+type StoredQuestionBase = {
   id: string;
   text: string;
   points: number;
-  options: StoredOption[];
-  correctOptionId: string;
   /** Markdown revealed on demand while the question is still open. */
   hint: string | null;
   /** Markdown revealed once the answer has been checked. */
   explanation: string | null;
 };
+
+/** The child picks one of the options. */
+export type StoredChoiceQuestion = StoredQuestionBase & {
+  type: "choice";
+  options: StoredOption[];
+  correctOptionId: string;
+};
+
+/** The child types the answer; any of `correctAnswers` is accepted, see `lib/grading`. */
+export type StoredInputQuestion = StoredQuestionBase & {
+  type: "input";
+  /** The first one is shown to the child as "the correct answer". */
+  correctAnswers: string[];
+};
+
+export type StoredQuestion = StoredChoiceQuestion | StoredInputQuestion;
 
 export type TestContent = {
   schemaVersion: string;
@@ -35,25 +49,35 @@ type QuestionSource = {
   id: string;
   text: string;
   points?: number;
-  options: Array<{ id: string; text: string }>;
-  correctOptionId: string;
   hint?: string;
   explanation?: string;
-};
+} & (
+  | { type?: "choice"; options: Array<{ id: string; text: string }>; correctOptionId: string }
+  | { type: "input"; correctAnswers: string[] }
+);
 
 /** Normalises a validated upload into the shape stored in `Test.content`. */
 export function buildTestContent(questions: QuestionSource[]): TestContent {
   return {
     schemaVersion: CONTENT_VERSION,
-    questions: questions.map((question) => ({
-      id: question.id,
-      text: question.text,
-      points: question.points ?? 1,
-      options: question.options.map((option) => ({ id: option.id, text: option.text })),
-      correctOptionId: question.correctOptionId,
-      hint: question.hint ?? null,
-      explanation: question.explanation ?? null,
-    })),
+    questions: questions.map((question): StoredQuestion => {
+      const base = {
+        id: question.id,
+        text: question.text,
+        points: question.points ?? 1,
+        hint: question.hint ?? null,
+        explanation: question.explanation ?? null,
+      };
+
+      return question.type === "input"
+        ? { ...base, type: "input", correctAnswers: question.correctAnswers.map((answer) => answer.trim()) }
+        : {
+            ...base,
+            type: "choice",
+            options: question.options.map((option) => ({ id: option.id, text: option.text })),
+            correctOptionId: question.correctOptionId,
+          };
+    }),
   };
 }
 
@@ -70,7 +94,10 @@ export function readTestContent(value: Prisma.JsonValue | null | undefined): Tes
     if (Array.isArray(record.questions)) {
       return {
         schemaVersion: typeof record.schemaVersion === "string" ? record.schemaVersion : CONTENT_VERSION,
-        questions: record.questions as StoredQuestion[],
+        // Content stored before input questions existed has no `type`: every such question is a choice.
+        questions: (record.questions as Array<{ type?: unknown }>).map(
+          (question) => ({ ...question, type: question.type === "input" ? "input" : "choice" }) as StoredQuestion,
+        ),
       };
     }
   }

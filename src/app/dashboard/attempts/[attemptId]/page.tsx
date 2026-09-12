@@ -6,14 +6,20 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { ArrowLeft, ArrowRight, Check, ChevronsRight, HelpCircle, Lightbulb, X } from "lucide-react";
 import { Markdown } from "@/components/Markdown";
+import { MAX_ANSWER_LENGTH } from "@/lib/grading";
 import styles from "../../test.module.css";
 
 type Question = {
   id: string;
+  /** "choice": pick one of the options; "input": type the answer. */
+  type: "choice" | "input";
   text: string;
   points: number;
+  /** Empty for input questions. */
   options: Array<{ id: string; text: string }>;
   correctOptionId?: string | null;
+  /** The correct answer of a checked input question. */
+  correctAnswer?: string | null;
   /** Markdown the child can reveal before answering. */
   hint?: string | null;
   hasHint: boolean;
@@ -22,12 +28,15 @@ type Question = {
   explanation?: string | null;
 };
 
+/** A checked answer (the chosen option or the typed value) with the server's verdict. */
+type SavedAnswer = { questionId: string; optionId: string | null; value: string | null; isCorrect: boolean };
+
 type Attempt = {
   reward: { eligible: boolean; pendingStars: number; earnedStars: number };
   id: string;
   status: "in_progress" | "submitted";
   test: { id: string; title: string; subject: string; questions: Question[] };
-  answers: Array<{ questionId: string; optionId: string }>;
+  answers: SavedAnswer[];
   result: { earnedPoints: number; totalPoints: number; percentage: number; passed: boolean } | null;
 };
 
@@ -36,7 +45,8 @@ type RouteContext = { params: Promise<{ attemptId: string }> };
 export default function AttemptPage({ params }: RouteContext) {
   const subjectLabel = useSubjectLabel();
   const [attempt, setAttempt] = useState<Attempt | null>(null);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [answers, setAnswers] = useState<Record<string, SavedAnswer>>({});
+  /** The chosen option id or the typed text of each question. */
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [currentIndex, setCurrentIndex] = useState(0);
   const [hintsShown, setHintsShown] = useState<Record<string, boolean>>({});
@@ -54,10 +64,10 @@ export default function AttemptPage({ params }: RouteContext) {
         return;
       }
       const payload = (await response.json()) as { attempt: Attempt };
-      const savedAnswers = Object.fromEntries(payload.attempt.answers.map((answer) => [answer.questionId, answer.optionId]));
+      const savedAnswers = Object.fromEntries(payload.attempt.answers.map((answer) => [answer.questionId, answer]));
       setAttempt(payload.attempt);
       setAnswers(savedAnswers);
-      setDrafts(savedAnswers);
+      setDrafts(Object.fromEntries(payload.attempt.answers.map((answer) => [answer.questionId, answer.optionId ?? answer.value ?? ""])));
       const nextQuestionIndex = payload.attempt.test.questions.findIndex((question) => !savedAnswers[question.id]);
       setCurrentIndex(payload.attempt.status === "submitted" ? 0 : nextQuestionIndex === -1 ? Math.max(0, payload.attempt.test.questions.length - 1) : nextQuestionIndex);
       setState("ready");
@@ -71,23 +81,28 @@ export default function AttemptPage({ params }: RouteContext) {
     return () => window.clearTimeout(timer);
   }, [loadAttempt]);
 
-  async function chooseOption(questionId: string, optionId: string) {
+  async function checkAnswer(question: Question, draft: string) {
     if (!attemptId || !attempt || attempt.status !== "in_progress" || state !== "ready") return;
     setSaveError(null);
     setState("saving");
     try {
-      const response = await fetch(`/api/v1/me/attempts/${attemptId}/answers/${questionId}`, {
+      const response = await fetch(`/api/v1/me/attempts/${attemptId}/answers/${question.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ optionId }),
+        body: JSON.stringify(question.type === "input" ? { value: draft } : { optionId: draft }),
       });
       if (!response.ok) throw new Error("Answer could not be saved");
-      const payload = (await response.json()) as { reward: Attempt["reward"]; feedback: { correctOptionId: string | null; explanation: string | null; hintUsed: boolean } };
-      setAnswers((current) => ({ ...current, [questionId]: optionId }));
+      const payload = (await response.json()) as {
+        reward: Attempt["reward"];
+        answer: SavedAnswer;
+        feedback: Pick<Question, "correctOptionId" | "correctAnswer" | "explanation" | "hintUsed">;
+      };
+      setAnswers((current) => ({ ...current, [question.id]: payload.answer }));
+      setDrafts((current) => ({ ...current, [question.id]: payload.answer.optionId ?? payload.answer.value ?? draft }));
       setAttempt((current) => current ? {
         ...current,
         reward: payload.reward,
-        test: { ...current.test, questions: current.test.questions.map((item) => item.id === questionId ? { ...item, ...payload.feedback } : item) },
+        test: { ...current.test, questions: current.test.questions.map((item) => item.id === question.id ? { ...item, ...payload.feedback } : item) },
       } : current);
     } catch {
       setSaveError("Your answer wasn’t saved. Please try again.");
@@ -143,9 +158,14 @@ export default function AttemptPage({ params }: RouteContext) {
 
   if (!question) return <main className={styles.statePage}>This test has no questions yet.</main>;
   const submitted = attempt.status === "submitted";
-  const checked = Boolean(answers[question.id]) || submitted;
-  const correct = checked && answers[question.id] === question.correctOptionId;
-  const correctOption = question.options.find((option) => option.id === question.correctOptionId);
+  const answer = answers[question.id];
+  const checked = Boolean(answer) || submitted;
+  const correct = Boolean(answer?.isCorrect);
+  const correctAnswerText = question.type === "input"
+    ? question.correctAnswer
+    : question.options.find((option) => option.id === question.correctOptionId)?.text;
+  const draft = drafts[question.id] ?? "";
+  const canCheck = !busy && !checked && draft.trim() !== "";
   const hintOpen = Boolean(hintsShown[question.id]);
 
   return (
@@ -192,19 +212,44 @@ export default function AttemptPage({ params }: RouteContext) {
             )}
           </div>
         )}
-        <div className={styles.options} role="group" aria-label="Answer choices">
-          {question.options.map((option, index) => (
-            <button className={`${styles.option} ${drafts[question.id] === option.id ? styles.optionSelected : ""} ${checked && option.id === question.correctOptionId ? styles.optionCorrect : ""} ${checked && answers[question.id] === option.id && !correct ? styles.optionWrong : ""}`} key={option.id} type="button" aria-pressed={drafts[question.id] === option.id} disabled={busy || checked} onClick={() => { setDrafts((current) => ({ ...current, [question.id]: option.id })); setSaveError(null); }}>
-              <span className={styles.optionLetter} aria-hidden="true">{String.fromCharCode(65 + index)}</span>
-              <span className={styles.optionText}>{option.text}</span>
-            </button>
-          ))}
-        </div>
+        {question.type === "input" ? (
+          <div className={styles.inputAnswer}>
+            <label className={styles.inputLabel} htmlFor={`answer-${question.id}`}>Your answer</label>
+            <input
+              className={`${styles.answerInput} ${answer ? (correct ? styles.answerInputCorrect : styles.answerInputWrong) : ""}`}
+              id={`answer-${question.id}`}
+              type="text"
+              value={draft}
+              placeholder="Type your answer"
+              maxLength={MAX_ANSWER_LENGTH}
+              autoComplete="off"
+              autoCapitalize="off"
+              autoCorrect="off"
+              spellCheck={false}
+              disabled={busy || checked}
+              onChange={(event) => { setDrafts((current) => ({ ...current, [question.id]: event.target.value })); setSaveError(null); }}
+              onKeyDown={(event) => {
+                if (event.key !== "Enter" || event.nativeEvent.isComposing || !canCheck) return;
+                event.preventDefault();
+                void checkAnswer(question, draft);
+              }}
+            />
+          </div>
+        ) : (
+          <div className={styles.options} role="group" aria-label="Answer choices">
+            {question.options.map((option, index) => (
+              <button className={`${styles.option} ${draft === option.id ? styles.optionSelected : ""} ${checked && option.id === question.correctOptionId ? styles.optionCorrect : ""} ${checked && answer?.optionId === option.id && !correct ? styles.optionWrong : ""}`} key={option.id} type="button" aria-pressed={draft === option.id} disabled={busy || checked} onClick={() => { setDrafts((current) => ({ ...current, [question.id]: option.id })); setSaveError(null); }}>
+                <span className={styles.optionLetter} aria-hidden="true">{String.fromCharCode(65 + index)}</span>
+                <span className={styles.optionText}>{option.text}</span>
+              </button>
+            ))}
+          </div>
+        )}
         {checked && <div className={`${styles.feedback} ${correct ? styles.feedbackCorrect : styles.feedbackWrong}`} role="status">
           {attempt.reward.eligible && !submitted && <p>{correct ? `+${question.hintUsed ? 0.5 : 1} ⭐` : "0 ⭐"}</p>}
           <div className={styles.feedbackHeading}>
             {correct ? <Check size={24} aria-hidden="true" /> : <X size={24} aria-hidden="true" />}
-            <div><h3>{correct ? "Correct!" : answers[question.id] ? "Not quite!" : "Not answered"}</h3><p>{correct ? "Well done! You got it right." : `The correct answer is ${correctOption?.text ?? "unavailable"}.`}</p></div>
+            <div><h3>{correct ? "Correct!" : answer ? "Not quite!" : "Not answered"}</h3><p>{correct ? "Well done! You got it right." : `The correct answer is ${correctAnswerText ?? "unavailable"}.`}</p></div>
           </div>
           {question.explanation && <div className={styles.feedbackExplanation}><Lightbulb size={20} aria-hidden="true" /><div><h4>Explanation</h4><Markdown className={styles.feedbackProse}>{question.explanation}</Markdown></div></div>}
         </div>}
@@ -216,7 +261,7 @@ export default function AttemptPage({ params }: RouteContext) {
             {!isLastQuestion && !checked && <button className={styles.secondaryAction} type="button" onClick={() => { setCurrentIndex((index) => index + 1); setSaveError(null); }} disabled={busy}><ChevronsRight size={19} aria-hidden="true" />Skip question</button>}
           </div>
           {!checked ? (
-            <button className={styles.primaryAction} type="button" onClick={() => void chooseOption(question.id, drafts[question.id])} disabled={busy || !drafts[question.id]}>{state === "saving" ? "Checking…" : "Check answer"}<Check size={20} aria-hidden="true" /></button>
+            <button className={styles.primaryAction} type="button" onClick={() => void checkAnswer(question, draft)} disabled={!canCheck}>{state === "saving" ? "Checking…" : "Check answer"}<Check size={20} aria-hidden="true" /></button>
           ) : isLastQuestion && submitted ? (
             <Link className={styles.primaryAction} href="/dashboard">Back to dashboard<ArrowRight size={20} aria-hidden="true" /></Link>
           ) : isLastQuestion ? (

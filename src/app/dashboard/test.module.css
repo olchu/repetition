@@ -29,6 +29,16 @@
 .optionWrong { border-color: #ff657c; background: #fff0f3; }
 .optionWrong .optionLetter { color: #fff; background: #ff4c66; }
 .optionCorrect:disabled, .optionWrong:disabled, .option:disabled[aria-pressed] { cursor: default; }
+.inputAnswer { display: grid; gap: 10px; max-width: 460px; margin-top: 28px; }
+.inputLabel { color: #5673b0; font-size: 13px; font-weight: 600; }
+.answerInput { width: 100%; min-height: 64px; padding: 0 20px; border: 1px solid #dfe8fa; border-radius: 14px; color: #080d50; background: #fbfdff; font: inherit; font-size: 22px; font-weight: 700; transition: border-color 160ms ease, box-shadow 160ms ease; }
+.answerInput::placeholder { color: #9fb2d6; font-weight: 500; }
+.answerInput:hover:not(:disabled) { border-color: #8ddaf7; }
+.answerInput:focus { outline: none; border-color: #00aaff; box-shadow: 0 0 0 3px #00aaff26; }
+/* Safari fades disabled fields; a checked answer must stay fully legible. */
+.answerInput:disabled { opacity: 1; -webkit-text-fill-color: currentColor; cursor: default; }
+.answerInputCorrect { border-color: #24c499; color: #138264; background: #e8faf2; }
+.answerInputWrong { border-color: #ff657c; color: #e13e59; background: #fff0f3; }
 .feedback { margin-top: 18px; padding: 18px; border-radius: 14px; }
 .feedbackCorrect { color: #138264; background: #e8faf2; }
 .feedbackWrong { color: #e13e59; background: #fff0f3; }
@@ -83,7 +93,7 @@
   .attemptActions > .primaryAction { width: 100%; }
   .segments { gap: 4px; }
 }
-@media (prefers-reduced-motion: reduce) { .option, .hintToggle { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .option, .hintToggle, .answerInput { transition: none; } }
 .rewardStatus {
   margin: 12px 0;
   color: #92400e;

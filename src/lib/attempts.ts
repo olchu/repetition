@@ -1,6 +1,7 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "./prisma";
-import { readTestContent } from "./test-content";
+import { isAnswerCorrect, type SubmittedAnswer } from "./grading";
+import { readTestContent, type StoredQuestion } from "./test-content";
 import { rewardUnits } from "./rewards";
 
 const attemptInclude = {
@@ -33,6 +34,26 @@ export async function findAttemptForChild(attemptId: string, childId: string, cl
   });
 }
 
+/** Answer key of one question; revealed only once it is checked or the attempt is submitted. */
+export function revealedAnswerKey(question: StoredQuestion) {
+  return {
+    ...(question.type === "input"
+      ? { correctAnswer: question.correctAnswers[0] ?? null }
+      : { correctOptionId: question.correctOptionId }),
+    explanation: question.explanation,
+  };
+}
+
+/** A saved answer with the server's verdict, so the client never grades typed values itself. */
+export function serializeAnswer(question: StoredQuestion | undefined, answer: SubmittedAnswer & { questionId: string }) {
+  return {
+    questionId: answer.questionId,
+    optionId: answer.optionId,
+    value: answer.value,
+    isCorrect: question ? isAnswerCorrect(question, answer) : false,
+  };
+}
+
 export function serializeAttempt(attempt: AttemptWithTest) {
   const revealAnswers = attempt.status === "SUBMITTED";
   const answeredQuestionIds = new Set(attempt.answers.map((answer) => answer.questionId));
@@ -55,27 +76,19 @@ export function serializeAttempt(attempt: AttemptWithTest) {
       passPercentage: attempt.assignment.test.passPercentage,
       questions: questions.map((question) => ({
         id: question.id,
+        type: question.type,
         text: question.text,
         points: question.points,
         hasHint: Boolean(question.hint),
         hintUsed: attempt.hintQuestionIds.includes(question.id),
         hint: revealAnswers || answeredQuestionIds.has(question.id) || attempt.hintQuestionIds.includes(question.id) ? question.hint : null,
-        options: question.options.map((option) => ({
-          id: option.id,
-          text: option.text,
-        })),
-        ...(revealAnswers || answeredQuestionIds.has(question.id)
-          ? {
-              correctOptionId: question.correctOptionId,
-              explanation: question.explanation,
-            }
-          : {}),
+        options: question.type === "choice"
+          ? question.options.map((option) => ({ id: option.id, text: option.text }))
+          : [],
+        ...(revealAnswers || answeredQuestionIds.has(question.id) ? revealedAnswerKey(question) : {}),
       })),
     },
-    answers: attempt.answers.map((answer) => ({
-      questionId: answer.questionId,
-      optionId: answer.optionId,
-    })),
+    answers: attempt.answers.map((answer) => serializeAnswer(questions.find((question) => question.id === answer.questionId), answer)),
     result: attempt.result
       ? {
           earnedPoints: attempt.result.earnedPoints,
