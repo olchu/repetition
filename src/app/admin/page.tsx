@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useSubjects } from "@/components/SubjectsProvider";
 import { SubjectManager } from "@/components/SubjectManager";
+import { AssignmentPlanner } from "@/components/AssignmentPlanner";
+import { getApiError } from "@/lib/api-error";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { Markdown } from "@/components/Markdown";
 import { SignOutButton } from "@/components/SignOutButton";
@@ -45,14 +47,6 @@ type View = "subjects" | "overview" | "children" | "groups" | "tests" | "assignm
 type Notice = { tone: "success" | "error"; text: string } | null;
 
 
-
-async function getApiError(response: Response, fallback: string) {
-  const payload = (await response.json().catch(() => null)) as {
-    error?: { message?: string; details?: Array<{ path?: string; message?: string }> };
-  } | null;
-  const details = payload?.error?.details?.map((detail) => `${detail.path ?? "$"}: ${detail.message ?? "Invalid value."}`).join(" ");
-  return details ? `${payload?.error?.message ?? fallback} ${details}` : payload?.error?.message ?? fallback;
-}
 
 function AdminNavigation({ view, onChange }: { view: View; onChange: (view: View) => void }) {
   return (
@@ -333,80 +327,6 @@ function TestsManager({ onRefresh }: { onRefresh: () => Promise<void> }) {
   );
 }
 
-function AssignmentManager({ childAccounts, groups, onRefresh }: { childAccounts: Child[]; groups: Group[]; onRefresh: () => Promise<void> }) {
-  const { subjectLabels } = useSubjects();
-  const [testId, setTestId] = useState("");
-  const [target, setTarget] = useState<"children" | "group">("children");
-  const [groupId, setGroupId] = useState("");
-  const [selectedChildren, setSelectedChildren] = useState<Record<string, boolean>>({});
-  const [publishedTests, setPublishedTests] = useState<Test[]>([]);
-  const [isLoadingTests, setIsLoadingTests] = useState(true);
-  const [notice, setNotice] = useState<Notice>(null);
-  const selectedGrades = new Set(childAccounts.filter((child) => selectedChildren[child.id]).map((child) => child.grade).filter((grade): grade is string => grade !== null));
-  const selectedGrade = selectedGrades.size === 1 ? [...selectedGrades][0] : null;
-  const availableTests = target === "children"
-    ? selectedGrade ? publishedTests.filter((test) => test.grade === selectedGrade) : []
-    : publishedTests;
-
-useEffect(() => {
-  const controller = new AbortController();
-  const timer = window.setTimeout(async () => {
-    try {
-      const response = await fetch("/api/v1/admin/tests?status=published&all=true", { cache: "no-store", signal: controller.signal });
-      if (!response.ok) throw new Error(await getApiError(response, "Unable to load published tests."));
-      const payload = (await response.json()) as TestListPayload;
-      setPublishedTests(payload.tests);
-    } catch (error) {
-      if (!(error instanceof DOMException && error.name === "AbortError")) {
-        setNotice({ tone: "error", text: error instanceof Error ? error.message : "Unable to load published tests." });
-      }
-    } finally {
-      if (!controller.signal.aborted) setIsLoadingTests(false);
-    }
-  }, 0);
-  return () => {
-    window.clearTimeout(timer);
-    controller.abort();
-  };
-}, []);
-
-function toggleChild(id: string) {
-  setSelectedChildren((current) => ({ ...current, [id]: !current[id] }));
-  setTestId("");
-}
-
-async function assignTest(event: FormEvent<HTMLFormElement>) {
-  event.preventDefault();
-  const childIds = Object.entries(selectedChildren).filter(([, selected]) => selected).map(([id]) => id);
-  if (!testId || (target === "children" && childIds.length === 0) || (target === "group" && !groupId)) {
-    setNotice({ tone: "error", text: target === "children" ? "Choose a published test and at least one child." : "Choose a published test and a group." });
-    return;
-  }
-  const response = await fetch("/api/v1/admin/assignments", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(target === "children" ? { testId, childIds } : { testId, groupId }),
-  });
-  setNotice(response.ok ? { tone: "success", text: "Test assignment saved." } : { tone: "error", text: await getApiError(response, "Unable to assign test.") });
-  if (response.ok) {
-    setSelectedChildren({});
-    setGroupId("");
-    await onRefresh();
-  }
-}
-
-return (
-  <section className={styles.controlSection} aria-labelledby="assignments-heading">
-    <div className={styles.controlHeader}><div><p className={styles.eyebrow}>Learning plan</p><h1 id="assignments-heading">Assignments</h1></div><span>Children or groups</span></div>
-    <form className={styles.assignmentForm} onSubmit={assignTest}>
-      <fieldset><legend>Assign to</legend><div className={styles.targetSwitch}><label><input type="radio" name="target" checked={target === "children"} onChange={() => { setTarget("children"); setTestId(""); }} />Children</label><label><input type="radio" name="target" checked={target === "group"} onChange={() => { setTarget("group"); setTestId(""); }} />Group</label></div>{target === "children" ? <><div className={styles.childChoices}>{childAccounts.filter((child) => child.status === "active").map((child) => <label key={child.id}><input type="checkbox" checked={Boolean(selectedChildren[child.id])} onChange={() => toggleChild(child.id)} />{child.displayName ?? child.login}<span>{child.grade ?? "—"}</span></label>)}</div><p className={styles.gradeHint}>{selectedGrade ? `Showing tests for grade ${selectedGrade}.` : selectedGrades.size > 1 ? "Choose children from one grade." : "Choose a child to see matching tests."}</p></> : <><select value={groupId} onChange={(event) => { setGroupId(event.target.value); setTestId(""); }}><option value="">Choose a group</option>{groups.filter((group) => group.status === "active").map((group) => <option key={group.id} value={group.id}>{group.name} · {group.memberCount} children</option>)}</select><p className={styles.gradeHint}>Groups may mix grades. All published tests are available.</p></>}</fieldset>
-      <label>Published test<select value={testId} onChange={(event) => setTestId(event.target.value)} disabled={isLoadingTests || (target === "children" && !selectedGrade)}><option value="">{isLoadingTests ? "Loading tests…" : target === "children" && !selectedGrade ? "Choose recipient first" : "Choose a test"}</option>{availableTests.map((test) => <option value={test.id} key={test.id}>{test.title} · Grade {test.grade} · {subjectLabels[test.subject] ?? test.subject}</option>)}</select></label>
-      <button className={styles.action} type="submit">Assign test<span aria-hidden="true">↗</span></button>
-    </form>
-    {notice && <p className={`${styles.notice} ${notice.tone === "error" ? styles.noticeError : ""}`} role={notice.tone === "error" ? "alert" : "status"}>{notice.text}</p>}
-  </section>
-); }
-
 function ResultsExplorer({ childAccounts, results }: { childAccounts: Child[]; results: Result[] }) {
   const { subjectLabels } = useSubjects();
   const [childId, setChildId] = useState("");
@@ -605,7 +525,7 @@ export default function AdminPage() {
       {view === "groups" && <GroupsManager childAccounts={data.children} groups={data.groups} onRefresh={loadAdmin} />}
       {view === "subjects" && <SubjectManager />}
       {view === "tests" && <TestsManager onRefresh={loadAdmin} />}
-      {view === "assignments" && <AssignmentManager childAccounts={data.children} groups={data.groups} onRefresh={loadAdmin} />}
+      {view === "assignments" && <AssignmentPlanner childAccounts={data.children} groups={data.groups} onRefresh={loadAdmin} />}
       {view === "results" && <ResultsExplorer childAccounts={data.children} results={data.results} />}
       {view === "overview" && <>
         <section className={styles.hero} aria-labelledby="admin-title"><div><p className={styles.eyebrow}>Administrator overview</p><h1 id="admin-title">Keep learning moving.</h1><p className={styles.heroCopy}>A clear view of who is practicing, what is ready, and where progress is building.</p></div><div className={styles.heroMark} aria-hidden="true">↗</div></section>

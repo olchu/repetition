@@ -1,12 +1,34 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { loadAssignedTests } from "@/lib/student-overview";
 
 type AssignmentBody = {
   testId?: unknown;
   childIds?: unknown;
   groupId?: unknown;
 };
+
+/**
+ * Each active child's learning plan: the tests they see (personal and group
+ * assignments collapsed by test), their progress, and the assignments behind
+ * every row.
+ */
+export async function GET() {
+  const admin = await getCurrentUser();
+
+  if (!admin || admin.role !== "ADMIN") {
+    return NextResponse.json(
+      { error: { code: "FORBIDDEN", message: "Administrator access required." } },
+      { status: admin ? 403 : 401 },
+    );
+  }
+
+  const children = await prisma.user.findMany({ where: { role: "CHILD", status: "ACTIVE" }, select: { id: true } });
+  const plans = await Promise.all(children.map(async (child) => ({ childId: child.id, tests: await loadAssignedTests(child.id) })));
+
+  return NextResponse.json({ plans });
+}
 
 export async function POST(request: Request) {
   const admin = await getCurrentUser();

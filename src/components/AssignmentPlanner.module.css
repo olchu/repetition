@@ -1,0 +1,71 @@
+/* Admin Assignments: child list on the left, the chosen child's plan on the right.
+   Colours and type follow src/app/admin/page.module.css. */
+.layout { display: grid; grid-template-columns: minmax(200px, 260px) minmax(0, 1fr); gap: 32px; align-items: start; margin-top: 38px; }
+.spaced { margin-top: 38px; }
+
+.childList { display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+.childItem { display: grid; gap: 4px; padding: 14px 12px; border: 0; border-bottom: 1px solid var(--line); border-left: 3px solid transparent; color: var(--ink); background: transparent; cursor: pointer; font: inherit; text-align: left; }
+.childItem strong { font-size: 14px; }
+.childItem span { color: var(--muted); font-size: 11px; }
+.childItem:hover { background: var(--paper-bright); }
+.childItem:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; }
+.childItemActive, .childItemActive:hover { border-left-color: var(--ink); background: var(--paper-bright); }
+
+.planPanel { min-width: 0; padding: 24px; border: 1px solid var(--line); background: var(--paper-bright); }
+.planHeader { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 18px 32px; padding-bottom: 22px; border-bottom: 1px solid var(--line); }
+.planHeader h2 { margin-top: 8px; font-family: var(--font-jakarta), sans-serif; font-size: 30px; font-weight: 700; letter-spacing: -0.05em; }
+.planStats { display: flex; flex-wrap: wrap; gap: 8px 26px; }
+.planStats div { display: flex; flex-direction: column-reverse; gap: 4px; }
+.planStats dt { color: var(--muted); font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; }
+.planStats dd { font-family: var(--font-jakarta), sans-serif; font-size: 26px; font-weight: 700; letter-spacing: -0.05em; }
+
+.blockTitle { margin: 28px 0 12px; font-family: var(--font-jakarta), sans-serif; font-size: 18px; font-weight: 600; letter-spacing: -0.04em; }
+.rows { list-style: none; border-top: 1px solid var(--line); }
+.planRow { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 0.8fr); gap: 18px; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--line); }
+.catalogRow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 18px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.testInfo { display: grid; gap: 5px; min-width: 0; }
+.testInfo strong { font-size: 14px; overflow-wrap: anywhere; }
+.testInfo span { color: var(--muted); font-size: 11px; }
+.warning { color: #9a6d2c; font-size: 11px; font-style: normal; font-weight: 600; line-height: 1.4; }
+
+.progress { display: grid; gap: 6px; justify-items: start; }
+.progress > span:last-child { color: var(--muted); font-size: 11px; line-height: 1.4; }
+.status { padding: 4px 8px; border: 1px solid var(--line); font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.statusNotStarted { color: var(--muted); }
+.statusInProgress { color: #2f5f8a; border-color: #9fbfdc; background: rgba(79, 139, 196, 0.08); }
+.statusCompleted { color: #9a6d2c; border-color: #dcc39a; background: rgba(196, 150, 79, 0.08); }
+.statusPassed { color: #45815f; border-color: #9bc7aa; background: rgba(77, 158, 118, 0.08); }
+
+.sources { display: grid; gap: 8px; justify-items: end; text-align: right; }
+.sources span, .update { display: inline-flex; flex-wrap: wrap; align-items: baseline; justify-content: flex-end; gap: 4px 10px; color: var(--muted); font-size: 11px; }
+
+.catalogHeader { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0 18px; }
+.catalogHeader .blockTitle { margin-bottom: 12px; }
+.catalogFilters { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 14px; }
+.catalogFilters label, .groupForm label { display: flex; flex: 1 1 200px; flex-direction: column; gap: 8px; color: var(--ink); font-size: 12px; font-weight: 700; }
+.catalogFilters input, .catalogFilters select, .groupForm select { min-height: 42px; padding: 0 12px; border: 1px solid var(--line); border-radius: 3px; color: var(--ink); background: var(--paper); font: inherit; font-size: 13px; outline: none; }
+.catalogFilters input:focus, .catalogFilters select:focus, .groupForm select:focus { border-color: var(--ink); box-shadow: 0 0 0 3px rgba(16, 44, 58, 0.1); }
+
+.assignButton { min-width: 88px; padding: 9px 14px; border: 1px solid var(--ink); border-radius: 3px; color: var(--ink); background: transparent; cursor: pointer; font: inherit; font-size: 12px; font-weight: 700; }
+.assignButton:hover:not(:disabled) { color: var(--paper-bright); background: var(--ink); }
+.assignButton:disabled { cursor: wait; opacity: 0.55; }
+.assigned { color: #45815f; font-size: 12px; font-weight: 700; white-space: nowrap; }
+
+.groupForm { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) auto; gap: 16px 20px; align-items: end; margin-top: 32px; padding: 24px; border: 1px solid var(--line); background: var(--paper-bright); }
+.groupForm h2 { grid-column: 1 / -1; font-family: var(--font-jakarta), sans-serif; font-size: 18px; font-weight: 600; letter-spacing: -0.04em; }
+.groupForm p { grid-column: 1 / -1; margin-top: -8px; color: var(--muted); font-size: 12px; }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .childList { flex-direction: row; overflow-x: auto; }
+  .childItem { flex: 0 0 auto; min-width: 170px; border-bottom: 3px solid transparent; border-left: 0; }
+  .childItemActive, .childItemActive:hover { border-bottom-color: var(--ink); }
+}
+
+@media (max-width: 760px) {
+  .planPanel { padding: 18px; }
+  .planRow { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .sources { justify-items: start; text-align: left; }
+  .sources span { justify-content: flex-start; }
+  .groupForm { grid-template-columns: minmax(0, 1fr); padding: 18px; }
+}
