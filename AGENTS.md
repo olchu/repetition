@@ -16,6 +16,10 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 Типы вопросов `choice` (выбор варианта) и `input` (ввод в поле): `docs/TEST-FORMAT.md`, хранение — `docs/TEST-STORAGE.md`. Правильность любого ответа для баллов, звёзд и разбора определяет только `isAnswerCorrect` из `src/lib/grading.ts`; в числах запятая и точка равнозначны.
 
+## Наборы тестов
+
+Администратор объединяет тесты в наборы (`TestSet`, членство по `stableId`, тест максимум в одном наборе): `docs/TEST-SETS.md`. Списки ученика группируются `groupBySet` из `src/lib/student-progress.ts`; карточки тестов — `src/components/TestCard.tsx`.
+
 ## Награды
 
 Правила звёзд и ограничения попыток: `docs/REWARDS.md`. Правильный ответ: 1 звезда, с подсказкой: 0,5; только первая попытка по stableId. Незавершённый тест можно только продолжить. Проверенные ответы неизменяемы. Все изменения попыток используют `withChildAttemptLock`.

@@ -103,6 +103,12 @@ async function collectAssignedTests(childId: string): Promise<AssignedTest[]> {
     entry.assignments.push(source);
   }
 
+  const setItems = await prisma.testSetItem.findMany({
+    where: { stableId: { in: [...collected.keys()] } },
+    select: { stableId: true, set: { select: { id: true, name: true } } },
+  });
+  const setByStableId = new Map(setItems.map((item) => [item.stableId, item.set]));
+
   const rows = [...collected.values()].map((entry): AssignedTest => {
     const attempts = [...entry.attempts].sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime());
     const submitted = attempts.filter((attempt) => attempt.result !== null);
@@ -124,6 +130,7 @@ async function collectAssignedTests(childId: string): Promise<AssignedTest[]> {
         grade: entry.test.grade,
         passPercentage: entry.test.passPercentage,
         questionCount: entry.test.questionCount,
+        set: setByStableId.get(entry.test.stableId) ?? null,
         status: statusOf(facts),
         ...facts,
         attemptCount: attempts.length,

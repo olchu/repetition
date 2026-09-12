@@ -9,6 +9,7 @@ import styles from "./AssignmentPlanner.module.css";
 type Child = { id: string; login: string; displayName: string | null; grade: string | null; status: string; subjects: string[] };
 type Group = { id: string; name: string; status: string; memberCount: number };
 type PublishedTest = { id: string; stableId: string; title: string; subject: string; grade: string | null; version: number; questionCount: number; passPercentage: number };
+type TestSet = { id: string; name: string; tests: Array<{ stableId: string; publishedTestId: string | null }> };
 type AssignmentSource = { id: string; testId: string; version: number; groupId: string | null; groupName: string | null; assignedAt: string };
 type TestStatus = "not_started" | "in_progress" | "completed" | "passed";
 /** A row of `GET /api/v1/admin/assignments`: the test as the child sees it, plus the assignments behind it. */
@@ -20,6 +21,7 @@ type PlannedTest = {
   subject: string;
   questionCount: number;
   passPercentage: number;
+  set: { id: string; name: string } | null;
   status: TestStatus;
   attemptCount: number;
   inProgressAttemptId: string | null;
@@ -29,6 +31,8 @@ type PlannedTest = {
   assignedAt: string;
   assignments: AssignmentSource[];
 };
+/** What `POST /api/v1/admin/test-sets/:id/assign` reports. */
+type SetAssignment = { assigned: number; alreadyAssigned: number; otherGrade: number; notPublished: number };
 type Notice = { tone: "success" | "error"; text: string } | null;
 
 const statusLabels: Record<TestStatus, string> = { not_started: "Not started", in_progress: "In progress", completed: "Completed", passed: "Passed" };
@@ -56,6 +60,14 @@ function childSummary(tests: readonly PlannedTest[]) {
   return [plural(tests.length, "test"), inProgress && `${inProgress} in progress`, passed && `${passed} passed`].filter(Boolean).join(" · ");
 }
 
+function setAssignmentMessage(setName: string, target: string, counts: SetAssignment) {
+  const parts = [`${plural(counts.assigned, "test")} assigned`];
+  if (counts.alreadyAssigned) parts.push(`${counts.alreadyAssigned} already assigned`);
+  if (counts.otherGrade) parts.push(`${counts.otherGrade} skipped as another grade`);
+  if (counts.notPublished) parts.push(`${counts.notPublished} not published yet`);
+  return `Set “${setName}” for ${target}: ${parts.join(", ")}.`;
+}
+
 /** Personal assignments and group assignments of one row, grouped for their buttons. */
 function sourcesOf(test: PlannedTest) {
   const personal = test.assignments.filter((source) => source.groupId === null).map((source) => source.id);
@@ -69,6 +81,9 @@ function sourcesOf(test: PlannedTest) {
   return { personal, groups: [...groups.entries()].map(([id, entry]) => ({ id, ...entry })) };
 }
 
+const bySetName = (a: { set: TestSet | null }, b: { set: TestSet | null }) =>
+  a.set === null ? 1 : b.set === null ? -1 : a.set.name.localeCompare(b.set.name, undefined, { numeric: true });
+
 export function AssignmentPlanner({ childAccounts, groups, onRefresh }: { childAccounts: Child[]; groups: Group[]; onRefresh: () => Promise<void> }) {
   const { subjectLabels } = useSubjects();
   const children = childAccounts.filter((child) => child.status === "active");
@@ -76,10 +91,12 @@ export function AssignmentPlanner({ childAccounts, groups, onRefresh }: { childA
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [plans, setPlans] = useState<Record<string, PlannedTest[]> | null>(null);
   const [publishedTests, setPublishedTests] = useState<PublishedTest[] | null>(null);
+  const [sets, setSets] = useState<TestSet[]>([]);
   const [search, setSearch] = useState("");
   const [subject, setSubject] = useState("");
   const [groupId, setGroupId] = useState("");
-  const [groupTestId, setGroupTestId] = useState("");
+  /** "set:<id>" or "test:<id>". */
+  const [groupTarget, setGroupTarget] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [notice, setNotice] = useState<Notice>(null);
   const subjectName = (slug: string) => subjectLabels[slug] ?? slug;
@@ -95,10 +112,18 @@ export function AssignmentPlanner({ childAccounts, groups, onRefresh }: { childA
     let cancelled = false;
     const timer = window.setTimeout(async () => {
       try {
-        const [, testsResponse] = await Promise.all([loadPlans(), fetch("/api/v1/admin/tests?status=published&all=true", { cache: "no-store" })]);
+        const [, testsResponse, setsResponse] = await Promise.all([
+          loadPlans(),
+          fetch("/api/v1/admin/tests?status=published&all=true", { cache: "no-store" }),
+          fetch("/api/v1/admin/test-sets", { cache: "no-store" }),
+        ]);
         if (!testsResponse.ok) throw new Error(await getApiError(testsResponse, "Unable to load published tests."));
-        const payload = (await testsResponse.json()) as { tests: PublishedTest[] };
-        if (!cancelled) setPublishedTests(payload.tests);
+        if (!setsResponse.ok) throw new Error(await getApiError(setsResponse, "Unable to load test sets."));
+        const [testsPayload, setsPayload] = (await Promise.all([testsResponse.json(), setsResponse.json()])) as [{ tests: PublishedTest[] }, { sets: TestSet[] }];
+        if (!cancelled) {
+          setPublishedTests(testsPayload.tests);
+          setSets(setsPayload.sets);
+        }
       } catch (error) {
         if (!cancelled) setNotice({ tone: "error", text: error instanceof Error ? error.message : "Unable to load assignments." });
       }
@@ -118,11 +143,16 @@ export function AssignmentPlanner({ childAccounts, groups, onRefresh }: { childA
     }
     return [...newest.values()].sort((a, b) => a.title.localeCompare(b.title));
   }, [publishedTests]);
+  const setByStableId = useMemo(() => new Map(sets.flatMap((set) => set.tests.map((test) => [test.stableId, set] as const))), [sets]);
 
   const child = children.find((item) => item.id === selectedId) ?? children[0] ?? null;
   const childName = child ? child.displayName ?? child.login : "";
   const plan = child && plans ? plans[child.id] ?? [] : [];
   const assignedByStableId = new Map(plan.map((test) => [test.stableId, test]));
+  const needsAssigning = (test: PublishedTest) => {
+    const assigned = assignedByStableId.get(test.stableId);
+    return !assigned || assigned.version < test.version;
+  };
   // Personal assignments require the child's grade; other grades go through groups.
   const gradeTests = child ? latestTests.filter((test) => test.grade === child.grade) : [];
   const subjectOptions = [...new Set(gradeTests.map((test) => test.subject))].sort((a, b) => subjectName(a).localeCompare(subjectName(b)));
@@ -130,6 +160,22 @@ export function AssignmentPlanner({ childAccounts, groups, onRefresh }: { childA
   const catalog = gradeTests
     .filter((test) => (!subject || test.subject === subject) && (!query || test.title.toLowerCase().includes(query)))
     .sort((a, b) => subjectName(a.subject).localeCompare(subjectName(b.subject)) || a.title.localeCompare(b.title));
+
+  // Group the catalog by set; "Assign whole set" counts the set's tests of this
+  // grade still to assign, whatever the filters hide.
+  const catalogByKey = new Map<string, { set: TestSet | null; tests: PublishedTest[] }>();
+  for (const test of catalog) {
+    const set = setByStableId.get(test.stableId) ?? null;
+    const entry = catalogByKey.get(set?.id ?? "") ?? { set, tests: [] };
+    entry.tests.push(test);
+    catalogByKey.set(set?.id ?? "", entry);
+  }
+  const catalogGroups = [...catalogByKey.values()].sort(bySetName);
+  const pendingBySet = new Map<string, number>();
+  for (const test of gradeTests) {
+    const set = setByStableId.get(test.stableId);
+    if (set && needsAssigning(test)) pendingBySet.set(set.id, (pendingBySet.get(set.id) ?? 0) + 1);
+  }
 
   async function run(key: string, action: () => Promise<Response>, success: (response: Response) => Promise<string>, fallback: string) {
     setBusy(key);
@@ -169,6 +215,16 @@ export function AssignmentPlanner({ childAccounts, groups, onRefresh }: { childA
     );
   }
 
+  function assignSetToChild(set: TestSet) {
+    if (!child) return;
+    void run(
+      `set-${set.id}`,
+      () => fetch(`/api/v1/admin/test-sets/${set.id}/assign`, { method: "POST", headers: jsonHeaders, body: JSON.stringify({ childIds: [child.id] }) }),
+      async (response) => setAssignmentMessage(set.name, childName, (await response.json()) as SetAssignment),
+      "Unable to assign the set.",
+    );
+  }
+
   function unassignPersonal(test: PlannedTest, ids: string[], groupNames: string[]) {
     void run(
       `unassign-${test.stableId}`,
@@ -186,20 +242,26 @@ export function AssignmentPlanner({ childAccounts, groups, onRefresh }: { childA
   function assignToGroup(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const group = activeGroups.find((item) => item.id === groupId);
-    const test = latestTests.find((item) => item.id === groupTestId);
-    if (!group || !test) {
-      setNotice({ tone: "error", text: "Choose a group and a published test." });
+    const [kind, targetId] = groupTarget.split(":");
+    const set = kind === "set" ? sets.find((item) => item.id === targetId) : undefined;
+    const test = kind === "test" ? latestTests.find((item) => item.id === targetId) : undefined;
+    if (!group || (!set && !test)) {
+      setNotice({ tone: "error", text: "Choose a group and a set or published test." });
       return;
     }
+    const target = `group “${group.name}”`;
     void run(
       "group-form",
-      () => fetch("/api/v1/admin/assignments", { method: "POST", headers: jsonHeaders, body: JSON.stringify({ testId: test.id, groupId: group.id }) }),
+      () => set
+        ? fetch(`/api/v1/admin/test-sets/${set.id}/assign`, { method: "POST", headers: jsonHeaders, body: JSON.stringify({ groupId: group.id }) })
+        : fetch("/api/v1/admin/assignments", { method: "POST", headers: jsonHeaders, body: JSON.stringify({ testId: test?.id, groupId: group.id }) }),
       async (response) => {
+        setGroupTarget("");
+        if (set) return setAssignmentMessage(set.name, target, (await response.json()) as SetAssignment);
         const payload = (await response.json()) as { skipped?: number };
-        setGroupTestId("");
-        return payload.skipped ? `Group “${group.name}” already has “${test.title}”.` : `“${test.title}” assigned to group “${group.name}”.`;
+        return payload.skipped ? `${target} already has “${test?.title}”.` : `“${test?.title}” assigned to ${target}.`;
       },
-      "Unable to assign the test to the group.",
+      "Unable to assign to the group.",
     );
   }
 
@@ -266,7 +328,7 @@ export function AssignmentPlanner({ childAccounts, groups, onRefresh }: { childA
                         <li className={styles.planRow} key={test.stableId}>
                           <div className={styles.testInfo}>
                             <strong>{test.title}</strong>
-                            <span>{subjectName(test.subject)} · v{test.version} · {plural(test.questionCount, "question")} · assigned {new Date(test.assignedAt).toLocaleDateString()}</span>
+                            <span>{subjectName(test.subject)}{test.set && ` · ${test.set.name}`} · v{test.version} · {plural(test.questionCount, "question")} · assigned {new Date(test.assignedAt).toLocaleDateString()}</span>
                             {subjectWarning(test.subject)}
                           </div>
                           <div className={styles.progress}>
@@ -315,34 +377,55 @@ export function AssignmentPlanner({ childAccounts, groups, onRefresh }: { childA
                 ) : catalog.length === 0 ? (
                   <p className={admin.empty}>{gradeTests.length === 0 ? `No published tests for grade ${child.grade ?? "—"} yet.` : "No tests match these filters."}</p>
                 ) : (
-                  <ul className={styles.rows}>
-                    {catalog.map((test) => {
-                      const assigned = assignedByStableId.get(test.stableId);
+                  <div className={styles.catalogGroups}>
+                    {catalogGroups.map((group) => {
+                      const pending = group.set ? pendingBySet.get(group.set.id) ?? 0 : 0;
                       return (
-                        <li className={styles.catalogRow} key={test.id}>
-                          <div className={styles.testInfo}>
-                            <strong>{test.title}</strong>
-                            <span>{subjectName(test.subject)} · v{test.version} · {plural(test.questionCount, "question")} · pass {test.passPercentage}%</span>
-                            {!assigned && subjectWarning(test.subject)}
-                          </div>
-                          {!assigned ? (
-                            <button className={styles.assignButton} type="button" disabled={busy !== null} onClick={() => assignToChild(test)}>
-                              {busy === `assign-${test.id}` ? "Assigning…" : "Assign"}
-                            </button>
-                          ) : assigned.version < test.version ? (
-                            <span className={styles.update}>
-                              Has v{assigned.version}
-                              <button className={admin.textButton} type="button" disabled={busy !== null} onClick={() => assignToChild(test)}>
-                                {busy === `assign-${test.id}` ? "Assigning…" : `Assign v${test.version}`}
-                              </button>
-                            </span>
-                          ) : (
-                            <span className={styles.assigned}>✓ Assigned</span>
+                        <div key={group.set?.id ?? "no-set"}>
+                          {(group.set || catalogGroups.length > 1) && (
+                            <div className={styles.groupHeader}>
+                              <strong>{group.set ? group.set.name : "Not in a set"}</strong>
+                              {group.set && (pending > 0 ? (
+                                <button className={styles.assignButton} type="button" disabled={busy !== null} onClick={() => group.set && assignSetToChild(group.set)}>
+                                  {busy === `set-${group.set.id}` ? "Assigning…" : `Assign whole set (${pending})`}
+                                </button>
+                              ) : (
+                                <span className={styles.assigned}>✓ Whole set assigned</span>
+                              ))}
+                            </div>
                           )}
-                        </li>
+                          <ul className={styles.rows}>
+                            {group.tests.map((test) => {
+                              const assigned = assignedByStableId.get(test.stableId);
+                              return (
+                                <li className={styles.catalogRow} key={test.id}>
+                                  <div className={styles.testInfo}>
+                                    <strong>{test.title}</strong>
+                                    <span>{subjectName(test.subject)} · v{test.version} · {plural(test.questionCount, "question")} · pass {test.passPercentage}%</span>
+                                    {!assigned && subjectWarning(test.subject)}
+                                  </div>
+                                  {!assigned ? (
+                                    <button className={styles.assignButton} type="button" disabled={busy !== null} onClick={() => assignToChild(test)}>
+                                      {busy === `assign-${test.id}` ? "Assigning…" : "Assign"}
+                                    </button>
+                                  ) : assigned.version < test.version ? (
+                                    <span className={styles.update}>
+                                      Has v{assigned.version}
+                                      <button className={admin.textButton} type="button" disabled={busy !== null} onClick={() => assignToChild(test)}>
+                                        {busy === `assign-${test.id}` ? "Assigning…" : `Assign v${test.version}`}
+                                      </button>
+                                    </span>
+                                  ) : (
+                                    <span className={styles.assigned}>✓ Assigned</span>
+                                  )}
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </div>
                       );
                     })}
-                  </ul>
+                  </div>
                 )}
               </section>
             </div>
@@ -352,9 +435,16 @@ export function AssignmentPlanner({ childAccounts, groups, onRefresh }: { childA
 
       <form className={styles.groupForm} onSubmit={assignToGroup}>
         <h2>Assign to a group</h2>
-        <p>Groups may mix grades, so any published test can go to a group. Every member sees it.</p>
+        <p>Groups may mix grades, so any published test or whole set can go to a group. Every member sees it.</p>
         <label>Group<select value={groupId} onChange={(event) => setGroupId(event.target.value)}><option value="">Choose a group</option>{activeGroups.map((group) => <option key={group.id} value={group.id}>{group.name} · {plural(group.memberCount, "child")}</option>)}</select></label>
-        <label>Published test<select value={groupTestId} onChange={(event) => setGroupTestId(event.target.value)} disabled={publishedTests === null}><option value="">{publishedTests === null ? "Loading tests…" : "Choose a test"}</option>{latestTests.map((test) => <option key={test.id} value={test.id}>{test.title} · Grade {test.grade ?? "—"} · {subjectName(test.subject)}</option>)}</select></label>
+        <label>
+          Set or test
+          <select value={groupTarget} onChange={(event) => setGroupTarget(event.target.value)} disabled={publishedTests === null}>
+            <option value="">{publishedTests === null ? "Loading tests…" : "Choose a set or a test"}</option>
+            {sets.length > 0 && <optgroup label="Sets">{sets.map((set) => <option key={set.id} value={`set:${set.id}`}>{set.name} · {plural(set.tests.length, "test")}</option>)}</optgroup>}
+            <optgroup label="Tests">{latestTests.map((test) => <option key={test.id} value={`test:${test.id}`}>{test.title} · Grade {test.grade ?? "—"} · {subjectName(test.subject)}</option>)}</optgroup>
+          </select>
+        </label>
         <button className={admin.action} type="submit" disabled={busy !== null}>{busy === "group-form" ? "Assigning…" : "Assign"}<span aria-hidden="true">↗</span></button>
       </form>
     </section>

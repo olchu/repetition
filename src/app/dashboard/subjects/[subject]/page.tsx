@@ -13,10 +13,10 @@ import {
 } from "@/components/DashboardShell";
 import { SubjectIcon } from "@/components/SubjectCard";
 import { useSubjectLabel } from "@/components/SubjectsProvider";
-import { TestActionButton } from "@/components/TestActionButton";
 import { TestActionsMenu } from "@/components/TestActionsMenu";
+import { TestCard, TestCardGrid } from "@/components/TestCard";
 import { TestFilters } from "@/components/TestFilters";
-import { matchesFilter, type StudentTest, type StudentTestStatus, type TestFilter } from "@/lib/student-progress";
+import { groupBySet, matchesFilter, type StudentTestStatus, type TestFilter } from "@/lib/student-progress";
 import { useStudentOverview } from "@/lib/use-student-overview";
 import styles from "./subject.module.css";
 
@@ -36,39 +36,6 @@ const statusClass: Record<StudentTestStatus, string> = {
   completed: styles.statusCompleted,
   passed: styles.statusPassed,
 };
-
-/** What the card's bar counts, and the line that names it. A test can sit at
- *  three different points, and each measures something else — so no number is
- *  shown without saying what it is. */
-function pickUpProgress(test: StudentTest) {
-  const passMark = `${test.passPercentage}% to pass`;
-
-  if (test.inProgressAttemptId) {
-    const answered = test.inProgressAnswered ?? 0;
-    return {
-      percent: test.questionCount ? Math.min(100, Math.round((answered / test.questionCount) * 100)) : 0,
-      start: `${answered} of ${test.questionCount} answered`,
-      end: passMark,
-      label: `${test.title} answered`,
-    };
-  }
-
-  if (test.completed) {
-    return {
-      percent: Math.round(test.bestPercentage),
-      start: `Best ${Math.round(test.bestPercentage)}%`,
-      end: passMark,
-      label: `${test.title} best result`,
-    };
-  }
-
-  return {
-    percent: 0,
-    start: `${test.questionCount} ${test.questionCount === 1 ? "question" : "questions"}`,
-    end: passMark,
-    label: `${test.title} answered`,
-  };
-}
 
 export default function SubjectPage({ params }: PageProps<"/dashboard/subjects/[subject]">) {
   const subjectLabel = useSubjectLabel();
@@ -111,6 +78,9 @@ export default function SubjectPage({ params }: PageProps<"/dashboard/subjects/[
   const notPassed = tests.filter((test) => test.completed && !test.passed && test.inProgressAttemptId === null);
   const pickUp = [...inProgress, ...notStarted, ...notPassed].slice(0, PICK_UP_LIMIT);
   const visible = tests.filter((test) => matchesFilter(test, filter));
+  const groups = groupBySet(visible);
+  // Without any set the list stays one plain grid, as before sets existed.
+  const showSetTitles = groups.some((group) => group.set !== null);
 
   return (
     <DashboardShell
@@ -193,39 +163,9 @@ export default function SubjectPage({ params }: PageProps<"/dashboard/subjects/[
               <span>Open one from All tests to practise it again.</span>
             </div>
           ) : (
-          <div className={styles.pickUpGrid}>
-            {pickUp.map((test) => {
-              const progress = pickUpProgress(test);
-
-              return (
-                <article className={styles.pickUpCard} key={test.stableId}>
-                  <h3>{test.title}</h3>
-                  <p className={styles.pickUpMeta}>
-                    <span>{progress.end}</span>
-                    <span>{progress.start}</span>
-                  </p>
-
-                  <div className={styles.pickUpProgress}>
-                    <div
-                      className={styles.pickUpBar}
-                      role="progressbar"
-                      aria-label={progress.label}
-                      aria-valuemin={0}
-                      aria-valuemax={100}
-                      aria-valuenow={progress.percent}
-                    >
-                      <span style={{ width: `${progress.percent}%` }} />
-                    </div>
-                    <span className={styles.pickUpPercent}>{progress.percent}%</span>
-                  </div>
-
-                  <div className={styles.pickUpAction}>
-                    <TestActionButton test={test} />
-                  </div>
-                </article>
-              );
-            })}
-          </div>
+          <TestCardGrid>
+            {pickUp.map((test) => <TestCard key={test.stableId} test={test} />)}
+          </TestCardGrid>
           )}
         </section>
       )}
@@ -258,29 +198,41 @@ export default function SubjectPage({ params }: PageProps<"/dashboard/subjects/[
             )}
           </div>
         ) : (
-          <div className={styles.testGrid}>
-            {visible.map((test) => (
-              <article className={styles.testRow} key={test.stableId}>
-                <div>
-                  <h3>{test.title}</h3>
-                  <p className={styles.testMeta}>
-                    <span>{test.questionCount} {test.questionCount === 1 ? "question" : "questions"}</span>
-                    <span aria-hidden="true">·</span>
-                    <span>{test.passPercentage}% to pass</span>
-                    <span aria-hidden="true">·</span>
-                    <span className={`${styles.status} ${statusClass[test.status]}`}>
-                      <span className={styles.statusDot} aria-hidden="true" />
-                      {statusLabels[test.status]}
-                      {test.completed && ` · best ${test.bestPercentage}%`}
-                    </span>
-                  </p>
+          <div className={styles.setGroups}>
+            {groups.map((group) => (
+              <section key={group.set?.id ?? "no-set"} aria-label={showSetTitles ? group.set?.name ?? "Other tests" : undefined}>
+                {showSetTitles && (
+                  <h3 className={styles.setTitle}>
+                    {group.set?.name ?? "Other tests"}
+                    <span>{group.tests.length}</span>
+                  </h3>
+                )}
+                <div className={styles.testGrid}>
+                  {group.tests.map((test) => (
+                    <article className={styles.testRow} key={test.stableId}>
+                      <div>
+                        <h3>{test.title}</h3>
+                        <p className={styles.testMeta}>
+                          <span>{test.questionCount} {test.questionCount === 1 ? "question" : "questions"}</span>
+                          <span aria-hidden="true">·</span>
+                          <span>{test.passPercentage}% to pass</span>
+                          <span aria-hidden="true">·</span>
+                          <span className={`${styles.status} ${statusClass[test.status]}`}>
+                            <span className={styles.statusDot} aria-hidden="true" />
+                            {statusLabels[test.status]}
+                            {test.completed && ` · best ${test.bestPercentage}%`}
+                          </span>
+                        </p>
+                      </div>
+                      <TestActionsMenu
+                        testId={test.id}
+                        attemptCount={test.attemptCount}
+                        inProgressAttemptId={test.inProgressAttemptId}
+                      />
+                    </article>
+                  ))}
                 </div>
-                <TestActionsMenu
-                  testId={test.id}
-                  attemptCount={test.attemptCount}
-                  inProgressAttemptId={test.inProgressAttemptId}
-                />
-              </article>
+              </section>
             ))}
           </div>
         )}

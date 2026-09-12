@@ -8,13 +8,17 @@ import {
   DashboardUnavailable,
 } from "@/components/DashboardShell";
 import { SubjectCard, subjectCardStyles } from "@/components/SubjectCard";
-import { TestTable } from "@/components/TestTable";
+import { TestCard, TestCardGrid } from "@/components/TestCard";
+import { byNewestAssignment, matchesFilter } from "@/lib/student-progress";
 import { useStudentOverview } from "@/lib/use-student-overview";
 import styles from "./home.module.css";
 
 /** Home stays a short overview: four subjects at most, and the full lists
  *  live in Subjects and in the test sections it links to. */
 const HOME_SUBJECT_LIMIT = 4;
+
+/** Each test widget is one row of cards; See all opens Tests filtered to it. */
+const HOME_TEST_LIMIT = 4;
 
 const RING_RADIUS = 52;
 const RING_LENGTH = 2 * Math.PI * RING_RADIUS;
@@ -38,6 +42,9 @@ export default function DashboardPage() {
   const assignedCount = data.tests.length;
   const overall = assignedCount ? Math.round((passedCount / assignedCount) * 100) : 0;
   const name = data.child.displayName;
+  const continueTests = data.tests.filter((test) => test.inProgressAttemptId !== null);
+  // "New" is every test the child hasn't opened yet, most recently assigned first.
+  const newTests = data.tests.filter((test) => matchesFilter(test, "not_started")).sort(byNewestAssignment);
 
   return (
     <DashboardShell userName={name} stars={data.stars} active="home">
@@ -132,14 +139,41 @@ export default function DashboardPage() {
         )}
       </section>
 
-      <TestTable
-        title="Assigned tests"
-        tests={data.tests}
-        empty={{
-          title: "No tests assigned yet.",
-          hint: "Your administrator will add the next one here.",
-        }}
-      />
+      {continueTests.length > 0 && (
+        <section className={styles.section} aria-labelledby="continue-title">
+          <div className={styles.sectionHeader}>
+            <h2 id="continue-title">Continue<span className={styles.count}>{continueTests.length}</span></h2>
+            {continueTests.length > HOME_TEST_LIMIT && (
+              <Link className={styles.seeAll} href="/dashboard/tests?status=in_progress">See all</Link>
+            )}
+          </div>
+          <TestCardGrid>
+            {continueTests.slice(0, HOME_TEST_LIMIT).map((test) => <TestCard key={test.stableId} test={test} showSubject />)}
+          </TestCardGrid>
+        </section>
+      )}
+
+      <section className={styles.section} aria-labelledby="new-tests-title">
+        <div className={styles.sectionHeader}>
+          <h2 id="new-tests-title">New tests{newTests.length > 0 && <span className={styles.count}>{newTests.length}</span>}</h2>
+          {data.tests.length > 0 && (
+            newTests.length > HOME_TEST_LIMIT
+              ? <Link className={styles.seeAll} href="/dashboard/tests?status=not_started">See all</Link>
+              : <Link className={styles.seeAll} href="/dashboard/tests">All tests</Link>
+          )}
+        </div>
+
+        {newTests.length === 0 ? (
+          <div className={styles.emptyWidget}>
+            <p>{data.tests.length === 0 ? "No tests assigned yet." : "No new tests right now."}</p>
+            <span>{data.tests.length === 0 ? "Your administrator will add the next one here." : "You’ve opened every test assigned to you."}</span>
+          </div>
+        ) : (
+          <TestCardGrid>
+            {newTests.slice(0, HOME_TEST_LIMIT).map((test) => <TestCard key={test.stableId} test={test} showSubject />)}
+          </TestCardGrid>
+        )}
+      </section>
     </DashboardShell>
   );
 }

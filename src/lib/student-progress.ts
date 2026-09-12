@@ -18,6 +18,9 @@
 
 export type StudentTestStatus = "not_started" | "in_progress" | "completed" | "passed";
 
+/** An administrator's set of tests ("Fractions", "Week 1"); see docs/TEST-SETS.md. */
+export type TestSetRef = { id: string; name: string };
+
 export type StudentTest = {
   /** Newest assigned version of this test — the id every action posts to. */
   id: string;
@@ -28,6 +31,8 @@ export type StudentTest = {
   grade: string | null;
   passPercentage: number;
   questionCount: number;
+  /** The set the administrator put this test in; lists group by it. */
+  set: TestSetRef | null;
   /** Headline label. Actions read the booleans below, not this. */
   status: StudentTestStatus;
   completed: boolean;
@@ -117,4 +122,28 @@ export function byAttention(a: StudentTest, b: StudentTest) {
   return rank(a) - rank(b)
     || a.assignedAt.localeCompare(b.assignedAt)
     || a.id.localeCompare(b.id);
+}
+
+/** Most recently assigned first: the order of "New tests" on Home. */
+export function byNewestAssignment(a: StudentTest, b: StudentTest) {
+  return b.assignedAt.localeCompare(a.assignedAt) || a.id.localeCompare(b.id);
+}
+
+export type TestGroup = { set: TestSetRef | null; tests: StudentTest[] };
+
+/** Splits a list by set, keeping each test's place within its set. Sets sort
+ *  by name with numbers compared naturally ("Week 2" before "Week 10"); tests
+ *  outside any set come last. */
+export function groupBySet(tests: readonly StudentTest[]): TestGroup[] {
+  const groups = new Map<string, TestGroup>();
+
+  for (const test of tests) {
+    const key = test.set?.id ?? "";
+    const group = groups.get(key) ?? { set: test.set, tests: [] };
+    group.tests.push(test);
+    groups.set(key, group);
+  }
+
+  return [...groups.values()].sort((a, b) =>
+    a.set === null ? 1 : b.set === null ? -1 : a.set.name.localeCompare(b.set.name, undefined, { numeric: true }));
 }

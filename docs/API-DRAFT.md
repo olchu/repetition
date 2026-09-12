@@ -71,6 +71,10 @@ sortOrder, archived. Slug после создания неизменяем; уд
 
 Ответ `/admin/tests/:id` может содержать `correctOptionId`, потому что доступ к нему есть только у администратора.
 
+### Наборы тестов
+
+Именованные группы тестов администратора; правила и полный список endpoints — в [TEST-SETS.md](./TEST-SETS.md): `GET`/`POST` `/admin/test-sets`, `PATCH`/`DELETE` `/admin/test-sets/:id`, `PUT`/`DELETE` `/admin/test-sets/:id/tests/:stableId`, `POST` `/admin/test-sets/:id/assign`.
+
 ### Назначения и результаты
 
 | Метод | Endpoint | Назначение |

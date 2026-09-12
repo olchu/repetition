@@ -112,7 +112,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
   const { id } = await context.params;
   const test = await prisma.test.findUnique({
     where: { id },
-    select: { id: true, title: true, status: true, _count: { select: { assignments: true } } },
+    select: { id: true, stableId: true, title: true, status: true, _count: { select: { assignments: true } } },
   });
 
   if (!test) {
@@ -137,5 +137,9 @@ export async function DELETE(_request: Request, context: RouteContext) {
   }
 
   await prisma.test.delete({ where: { id } });
+  // Sets list tests by stableId; drop the entry once no version is left.
+  if ((await prisma.test.count({ where: { stableId: test.stableId } })) === 0) {
+    await prisma.testSetItem.deleteMany({ where: { stableId: test.stableId } });
+  }
   return new NextResponse(null, { status: 204 });
 }

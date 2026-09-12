@@ -1,0 +1,114 @@
+/* Test cards: Home widgets and a subject's "Continue learning". Colours come
+   from the global [data-subject] palette — the card sets it on Home, the
+   subject page sets it on the whole column. */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 8px 22px rgba(24, 44, 92, 0.04);
+}
+
+.card h3 {
+  color: #16204a;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+/* Subject, set and the "New" badge above the title. */
+.context {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.subject {
+  color: var(--subject-ink, var(--tone-ink, #16204a));
+}
+
+.set {
+  color: #8c9ac1;
+  overflow-wrap: anywhere;
+}
+
+.newBadge {
+  padding: 2px 8px;
+  border-radius: 99px;
+  color: #1d4ed8;
+  background: #e5edff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* What the test asks for on the left, where the child stands on the right. */
+.meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 2px;
+  color: #8c9ac1;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 10px 0 12px;
+}
+
+.bar {
+  height: 7px;
+  flex: 1;
+  overflow: hidden;
+  border-radius: 99px;
+  background: #edf1f8;
+}
+
+.bar span {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: var(--tone, #2f80ed);
+  transition: width 500ms ease;
+}
+
+.percent {
+  color: var(--subject-ink, var(--tone-ink, #16204a));
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Pushes the action to the bottom so cards line up on uneven titles. */
+.action {
+  margin-top: auto;
+}
+
+@media (max-width: 1240px) {
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 720px) {
+  .grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bar span { transition: none; }
+}

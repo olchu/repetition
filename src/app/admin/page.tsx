@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSubjects } from "@/components/SubjectsProvider";
 import { SubjectManager } from "@/components/SubjectManager";
 import { AssignmentPlanner } from "@/components/AssignmentPlanner";
+import { TestSetManager } from "@/components/TestSetManager";
 import { getApiError } from "@/lib/api-error";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { Markdown } from "@/components/Markdown";
@@ -43,7 +44,7 @@ type AttemptDetail = {
   result: { earnedPoints: number; totalPoints: number; percentage: number; passed: boolean } | null;
   questions: AttemptQuestion[];
 };
-type View = "subjects" | "overview" | "children" | "groups" | "tests" | "assignments" | "results";
+type View = "subjects" | "overview" | "children" | "groups" | "tests" | "sets" | "assignments" | "results";
 type Notice = { tone: "success" | "error"; text: string } | null;
 
 
@@ -51,9 +52,9 @@ type Notice = { tone: "success" | "error"; text: string } | null;
 function AdminNavigation({ view, onChange }: { view: View; onChange: (view: View) => void }) {
   return (
     <nav className={styles.nav} aria-label="Admin navigation">
-      {(["overview", "children", "groups", "subjects", "tests", "assignments", "results"] as View[]).map((item) => (
+      {(["overview", "children", "groups", "subjects", "tests", "sets", "assignments", "results"] as View[]).map((item) => (
         <button className={`${styles.navButton} ${view === item ? styles.navActive : ""}`} key={item} type="button" onClick={() => onChange(item)}>
-          {item === "overview" ? "Overview" : item === "children" ? "Children" : item === "groups" ? "Groups" : item === "subjects" ? "Subjects" : item === "tests" ? "Tests" : item === "assignments" ? "Assignments" : "Results"}
+          {item === "overview" ? "Overview" : item === "children" ? "Children" : item === "groups" ? "Groups" : item === "subjects" ? "Subjects" : item === "tests" ? "Tests" : item === "sets" ? "Sets" : item === "assignments" ? "Assignments" : "Results"}
         </button>
       ))}
       <SignOutButton className={styles.navLink} />
@@ -525,6 +526,7 @@ export default function AdminPage() {
       {view === "groups" && <GroupsManager childAccounts={data.children} groups={data.groups} onRefresh={loadAdmin} />}
       {view === "subjects" && <SubjectManager />}
       {view === "tests" && <TestsManager onRefresh={loadAdmin} />}
+      {view === "sets" && <TestSetManager />}
       {view === "assignments" && <AssignmentPlanner childAccounts={data.children} groups={data.groups} onRefresh={loadAdmin} />}
       {view === "results" && <ResultsExplorer childAccounts={data.children} results={data.results} />}
       {view === "overview" && <>

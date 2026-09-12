@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { BookOpen, Heart, House } from "lucide-react";
+import { BookOpen, ClipboardList, Heart, House } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import logo from "../../public/images/logo.png";
 import styles from "./DashboardSidebar.module.css";
@@ -19,6 +19,7 @@ type NavEntry = {
 const navEntries: NavEntry[] = [
   { section: "home", label: "Home", Icon: House, href: "/dashboard" },
   { section: "subjects", label: "Subjects", Icon: BookOpen, href: "/dashboard/subjects" },
+  { section: "tests", label: "Tests", Icon: ClipboardList, href: "/dashboard/tests" },
 ];
 
 type DashboardSidebarProps = {

@@ -1,0 +1,57 @@
+/* Admin Sets: create a set, pick it on the left, fill it from the library on
+   the right. Colours and type follow src/app/admin/page.module.css. */
+.spaced { margin-top: 38px; }
+
+.createForm { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) auto; gap: 16px 20px; align-items: end; margin-top: 38px; padding: 24px; border: 1px solid var(--line); background: var(--paper-bright); }
+.createForm label, .editForm label, .search { display: flex; flex-direction: column; gap: 8px; color: var(--ink); font-size: 12px; font-weight: 700; }
+.createForm input, .editForm input, .search input { min-height: 42px; padding: 0 12px; border: 1px solid var(--line); border-radius: 3px; color: var(--ink); background: var(--paper); font: inherit; font-size: 13px; outline: none; }
+.createForm input:focus, .editForm input:focus, .search input:focus { border-color: var(--ink); box-shadow: 0 0 0 3px rgba(16, 44, 58, 0.1); }
+
+.layout { display: grid; grid-template-columns: minmax(200px, 260px) minmax(0, 1fr); gap: 32px; align-items: start; margin-top: 32px; }
+.setList { display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+.setItem { display: grid; gap: 4px; padding: 14px 12px; border: 0; border-bottom: 1px solid var(--line); border-left: 3px solid transparent; color: var(--ink); background: transparent; cursor: pointer; font: inherit; text-align: left; }
+.setItem strong { font-size: 14px; overflow-wrap: anywhere; }
+.setItem span { color: var(--muted); font-size: 11px; }
+.setItem:hover { background: var(--paper-bright); }
+.setItem:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; }
+.setItemActive, .setItemActive:hover { border-left-color: var(--ink); background: var(--paper-bright); }
+
+.panel { min-width: 0; padding: 24px; border: 1px solid var(--line); background: var(--paper-bright); }
+.panelHeader { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px 24px; padding-bottom: 20px; border-bottom: 1px solid var(--line); }
+.panelHeader h2 { font-family: var(--font-jakarta), sans-serif; font-size: 28px; font-weight: 700; letter-spacing: -0.05em; overflow-wrap: anywhere; }
+.panelHeader p { margin-top: 8px; color: var(--muted); font-size: 13px; line-height: 1.45; }
+.headerActions { display: flex; gap: 18px; }
+.editForm { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) auto; gap: 16px; align-items: end; padding-bottom: 20px; border-bottom: 1px solid var(--line); }
+.editActions { display: flex; align-items: center; gap: 16px; }
+
+.blockTitle { margin: 26px 0 12px; font-family: var(--font-jakarta), sans-serif; font-size: 18px; font-weight: 600; letter-spacing: -0.04em; }
+.libraryHeader { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 0 18px; margin-bottom: 12px; }
+.libraryHeader .blockTitle { margin-bottom: 0; }
+.search { flex: 0 1 260px; margin-top: 18px; }
+
+.rows { list-style: none; border-top: 1px solid var(--line); }
+.row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 18px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.testInfo { display: grid; gap: 5px; min-width: 0; }
+.testInfo strong { font-size: 14px; overflow-wrap: anywhere; }
+.testInfo span { color: var(--muted); font-size: 11px; }
+.warning, .note { font-size: 11px; font-style: normal; font-weight: 600; line-height: 1.4; }
+.warning { color: #9a6d2c; }
+.note { color: var(--muted); }
+
+.addButton { min-width: 88px; padding: 9px 14px; border: 1px solid var(--ink); border-radius: 3px; color: var(--ink); background: transparent; cursor: pointer; font: inherit; font-size: 12px; font-weight: 700; }
+.addButton:hover:not(:disabled) { color: var(--paper-bright); background: var(--ink); }
+.addButton:disabled { cursor: wait; opacity: 0.55; }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .setList { flex-direction: row; overflow-x: auto; }
+  .setItem { flex: 0 0 auto; min-width: 160px; border-bottom: 3px solid transparent; border-left: 0; }
+  .setItemActive, .setItemActive:hover { border-bottom-color: var(--ink); }
+}
+
+@media (max-width: 760px) {
+  .createForm, .editForm { grid-template-columns: minmax(0, 1fr); padding: 18px; }
+  .editForm { padding: 0 0 20px; }
+  .panel { padding: 18px; }
+  .search { flex-basis: 100%; }
+}

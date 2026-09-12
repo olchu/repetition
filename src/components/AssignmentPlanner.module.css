@@ -55,6 +55,11 @@
 .groupForm h2 { grid-column: 1 / -1; font-family: var(--font-jakarta), sans-serif; font-size: 18px; font-weight: 600; letter-spacing: -0.04em; }
 .groupForm p { grid-column: 1 / -1; margin-top: -8px; color: var(--muted); font-size: 12px; }
 
+/* The catalog, grouped by test set. */
+.catalogGroups { display: grid; gap: 22px; }
+.groupHeader { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin-bottom: 8px; }
+.groupHeader strong { font-size: 13px; letter-spacing: 0.02em; }
+
 @media (max-width: 900px) {
   .layout { grid-template-columns: minmax(0, 1fr); gap: 20px; }
   .childList { flex-direction: row; overflow-x: auto; }
