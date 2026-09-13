@@ -24,29 +24,25 @@ psql --version
 
 ## 2. Запуск и остановка сервера
 
-Запуск как фоновой macOS-службы:
+Сервер запускается вместе с проектом: `npm run dev` (`scripts/dev.mjs`) поднимает PostgreSQL, если он выключен, запускает Next, а после Ctrl+C останавливает сервер — но только если сам его поднял. Сервер, который уже работал до запуска, остаётся как был.
+
+Для этого PostgreSQL не должен быть службой `brew services`: она запускает сервер при входе в macOS и перезапускает его при каждой остановке. Отключить её один раз:
 
 ```bash
-brew services start postgresql@16
-```
-
-Проверка готовности:
-
-```bash
-pg_isready -h localhost -p 5432
-```
-
-Ожидаемый результат содержит `accepting connections`.
-
-Полезные команды:
-
-```bash
-brew services list
-brew services restart postgresql@16
 brew services stop postgresql@16
 ```
 
-После `brew services start` PostgreSQL будет запускаться автоматически при входе в macOS.
+Ручное управление — например, для интеграционных тестов без запущенного Next:
+
+```bash
+npm run db:status   # запущен ли сервер и не служба ли он brew
+npm run db:start
+npm run db:stop
+```
+
+`npm run dev:next` запускает только Next, не трогая базу. Проверка готовности: `pg_isready -h localhost -p 5432` — ожидается `accepting connections`. Лог сервера: `/opt/homebrew/var/log/postgresql@16.log`.
+
+Вернуть автозапуск при входе в macOS: `brew services start postgresql@16`. Тогда `npm run dev` сервер не останавливает, а `npm run db:stop` подсказывает, как отключить службу.
 
 ## 3. Создание базы для Repetition
 
@@ -103,11 +99,10 @@ npm run dev
 Если база уже создана, каждый раз достаточно:
 
 ```bash
-brew services start postgresql@16
 npm run dev
 ```
 
-Если служба уже запущена, повторный `start` не требуется.
+PostgreSQL поднимется сам и остановится после Ctrl+C. Интеграционным тестам (`node --test tests/…`) нужна запущенная база: `npm run db:start` перед ними и `npm run db:stop` после, если Next не запущен.
 
 ## 6. Типовые проблемы
 
@@ -124,11 +119,11 @@ which psql
 
 ### `connection refused`
 
-Проверьте состояние службы и запустите её:
+Сервер выключен — например, Next запущен через `npm run dev:next`. Проверьте и запустите его:
 
 ```bash
-brew services list
-brew services start postgresql@16
+npm run db:status
+npm run db:start
 pg_isready -h localhost -p 5432
 ```
 
