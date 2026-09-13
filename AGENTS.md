@@ -20,6 +20,10 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 Администратор объединяет тесты в наборы (`TestSet`, членство по `stableId`, тест максимум в одном наборе): `docs/TEST-SETS.md`. Списки ученика группируются `groupBySet` из `src/lib/student-progress.ts`, сводка наборов — `summarizeSets`; карточки тестов — `src/components/TestCard.tsx`, карточки наборов — `SetCard.tsx`, страница набора — `src/app/dashboard/sets/[setId]`.
 
+## Деплой
+
+Supabase + Vercel: `docs/DEPLOY.md`. Приложение ходит по `DATABASE_URL` (transaction pooler), Prisma CLI и миграции — по `DIRECT_URL` (session pooler): `prisma.config.ts` берёт её как `url`, а `directUrl` там в Prisma 6.19 для подключения не используется. Строки Supabase лежат в `.env.supabase`, не в `.env`. Все таблицы в `public` — с RLS без политик, чтобы Data API Supabase их не отдавал; миграция новой таблицы должна включать `ALTER TABLE … ENABLE ROW LEVEL SECURITY` (проверяет `tests/rls.integration.cjs`).
+
 ## Награды
 
 Правила звёзд и ограничения попыток: `docs/REWARDS.md`. Правильный ответ: 1 звезда, с подсказкой: 0,5; только первая попытка по stableId. Незавершённый тест можно только продолжить. Проверенные ответы неизменяемы. Все изменения попыток используют `withChildAttemptLock`.
