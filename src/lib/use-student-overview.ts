@@ -1,13 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { createContext, createElement, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import type { StudentOverview } from "./student-progress";
 
 export type OverviewError = "unauthorized" | "unavailable";
 
-/** One loader for every learning-room section, so the sections can't drift
- *  apart on the numbers they show. */
-export function useStudentOverview() {
+type StudentOverviewContextValue = ReturnType<typeof useStudentOverviewState>;
+
+const StudentOverviewContext = createContext<StudentOverviewContextValue | null>(null);
+
+/** One loader shared by the whole learning room, so navigation neither
+ *  refetches the same summary nor temporarily removes the persistent frame. */
+function useStudentOverviewState() {
   const [data, setData] = useState<StudentOverview | null>(null);
   const [error, setError] = useState<OverviewError | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,4 +44,15 @@ export function useStudentOverview() {
   }, [reload]);
 
   return { data, error, isLoading, reload };
+}
+
+export function StudentOverviewProvider({ children }: { children: ReactNode }) {
+  const value = useStudentOverviewState();
+  return createElement(StudentOverviewContext.Provider, { value }, children);
+}
+
+export function useStudentOverview() {
+  const context = useContext(StudentOverviewContext);
+  if (!context) throw new Error("StudentOverviewProvider is required.");
+  return context;
 }

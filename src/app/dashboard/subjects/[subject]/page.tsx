@@ -2,13 +2,9 @@
 
 import { use, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, Circle, CircleCheck, CirclePlay } from "lucide-react";
+import { Circle, CircleCheck, CirclePlay } from "lucide-react";
 import {
-  DashboardLoading,
-  DashboardShell,
   DashboardStateCard,
-  DashboardUnauthorized,
-  DashboardUnavailable,
   shellStyles,
 } from "@/components/DashboardShell";
 import { SubjectIcon } from "@/components/SubjectCard";
@@ -40,20 +36,9 @@ const statusClass: Record<StudentTestStatus, string> = {
 export default function SubjectPage({ params }: PageProps<"/dashboard/subjects/[subject]">) {
   const subjectLabel = useSubjectLabel();
   const { subject } = use(params);
-  const { data, error, isLoading, reload } = useStudentOverview();
+  const { data } = useStudentOverview();
   const [filter, setFilter] = useState<TestFilter>("all");
-
-  if (isLoading) {
-    return <DashboardLoading label="Loading subject…" />;
-  }
-
-  if (error === "unauthorized") {
-    return <DashboardUnauthorized />;
-  }
-
-  if (error === "unavailable" || !data) {
-    return <DashboardUnavailable onRetry={() => void reload()} />;
-  }
+  if (!data) return null;
 
   const summary = data.subjects.find((item) => item.subject === subject);
 
@@ -65,6 +50,7 @@ export default function SubjectPage({ params }: PageProps<"/dashboard/subjects/[
         title="This subject is unavailable."
         description="It is not one of your assigned subjects."
         action={<Link className={shellStyles.stateAction} href="/dashboard/subjects">Back to subjects</Link>}
+        embedded
       />
     );
   }
@@ -83,18 +69,7 @@ export default function SubjectPage({ params }: PageProps<"/dashboard/subjects/[
   const showSetTitles = groups.some((group) => group.set !== null);
 
   return (
-    <DashboardShell
-      userName={data.child.displayName}
-      stars={data.stars}
-      active="subjects"
-      subject={subject}
-      leading={
-        <Link className={shellStyles.backLink} href="/dashboard/subjects">
-          <ChevronLeft size={16} strokeWidth={2.6} aria-hidden="true" />
-          All subjects
-        </Link>
-      }
-    >
+    <>
       <section className={styles.hero} aria-labelledby="subject-title">
         <div>
           <div className={styles.intro}>
@@ -237,6 +212,6 @@ export default function SubjectPage({ params }: PageProps<"/dashboard/subjects/[
           </div>
         )}
       </section>
-    </DashboardShell>
+    </>
   );
 }

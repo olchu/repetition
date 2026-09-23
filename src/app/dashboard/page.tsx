@@ -1,12 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import {
-  DashboardLoading,
-  DashboardShell,
-  DashboardUnauthorized,
-  DashboardUnavailable,
-} from "@/components/DashboardShell";
 import { SubjectCard, subjectCardStyles } from "@/components/SubjectCard";
 import { TestCard, TestCardGrid } from "@/components/TestCard";
 import { byNewestAssignment, matchesFilter } from "@/lib/student-progress";
@@ -24,19 +18,8 @@ const RING_RADIUS = 52;
 const RING_LENGTH = 2 * Math.PI * RING_RADIUS;
 
 export default function DashboardPage() {
-  const { data, error, isLoading, reload } = useStudentOverview();
-
-  if (isLoading) {
-    return <DashboardLoading label="Loading your learning room…" />;
-  }
-
-  if (error === "unauthorized") {
-    return <DashboardUnauthorized />;
-  }
-
-  if (error === "unavailable" || !data) {
-    return <DashboardUnavailable onRetry={() => void reload()} />;
-  }
+  const { data } = useStudentOverview();
+  if (!data) return null;
 
   const passedCount = data.tests.filter((test) => test.passed).length;
   const assignedCount = data.tests.length;
@@ -47,7 +30,7 @@ export default function DashboardPage() {
   const newTests = data.tests.filter((test) => matchesFilter(test, "not_started")).sort(byNewestAssignment);
 
   return (
-    <DashboardShell userName={name} stars={data.stars} active="home">
+    <>
       <section className={styles.hero} aria-labelledby="dashboard-title">
         <div className={styles.heroText}>
           <p className={styles.eyebrow}>Your learning room</p>
@@ -174,6 +157,6 @@ export default function DashboardPage() {
           </TestCardGrid>
         )}
       </section>
-    </DashboardShell>
+    </>
   );
 }

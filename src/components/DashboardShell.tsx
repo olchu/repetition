@@ -2,16 +2,14 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { LogOut } from "lucide-react";
 import { DashboardSidebar, type DashboardSection } from "./DashboardSidebar";
-import { SignOutButton } from "./SignOutButton";
 import styles from "./DashboardShell.module.css";
 
 export { styles as shellStyles };
 
 type DashboardShellProps = {
   userName: string;
-  /** Credited stars; shown left of Sign out on every section. */
+  /** Credited stars; shown in the top bar on every browsing section. */
   stars: number;
   active: DashboardSection;
   /** Left of the top bar — a back link on the sections that have a parent. */
@@ -22,9 +20,8 @@ type DashboardShellProps = {
   children: ReactNode;
 };
 
-/** The frame around every learning-room section. It is a component rather than
- *  a route layout on purpose: the test and attempt pages live under
- *  /dashboard too and render their own workspace instead. */
+/** The frame around every browsing section of the learning room. Its route
+ *  layout keeps this component mounted while the page child changes. */
 export function DashboardShell({ userName, stars, active, leading, subject, children }: DashboardShellProps) {
   return (
     <div className={styles.shell}>
@@ -33,13 +30,7 @@ export function DashboardShell({ userName, stars, active, leading, subject, chil
       <main className={styles.main} data-subject={subject}>
         <div className={styles.topBar}>
           <div className={styles.topBarLeading}>{leading}</div>
-          <div className={styles.topBarActions}>
-            <p className={styles.starBalance} aria-label={`${stars} stars earned`}>⭐ {stars} stars</p>
-            <SignOutButton className={styles.signOut}>
-              <LogOut size={18} strokeWidth={2} aria-hidden="true" />
-              Sign out
-            </SignOutButton>
-          </div>
+          <p className={styles.starBalance} aria-label={`${stars} stars earned`}>⭐ {stars} stars</p>
         </div>
 
         {children}
@@ -57,20 +48,23 @@ export function DashboardStateCard({
   title,
   description,
   action,
+  embedded = false,
 }: {
   title: string;
   description: string;
   action: ReactNode;
+  embedded?: boolean;
 }) {
-  return (
-    <main className={styles.statePage}>
-      <div className={styles.stateCard}>
-        <h1>{title}</h1>
-        <p>{description}</p>
-        {action}
-      </div>
-    </main>
+  const card = (
+    <div className={styles.stateCard}>
+      <h1>{title}</h1>
+      <p>{description}</p>
+      {action}
+    </div>
   );
+
+  if (embedded) return <section className={styles.statePageEmbedded}>{card}</section>;
+  return <main className={styles.statePage}>{card}</main>;
 }
 
 export function DashboardUnauthorized() {

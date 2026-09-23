@@ -2,12 +2,6 @@
 
 import { useState } from "react";
 import { BookOpen, FileText } from "lucide-react";
-import {
-  DashboardLoading,
-  DashboardShell,
-  DashboardUnauthorized,
-  DashboardUnavailable,
-} from "@/components/DashboardShell";
 import { SubjectCard, subjectCardStyles } from "@/components/SubjectCard";
 import { useSubjectLabel } from "@/components/SubjectsProvider";
 import type { StudentSubjectSummary } from "@/lib/student-progress";
@@ -39,32 +33,16 @@ function sortSubjects(subjects: readonly StudentSubjectSummary[], order: SortOrd
  *  not put tests in yet, which stay visible so the child knows they exist. */
 export default function SubjectsPage() {
   const subjectLabel = useSubjectLabel();
-  const { data, error, isLoading, reload } = useStudentOverview();
+  const { data } = useStudentOverview();
   const [order, setOrder] = useState<SortOrder>("assigned");
-
-  if (isLoading) {
-    return <DashboardLoading label="Loading your subjects…" />;
-  }
-
-  if (error === "unauthorized") {
-    return <DashboardUnauthorized />;
-  }
-
-  if (error === "unavailable" || !data) {
-    return <DashboardUnavailable onRetry={() => void reload()} />;
-  }
+  if (!data) return null;
 
   const assignedTests = data.tests.length;
   const passedTests = data.tests.filter((test) => test.passed).length;
   const overall = assignedTests ? Math.round((passedTests / assignedTests) * 100) : 0;
 
   return (
-    <DashboardShell
-      userName={data.child.displayName}
-      stars={data.stars}
-      active="subjects"
-      leading={<p className={styles.eyebrow}>Your learning room</p>}
-    >
+    <>
       <header className={styles.head}>
         <h1>Your <span className={styles.headAccent}>subjects</span></h1>
         <p>Choose a subject to continue learning and review assigned tests.</p>
@@ -156,6 +134,6 @@ export default function SubjectsPage() {
           ))}
         </div>
       )}
-    </DashboardShell>
+    </>
   );
 }

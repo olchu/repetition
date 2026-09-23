@@ -13,7 +13,7 @@ export function SignOutButton({ className, children }: SignOutButtonProps) {
   }
 
   return (
-    <button className={className} type="button" onClick={() => void signOut()}>
+    <button className={className} type="button" aria-label="Sign out" onClick={() => void signOut()}>
       {children ?? "Sign out"}
     </button>
   );

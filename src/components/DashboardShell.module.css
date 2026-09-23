@@ -17,7 +17,7 @@
 }
 
 /* Spans the content column so a section can put a back link on the left
-   without moving the stars and Sign out. Absolute, so Home's hero keeps
+   without moving the stars. Absolute, so Home's hero keeps
    starting at the top of the column. */
 .topBar {
   position: absolute;
@@ -36,10 +36,12 @@
   align-items: center;
 }
 
-.topBarActions {
-  display: flex;
-  align-items: center;
-  gap: 14px;
+.topBarEyebrow {
+  color: #8c9ac1;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
 }
 
 .starBalance {
@@ -52,35 +54,6 @@
   background: #fff3cd;
   font-size: 14px;
   font-weight: 600;
-}
-
-.signOut {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 40px;
-  padding: 0 18px;
-  border: 1px solid #e3ecf8;
-  border-radius: 13px;
-  color: #16204a;
-  background: #fff;
-  cursor: pointer;
-  font: inherit;
-  font-size: 14px;
-  font-weight: 700;
-  box-shadow: 0 4px 14px rgba(24, 44, 92, 0.05);
-  transition: border-color 160ms ease, box-shadow 160ms ease;
-}
-
-.signOut svg {
-  width: 17px;
-  height: 17px;
-  color: #4a7cf7;
-}
-
-.signOut:hover {
-  border-color: #c9d8ef;
-  box-shadow: 0 6px 18px rgba(24, 44, 92, 0.09);
 }
 
 /* Section heading shared by Subjects, Tests and Progress. */
@@ -137,6 +110,12 @@
   font-weight: 500;
 }
 
+.statePageEmbedded {
+  display: grid;
+  min-height: calc(100svh - 116px);
+  place-items: center;
+}
+
 .stateCard {
   width: min(100%, 440px);
   padding: 34px;
@@ -184,6 +163,7 @@
 @media (max-width: 900px) {
   .shell {
     grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: max-content minmax(0, 1fr);
   }
 
   .main {
@@ -194,11 +174,5 @@
 @media (max-width: 720px) {
   .main {
     padding: 86px 16px 36px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .signOut {
-    transition: none;
   }
 }

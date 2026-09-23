@@ -2,13 +2,9 @@
 
 import { use, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, Circle, CircleCheck, CirclePlay, Layers } from "lucide-react";
+import { Circle, CircleCheck, CirclePlay, Layers } from "lucide-react";
 import {
-  DashboardLoading,
-  DashboardShell,
   DashboardStateCard,
-  DashboardUnauthorized,
-  DashboardUnavailable,
   shellStyles,
 } from "@/components/DashboardShell";
 import { useSubjectLabel } from "@/components/SubjectsProvider";
@@ -26,20 +22,9 @@ const PICK_UP_LIMIT = 4;
 export default function SetPage({ params }: PageProps<"/dashboard/sets/[setId]">) {
   const { setId } = use(params);
   const subjectLabel = useSubjectLabel();
-  const { data, error, isLoading, reload } = useStudentOverview();
+  const { data } = useStudentOverview();
   const [filter, setFilter] = useState<TestFilter>("all");
-
-  if (isLoading) {
-    return <DashboardLoading label="Loading set…" />;
-  }
-
-  if (error === "unauthorized") {
-    return <DashboardUnauthorized />;
-  }
-
-  if (error === "unavailable" || !data) {
-    return <DashboardUnavailable onRetry={() => void reload()} />;
-  }
+  if (!data) return null;
 
   const summary = data.sets.find((set) => set.id === setId);
 
@@ -50,6 +35,7 @@ export default function SetPage({ params }: PageProps<"/dashboard/sets/[setId]">
         title="This set is unavailable."
         description="None of its tests are assigned to you."
         action={<Link className={shellStyles.stateAction} href="/dashboard/tests">Back to tests</Link>}
+        embedded
       />
     );
   }
@@ -64,18 +50,7 @@ export default function SetPage({ params }: PageProps<"/dashboard/sets/[setId]">
   const visible = tests.filter((test) => matchesFilter(test, filter));
 
   return (
-    <DashboardShell
-      userName={data.child.displayName}
-      stars={data.stars}
-      active="tests"
-      subject={singleSubject}
-      leading={
-        <Link className={shellStyles.backLink} href="/dashboard/tests">
-          <ChevronLeft size={16} strokeWidth={2.6} aria-hidden="true" />
-          All tests
-        </Link>
-      }
-    >
+    <>
       <section className={styles.hero} aria-labelledby="set-title">
         <div className={styles.intro}>
           <span className={styles.badge} aria-hidden="true">
@@ -148,6 +123,6 @@ export default function SetPage({ params }: PageProps<"/dashboard/sets/[setId]">
           hint: <button className={shellStyles.backLink} type="button" onClick={() => setFilter("all")}>Show all tests</button>,
         }}
       />
-    </DashboardShell>
+    </>
   );
 }

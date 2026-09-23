@@ -3,10 +3,6 @@
 import { use, useState } from "react";
 import { Search } from "lucide-react";
 import {
-  DashboardLoading,
-  DashboardShell,
-  DashboardUnauthorized,
-  DashboardUnavailable,
   shellStyles,
 } from "@/components/DashboardShell";
 import { SetCard, SetCardGrid } from "@/components/SetCard";
@@ -27,22 +23,12 @@ function readFilter(value: string | string[] | undefined): TestFilter {
 export default function TestsPage({ searchParams }: PageProps<"/dashboard/tests">) {
   const { status } = use(searchParams);
   const subjectLabel = useSubjectLabel();
-  const { data, error, isLoading, reload } = useStudentOverview();
+  const { data } = useStudentOverview();
   const [filter, setFilter] = useState<TestFilter>(() => readFilter(status));
   const [subject, setSubject] = useState("");
   const [search, setSearch] = useState("");
 
-  if (isLoading) {
-    return <DashboardLoading label="Loading your tests…" />;
-  }
-
-  if (error === "unauthorized") {
-    return <DashboardUnauthorized />;
-  }
-
-  if (error === "unavailable" || !data) {
-    return <DashboardUnavailable onRetry={() => void reload()} />;
-  }
+  if (!data) return null;
 
   const query = search.trim().toLowerCase();
   const subjects = [...new Set(data.tests.map((test) => test.subject))].sort((a, b) => subjectLabel(a).localeCompare(subjectLabel(b)));
@@ -60,7 +46,7 @@ export default function TestsPage({ searchParams }: PageProps<"/dashboard/tests"
   }
 
   return (
-    <DashboardShell userName={data.child.displayName} stars={data.stars} active="tests">
+    <>
       <header className={styles.header}>
         <p className={styles.eyebrow}>Tests</p>
         <h1>All your tests</h1>
@@ -114,6 +100,6 @@ export default function TestsPage({ searchParams }: PageProps<"/dashboard/tests"
           </section>
         </div>
       )}
-    </DashboardShell>
+    </>
   );
 }
