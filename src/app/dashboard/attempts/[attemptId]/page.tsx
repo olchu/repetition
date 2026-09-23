@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ArrowLeft, ArrowRight, Check, ChevronsRight, HelpCircle, Lightbulb, X } from "lucide-react";
 import { Markdown } from "@/components/Markdown";
 import { MAX_ANSWER_LENGTH } from "@/lib/grading";
+import { useStudentOverview } from "@/lib/use-student-overview";
 import styles from "../../test.module.css";
 
 type Question = {
@@ -44,6 +45,7 @@ type RouteContext = { params: Promise<{ attemptId: string }> };
 
 export default function AttemptPage({ params }: RouteContext) {
   const subjectLabel = useSubjectLabel();
+  const { reload: reloadOverview } = useStudentOverview();
   const [attempt, setAttempt] = useState<Attempt | null>(null);
   const [answers, setAnswers] = useState<Record<string, SavedAnswer>>({});
   /** The chosen option id or the typed text of each question. */
@@ -141,6 +143,7 @@ export default function AttemptPage({ params }: RouteContext) {
       if (!response.ok) throw new Error("Attempt could not be submitted");
       const payload = (await response.json()) as { attempt: Attempt };
       setAttempt(payload.attempt);
+      void reloadOverview();
     } catch {
       setSaveError("Your test couldn’t be submitted. Please try again.");
     } finally {

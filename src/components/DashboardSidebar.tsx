@@ -6,6 +6,7 @@ import { useEffect, useId, useState } from "react";
 import { BookOpen, ClipboardList, Heart, House, LogOut, Menu, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { useStudentOverview } from "@/lib/use-student-overview";
 import logo from "../../public/images/logo.png";
 import { SignOutButton } from "./SignOutButton";
 import styles from "./DashboardSidebar.module.css";
@@ -36,7 +37,7 @@ type DashboardSidebarProps = {
   active?: DashboardSection;
 };
 
-function UserCard({ userName, userRole, mobile = false }: { userName: string; userRole: string; mobile?: boolean }) {
+function UserCard({ userName, userRole, stars, mobile = false }: { userName: string; userRole: string; stars: number | null; mobile?: boolean }) {
   return (
     <div className={`${styles.userFooter} ${mobile ? styles.mobileUserFooter : ""}`}>
       <div className={`${styles.userCard} ${mobile ? styles.mobileUserCard : ""}`}>
@@ -44,7 +45,8 @@ function UserCard({ userName, userRole, mobile = false }: { userName: string; us
           <span className={styles.avatar} aria-hidden="true">{userName.slice(0, 1).toUpperCase()}</span>
           <span className={styles.userText}>
             <strong>{userName}</strong>
-            <span>{userRole}</span>
+            <span className={styles.userRole}>{userRole}</span>
+            {stars !== null && <span className={styles.userBalance} aria-label={`${stars} stars earned`}>⭐ {stars} stars</span>}
           </span>
         </div>
       </div>
@@ -57,6 +59,8 @@ function UserCard({ userName, userRole, mobile = false }: { userName: string; us
 }
 
 export function DashboardSidebar({ userName, userRole = "Student", active = "home" }: DashboardSidebarProps) {
+  const { data } = useStudentOverview();
+  const stars = data?.stars ?? null;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const mobileMenuId = useId();
   const shouldReduceMotion = useReducedMotion();
@@ -117,7 +121,7 @@ export function DashboardSidebar({ userName, userRole = "Student", active = "hom
         <Heart size={18} strokeWidth={2} />
       </p>
 
-      <UserCard userName={userName} userRole={userRole} />
+      <UserCard userName={userName} userRole={userRole} stars={stars} />
 
       <button
         className={styles.menuButton}
@@ -186,7 +190,7 @@ export function DashboardSidebar({ userName, userRole = "Student", active = "hom
                   );
                 })}
               </nav>
-              <UserCard userName={userName} userRole={userRole} mobile />
+              <UserCard userName={userName} userRole={userRole} stars={stars} mobile />
             </motion.div>
           </motion.div>
         )}

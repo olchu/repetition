@@ -16,23 +16,17 @@
   padding: 76px clamp(24px, 3vw, 50px) 40px;
 }
 
-/* Spans the content column so a section can put a back link on the left
-   without moving the stars. Absolute, so Home's hero keeps
-   starting at the top of the column. */
+.mainWithoutTopBar {
+  padding-top: 32px;
+}
+
+/* Back links and the Subjects eyebrow sit above the page content. */
 .topBar {
   position: absolute;
   top: 18px;
   left: clamp(24px, 3vw, 50px);
   right: clamp(24px, 3vw, 50px);
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-}
-
-.topBarLeading {
-  display: flex;
-  min-width: 0;
   align-items: center;
 }
 
@@ -42,18 +36,6 @@
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-}
-
-.starBalance {
-  display: inline-block;
-  margin: 0;
-  padding: 4px 10px;
-  white-space: nowrap;
-  border-radius: 12px;
-  color: #92400e;
-  background: #fff3cd;
-  font-size: 14px;
-  font-weight: 600;
 }
 
 /* Section heading shared by Subjects, Tests and Progress. */
@@ -169,10 +151,18 @@
   .main {
     padding-top: 90px;
   }
+
+  .mainWithoutTopBar {
+    padding-top: 32px;
+  }
 }
 
 @media (max-width: 720px) {
   .main {
     padding: 86px 16px 36px;
+  }
+
+  .mainWithoutTopBar {
+    padding-top: 28px;
   }
 }

@@ -202,6 +202,16 @@ a.navItemActive:focus-visible {
   font-weight: 500;
 }
 
+.userText .userBalance {
+  overflow: hidden;
+  margin-top: 5px;
+  color: #f7d988;
+  font-size: 12px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .signOut {
   display: inline-flex;
   min-height: 36px;
@@ -260,7 +270,8 @@ a.navItemActive:focus-visible {
     display: none;
   }
 
-  .userText {
+  .userText strong,
+  .userText .userRole {
     display: none;
   }
 
@@ -310,8 +321,9 @@ a.navItemActive:focus-visible {
     padding: 14px;
   }
 
-  .mobileUserCard .userText {
-    display: flex;
+  .mobileUserCard .userText strong,
+  .mobileUserCard .userRole {
+    display: block;
   }
 
   .mobileUserCard .avatar {

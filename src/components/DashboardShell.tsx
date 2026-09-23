@@ -9,8 +9,6 @@ export { styles as shellStyles };
 
 type DashboardShellProps = {
   userName: string;
-  /** Credited stars; shown in the top bar on every browsing section. */
-  stars: number;
   active: DashboardSection;
   /** Left of the top bar — a back link on the sections that have a parent. */
   leading?: ReactNode;
@@ -22,16 +20,13 @@ type DashboardShellProps = {
 
 /** The frame around every browsing section of the learning room. Its route
  *  layout keeps this component mounted while the page child changes. */
-export function DashboardShell({ userName, stars, active, leading, subject, children }: DashboardShellProps) {
+export function DashboardShell({ userName, active, leading, subject, children }: DashboardShellProps) {
   return (
     <div className={styles.shell}>
       <DashboardSidebar userName={userName} active={active} />
 
-      <main className={styles.main} data-subject={subject}>
-        <div className={styles.topBar}>
-          <div className={styles.topBarLeading}>{leading}</div>
-          <p className={styles.starBalance} aria-label={`${stars} stars earned`}>⭐ {stars} stars</p>
-        </div>
+      <main className={`${styles.main} ${leading ? "" : styles.mainWithoutTopBar}`} data-subject={subject}>
+        {leading && <div className={styles.topBar}>{leading}</div>}
 
         {children}
       </main>

@@ -75,7 +75,6 @@ function DashboardFrame({ children }: { children: ReactNode }) {
   return (
     <DashboardShell
       userName={data.child.displayName}
-      stars={data.stars}
       active={active}
       leading={leading}
       subject={subject}
