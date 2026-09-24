@@ -85,7 +85,7 @@ export default function SubjectsPage() {
           </span>
           <p className={styles.statText}>
             <strong>{overall}%</strong>
-            <span>of assigned tests passed</span>
+            <span><span className={styles.statLabelLong}>of assigned </span>tests passed</span>
           </p>
         </article>
       </section>

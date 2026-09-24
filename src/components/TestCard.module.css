@@ -114,6 +114,12 @@
 
 @media (max-width: 720px) {
   .grid { grid-template-columns: minmax(0, 1fr); }
+  .card { padding: 16px; border-radius: 22px; }
+  .context { font-size: 13px; }
+  .card h3 { font-size: 17px; }
+  .meta { font-size: 14px; }
+  .percent { font-size: 14px; }
+  .action > button { min-height: 42px; border-radius: 13px; font-size: 14px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

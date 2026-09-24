@@ -161,6 +161,15 @@
   text-transform: uppercase;
 }
 
+/* The ring's words and link, Up next and the closing banner are drawn on
+   phones only; on wider screens the progress picture says it instead. */
+.progressText,
+.progressLink,
+.upNext,
+.cheer {
+  display: none;
+}
+
 /* Subjects ---------------------------------------------------------------- */
 
 .section {
@@ -249,11 +258,225 @@
   .heroArt { position: relative; top: auto; right: auto; width: 100%; max-width: 500px; grid-column: 1 / -1; grid-row: 2; justify-self: center; }
 }
 
+/* Phones: the greeting spans the width and the picture shares the next row
+   with the copy, so neither runs over the other. The text box dissolves into
+   the hero grid to make that row possible. */
 @media (max-width: 720px) {
-  .hero { grid-template-columns: minmax(0, 1fr); }
-  .heroArt { grid-column: 1; }
-  .heroText h1 { font-size: clamp(36px, 8vw, 54px); }
-  .heroCopy { max-width: 100%; }
+  .hero {
+    grid-template-columns: minmax(0, 46fr) minmax(0, 54fr);
+    gap: 0;
+    min-height: 0;
+    padding-bottom: 0;
+  }
+
+  .heroText { display: contents; }
+  .eyebrow { grid-column: 1 / -1; margin-bottom: 12px; font-size: 12px; }
+
+  .heroText h1 {
+    position: relative;
+    z-index: 1;
+    grid-column: 1 / -1;
+    font-size: clamp(32px, 9vw, 44px);
+    line-height: 1.02;
+  }
+
+  .heroCopy {
+    grid-column: 1;
+    grid-row: 3;
+    max-width: none;
+    margin-top: 12px;
+    padding-right: 6px;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  /* Rises into the name's line, which only fills the left column, and bleeds
+     to the screen edge on the right like the mock-up. */
+  .heroArt {
+    position: relative;
+    top: auto;
+    right: auto;
+    grid-column: 2;
+    grid-row: 3;
+    justify-self: start;
+    width: calc(100% + 16px);
+    max-width: none;
+    margin-top: -24px;
+    aspect-ratio: 4 / 3;
+    background-size: contain;
+    background-position: right bottom;
+  }
+
+  .progressCard {
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    max-width: none;
+    aspect-ratio: auto;
+    grid-column: 1 / -1;
+    margin-top: 18px;
+    padding: 16px 16px 16px 14px;
+    container-type: normal;
+    justify-self: stretch;
+    border-radius: 22px;
+    color: #06094d;
+    background: #fff;
+    box-shadow: 0 8px 22px rgba(24, 44, 92, 0.05);
+  }
+
+  .ring { position: static; flex: none; width: 92px; }
+  .ringTrack { stroke: #e8eef8; }
+  .ring stop:nth-child(1) { stop-color: #2ee6b8; }
+  .ring stop:nth-child(2) { stop-color: #1fd6d2; }
+  .ring stop:nth-child(3) { stop-color: #38c6f4; }
+  .ringValue { filter: none; }
+  .ringLabel { gap: 2px; }
+  .ringLabel strong { font-size: 24px; }
+  .ringLabel span { color: #526da8; font-size: 9px; }
+
+  .progressText {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .progressText strong {
+    color: #06094d;
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+  }
+
+  .progressText span {
+    color: #7489bc;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .progressLink {
+    display: grid;
+    flex: none;
+    width: 32px;
+    height: 32px;
+    place-items: center;
+    border-radius: 50%;
+    color: #080d58;
+    background: #f1f6fc;
+  }
+
+  .upNext {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 14px;
+    padding: 14px;
+    border: 1px solid var(--subject-soft, var(--tone-soft));
+    border-radius: 20px;
+    background: color-mix(in srgb, var(--subject-soft, var(--tone-soft)) 45%, #fff);
+  }
+
+  .upNextIcon {
+    display: grid;
+    flex: none;
+    width: 46px;
+    height: 46px;
+    place-items: center;
+    border-radius: 14px;
+    color: var(--tone);
+    background: var(--subject-soft, var(--tone-soft));
+  }
+
+  .upNextText { flex: 1; min-width: 0; }
+
+  .upNextEyebrow {
+    color: var(--subject-ink, var(--tone-ink));
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .upNextText h2 {
+    margin-top: 2px;
+    color: #16204a;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+  }
+
+  .upNextMeta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0 6px;
+    margin-top: 3px;
+    color: #7489bc;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .upNextMeta span { color: var(--tone); }
+
+  .upNextAction { flex: none; }
+
+  .section { padding-top: 22px; padding-bottom: 4px; }
+  .sectionHeader { margin-bottom: 12px; }
+  .sectionHeader h2 { font-size: 22px; }
+  .seeAll { font-size: 14px; }
+
+  .hiddenOnPhone { display: none; }
+
+  .cheer {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    margin-top: 22px;
+    padding: 20px 64px;
+    overflow: hidden;
+    border-radius: 22px;
+    color: #fff;
+    background:
+      radial-gradient(circle at 12% 30%, rgba(255, 255, 255, 0.8) 0 1px, transparent 2px),
+      radial-gradient(circle at 70% 20%, rgba(255, 255, 255, 0.7) 0 1px, transparent 2px),
+      radial-gradient(circle at 88% 68%, rgba(255, 255, 255, 0.6) 0 1px, transparent 2px),
+      radial-gradient(circle at 34% 82%, rgba(255, 255, 255, 0.6) 0 1px, transparent 2px),
+      radial-gradient(circle at -4% 130%, #3fd7f5 0 22%, #1d7fe0 34%, transparent 35%),
+      linear-gradient(120deg, #0d2a86 0%, #13389e 55%, #0b2270 100%);
+    text-align: center;
+  }
+
+  .cheer p {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  .cheer > span {
+    color: #d6e4ff;
+    font-size: 15px;
+    font-style: italic;
+  }
+
+  .cheerSparkle { flex: none; color: #ffd84d; fill: #ffd84d; }
+
+  .cheerRocket {
+    position: absolute;
+    right: 18px;
+    bottom: 14px;
+    color: #f4f7ff;
+    transform: rotate(8deg);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

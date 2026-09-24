@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { ChevronRight, FileText, Rocket, Sparkles } from "lucide-react";
 import { SubjectCard, subjectCardStyles } from "@/components/SubjectCard";
+import { TestActionButton } from "@/components/TestActionButton";
 import { TestCard, TestCardGrid } from "@/components/TestCard";
+import { useSubjectLabel } from "@/components/SubjectsProvider";
 import { byNewestAssignment, matchesFilter } from "@/lib/student-progress";
 import { useStudentOverview } from "@/lib/use-student-overview";
 import styles from "./home.module.css";
@@ -19,6 +22,7 @@ const RING_LENGTH = 2 * Math.PI * RING_RADIUS;
 
 export default function DashboardPage() {
   const { data } = useStudentOverview();
+  const subjectLabel = useSubjectLabel();
   if (!data) return null;
 
   const passedCount = data.tests.filter((test) => test.passed).length;
@@ -28,6 +32,17 @@ export default function DashboardPage() {
   const continueTests = data.tests.filter((test) => test.inProgressAttemptId !== null);
   // "New" is every test the child hasn't opened yet, most recently assigned first.
   const newTests = data.tests.filter((test) => matchesFilter(test, "not_started")).sort(byNewestAssignment);
+  // Phones lead with the one test to pick up; the Continue widget then only
+  // repeats it, so it is dropped there when that test is the only one.
+  const upNext = continueTests[0] ?? null;
+  // The ring counts passed tests, so the phone card says that in words.
+  const progressTitle = assignedCount === 0
+    ? "Your tests will appear here"
+    : passedCount === 0
+      ? "Let’s get started!"
+      : passedCount === assignedCount
+        ? "All tests passed!"
+        : "You’re making great progress!";
 
   return (
     <>
@@ -73,8 +88,36 @@ export default function DashboardPage() {
             </span>
           </div>
           <p className={styles.visuallyHidden}>&ldquo;One step at a time.&rdquo;</p>
+          {/* Phones only: the card turns white and explains the ring. */}
+          <div className={styles.progressText}>
+            <strong>{progressTitle}</strong>
+            <span>{passedCount} of {assignedCount} {assignedCount === 1 ? "test" : "tests"} passed</span>
+          </div>
+          <Link className={styles.progressLink} href="/dashboard/tests" aria-label="All tests">
+            <ChevronRight size={18} strokeWidth={2.4} aria-hidden="true" />
+          </Link>
         </aside>
       </section>
+
+      {upNext && (
+        <section className={styles.upNext} data-subject={upNext.subject} aria-labelledby="up-next-title">
+          <span className={styles.upNextIcon} aria-hidden="true">
+            <FileText size={24} strokeWidth={2} />
+          </span>
+          <div className={styles.upNextText}>
+            <p className={styles.upNextEyebrow}>Up next</p>
+            <h2 id="up-next-title">{upNext.title}</h2>
+            <p className={styles.upNextMeta}>
+              {subjectLabel(upNext.subject)}
+              <span aria-hidden="true">•</span>
+              {upNext.questionCount} {upNext.questionCount === 1 ? "question" : "questions"}
+            </p>
+          </div>
+          <div className={styles.upNextAction}>
+            <TestActionButton test={upNext} />
+          </div>
+        </section>
+      )}
 
       <section className={styles.section} aria-labelledby="subjects-title">
         <div className={styles.sectionHeader}>
@@ -123,7 +166,10 @@ export default function DashboardPage() {
       </section>
 
       {continueTests.length > 0 && (
-        <section className={styles.section} aria-labelledby="continue-title">
+        <section
+          className={`${styles.section} ${continueTests.length === 1 ? styles.hiddenOnPhone : ""}`}
+          aria-labelledby="continue-title"
+        >
           <div className={styles.sectionHeader}>
             <h2 id="continue-title">Continue<span className={styles.count}>{continueTests.length}</span></h2>
             {continueTests.length > HOME_TEST_LIMIT && (
@@ -157,6 +203,15 @@ export default function DashboardPage() {
           </TestCardGrid>
         )}
       </section>
+
+      <aside className={styles.cheer} aria-label="Keep going">
+        <p>
+          <Sparkles className={styles.cheerSparkle} size={22} strokeWidth={2} aria-hidden="true" />
+          Keep going, {name}!
+        </p>
+        <span>&ldquo;One step at a time.&rdquo;</span>
+        <Rocket className={styles.cheerRocket} size={34} strokeWidth={1.8} aria-hidden="true" />
+      </aside>
     </>
   );
 }

@@ -46,27 +46,13 @@
 }
 
 .stat {
-  position: relative;
   display: flex;
   align-items: center;
   gap: 16px;
-  overflow: hidden;
   padding: 18px 20px;
   border-radius: 18px;
   background: #fff;
   box-shadow: 0 8px 22px rgba(24, 44, 92, 0.04);
-}
-
-/* Stands in for the tile artwork; sits behind the numbers. */
-.stat::after {
-  position: absolute;
-  right: -30px;
-  bottom: -46px;
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, rgba(214, 233, 253, 0.75), rgba(226, 240, 253, 0.25) 70%);
-  content: "";
 }
 
 .statIcon {
@@ -82,7 +68,6 @@
 .statTests { color: #15803d; background: #e2f6e9; }
 
 .statText {
-  position: relative;
   min-width: 0;
 }
 
@@ -216,9 +201,36 @@
   .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
+/* Phones keep the three tiles in one row, each shrunk to icon, number and a
+   two-line label; the sort control stays beside the heading. */
 @media (max-width: 720px) {
-  .stats { grid-template-columns: minmax(0, 1fr); }
-  .sectionHeader { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .head { margin-bottom: 18px; }
+  .head h1 { font-size: clamp(38px, 10.5vw, 48px); }
+  .head p { font-size: 16px; }
+
+  .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 26px; }
+  .stat { gap: 10px; min-height: 88px; padding: 14px 10px; border-radius: 18px; }
+
+  .statIcon,
+  .statRing { width: 42px; height: 42px; border-radius: 12px; }
+  .statIcon svg { width: 20px; height: 20px; }
+  .statRing { padding: 7px; background: #e9f1fd; }
+  .ringTrack { stroke: #d6e5fb; }
+  .ringTrack,
+  .ringValue { stroke-width: 8; }
+
+  .statText strong { font-size: 22px; }
+  .statText > span { display: block; margin-top: 2px; color: #6b7fb0; font-size: 12px; line-height: 1.2; }
+  .statLabelLong { display: none; }
+
+  .sectionHeader { gap: 12px; margin-bottom: 12px; }
+  .sectionHeader h2 { font-size: 24px; }
+  .sort { gap: 6px; font-size: 12px; }
+}
+
+/* Too narrow for icon and label side by side: the icon goes on top. */
+@media (max-width: 389px) {
+  .stat { flex-direction: column; align-items: flex-start; }
 }
 
 @media (prefers-reduced-motion: reduce) {

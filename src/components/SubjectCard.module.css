@@ -195,9 +195,22 @@
   .gridWide { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
+/* One card per row on phones, so the card has room for larger type and a
+   full-size touch target. */
 @media (max-width: 720px) {
   .grid,
   .gridWide { grid-template-columns: minmax(0, 1fr); }
+  .card { padding: 16px 16px 14px; border-radius: 22px; }
+  .top { grid-template-columns: 52px minmax(0, 1fr) 32px; gap: 4px 14px; }
+  .icon { width: 52px; height: 52px; border-radius: 14px; }
+  .top h3 { font-size: 16px; }
+  .meta { font-size: 14px; }
+  .chevron { width: 32px; height: 32px; padding: 7px; }
+  .track { margin-top: 14px; }
+  .action,
+  .cardWide .action { min-height: 42px; margin-top: 14px; border-radius: 13px; font-size: 14px; }
+  .cardWide { padding: 16px 16px 14px; }
+  .gridWide { gap: 12px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -159,7 +159,18 @@
 
 @media (max-width: 720px) {
   .main {
-    padding: 86px 16px 36px;
+    padding: 62px 16px 36px;
+  }
+
+  /* Same 16px gutter as the content, and close to the heading it labels. */
+  .topBar {
+    top: 26px;
+    left: 16px;
+    right: 16px;
+  }
+
+  .topBarEyebrow {
+    color: #526da8;
   }
 
   .mainWithoutTopBar {
