@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { BookOpen, FileText } from "lucide-react";
+import { BookOpen, Check, FileText, Sparkles } from "lucide-react";
 import { SubjectCard, subjectCardStyles } from "@/components/SubjectCard";
 import { useSubjectLabel } from "@/components/SubjectsProvider";
 import type { StudentSubjectSummary } from "@/lib/student-progress";
@@ -15,9 +15,6 @@ const sortOrders: ReadonlyArray<{ value: SortOrder; label: string }> = [
   { value: "progress", label: "Progress" },
   { value: "name", label: "Name" },
 ];
-
-const RING_RADIUS = 20;
-const RING_LENGTH = 2 * Math.PI * RING_RADIUS;
 
 /** The administrator's order is the default; the others are the child's own
  *  way of looking at the same list. */
@@ -40,6 +37,7 @@ export default function SubjectsPage() {
   const assignedTests = data.tests.length;
   const passedTests = data.tests.filter((test) => test.passed).length;
   const overall = assignedTests ? Math.round((passedTests / assignedTests) * 100) : 0;
+  const testsToPass = Math.max(assignedTests - passedTests, 0);
 
   return (
     <>
@@ -48,7 +46,45 @@ export default function SubjectsPage() {
         <p>Choose a subject to continue learning and review assigned tests.</p>
       </header>
 
-      <section className={styles.stats} aria-label="Summary">
+      <section className={styles.stats} aria-label="Your learning snapshot">
+        <article className={styles.progressSummary}>
+          <div className={styles.summaryCopy}>
+            <span className={styles.summaryEyebrow}>
+              <Sparkles size={15} strokeWidth={2.4} aria-hidden="true" />
+              Overall progress
+            </span>
+            <p className={styles.summaryLead}>
+              <strong>{passedTests}<span>/{assignedTests}</span></strong>
+              tests passed
+            </p>
+            <p className={styles.summaryHint}>
+              {assignedTests === 0
+                ? "Your tests will appear here once they are assigned."
+                : testsToPass === 0
+                  ? "Everything assigned is passed — brilliant work!"
+                  : `${testsToPass} ${testsToPass === 1 ? "test" : "tests"} left to complete your goal.`}
+            </p>
+          </div>
+
+          <div className={styles.progressVisual}>
+            <span className={styles.progressPercent}>{overall}%</span>
+            <div
+              className={styles.progressTrack}
+              role="progressbar"
+              aria-label="Assigned tests passed"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={overall}
+            >
+              <span style={{ width: `${overall}%` }} />
+            </div>
+            <span className={styles.progressCaption}>
+              <Check size={14} strokeWidth={2.8} aria-hidden="true" />
+              {assignedTests === 0 ? "Ready when you are" : "Keep moving forward"}
+            </span>
+          </div>
+        </article>
+
         <article className={styles.stat}>
           <span className={`${styles.statIcon} ${styles.statSubjects}`} aria-hidden="true">
             <BookOpen size={24} strokeWidth={2.2} />
@@ -57,6 +93,7 @@ export default function SubjectsPage() {
             <strong>{data.subjects.length}</strong>
             <span>{data.subjects.length === 1 ? "subject" : "subjects"}</span>
           </p>
+          <span className={styles.statNote}>in your learning plan</span>
         </article>
 
         <article className={styles.stat}>
@@ -67,26 +104,7 @@ export default function SubjectsPage() {
             <strong>{assignedTests}</strong>
             <span>{assignedTests === 1 ? "assigned test" : "assigned tests"}</span>
           </p>
-        </article>
-
-        <article className={styles.stat}>
-          <span className={styles.statRing} aria-hidden="true">
-            <svg viewBox="0 0 52 52">
-              <circle className={styles.ringTrack} cx="26" cy="26" r={RING_RADIUS} />
-              <circle
-                className={styles.ringValue}
-                cx="26"
-                cy="26"
-                r={RING_RADIUS}
-                strokeDasharray={RING_LENGTH}
-                strokeDashoffset={RING_LENGTH * (1 - overall / 100)}
-              />
-            </svg>
-          </span>
-          <p className={styles.statText}>
-            <strong>{overall}%</strong>
-            <span><span className={styles.statLabelLong}>of assigned </span>tests passed</span>
-          </p>
+          <span className={styles.statNote}>ready to work through</span>
         </article>
       </section>
 
