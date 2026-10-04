@@ -76,6 +76,8 @@
   line-height: 1.4;
 }
 
+.note { padding: 6px 10px; color: #526da8; font-size: 11px; }
+
 @media (max-width: 600px) {
   .menu {
     min-width: 200px;

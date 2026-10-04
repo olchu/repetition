@@ -203,6 +203,7 @@ export default function SubjectPage({ params }: PageProps<"/dashboard/subjects/[
                         testId={test.id}
                         attemptCount={test.attemptCount}
                         inProgressAttemptId={test.inProgressAttemptId}
+                        rewardEligible={test.rewardEligible}
                       />
                     </article>
                   ))}

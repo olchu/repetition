@@ -57,21 +57,35 @@ async function collectAssignedTests(childId: string): Promise<AssignedTest[]> {
           questionCount: true,
         },
       },
-      attempts: {
-        where: { childId },
-        include: { result: true, _count: { select: { answers: true } } },
-        orderBy: { startedAt: "desc" },
-      },
     },
+  });
+
+  // Results and reward rights survive cancelled assignments and older versions.
+  const attempts = await prisma.attempt.findMany({
+    where: { childId, assignment: { test: { stableId: { in: assignments.map((item) => item.test.stableId) } } } },
+    select: {
+      id: true, status: true, startedAt: true, submittedAt: true,
+      result: true, reward: { select: { attemptId: true } },
+      _count: { select: { answers: true } },
+      assignment: { select: { test: { select: { stableId: true } } } },
+    },
+    orderBy: [{ startedAt: "desc" }, { id: "desc" }],
   });
 
   type Collected = {
     test: (typeof assignments)[number]["test"];
     assignedAt: Date;
-    attempts: (typeof assignments)[number]["attempts"];
+    attempts: typeof attempts;
     assignments: AssignmentSource[];
   };
   const collected = new Map<string, Collected>();
+  const attemptsByTest = new Map<string, typeof attempts>();
+  for (const attempt of attempts) {
+    const stableId = attempt.assignment.test.stableId;
+    const own = attemptsByTest.get(stableId) ?? [];
+    own.push(attempt);
+    attemptsByTest.set(stableId, own);
+  }
 
   for (const assignment of assignments) {
     const source: AssignmentSource = {
@@ -88,7 +102,7 @@ async function collectAssignedTests(childId: string): Promise<AssignedTest[]> {
       collected.set(assignment.test.stableId, {
         test: assignment.test,
         assignedAt: assignment.createdAt,
-        attempts: [...assignment.attempts],
+        attempts: attemptsByTest.get(assignment.test.stableId) ?? [],
         assignments: [source],
       });
       continue;
@@ -100,7 +114,6 @@ async function collectAssignedTests(childId: string): Promise<AssignedTest[]> {
     if (assignment.createdAt < entry.assignedAt) {
       entry.assignedAt = assignment.createdAt;
     }
-    entry.attempts.push(...assignment.attempts);
     entry.assignments.push(source);
   }
 
@@ -112,7 +125,8 @@ async function collectAssignedTests(childId: string): Promise<AssignedTest[]> {
 
   const rows = [...collected.values()].map((entry): AssignedTest => {
     const attempts = [...entry.attempts].sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime());
-    const submitted = attempts.filter((attempt) => attempt.result !== null);
+    const submitted = attempts.filter((attempt) => attempt.result !== null)
+      .sort((a, b) => (b.submittedAt?.getTime() ?? 0) - (a.submittedAt?.getTime() ?? 0) || b.id.localeCompare(a.id));
     const latest = submitted[0] ?? null;
     const unfinished = attempts.find((attempt) => attempt.status === "IN_PROGRESS") ?? null;
     const facts = {
@@ -135,6 +149,7 @@ async function collectAssignedTests(childId: string): Promise<AssignedTest[]> {
         status: statusOf(facts),
         ...facts,
         attemptCount: attempts.length,
+        rewardEligible: unfinished ? unfinished.reward !== null : attempts.length === 0,
         bestPercentage: submitted.reduce((best, attempt) => Math.max(best, attempt.result?.percentage ?? 0), 0),
         latestPercentage: latest?.result?.percentage ?? null,
         latestSubmittedAt: latest?.submittedAt?.toISOString() ?? null,

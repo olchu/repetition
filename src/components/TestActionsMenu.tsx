@@ -12,9 +12,10 @@ type TestActionsMenuProps = {
   attemptCount: number;
   /** Set when there is a resumable attempt to jump straight into. */
   inProgressAttemptId?: string | null;
+  rewardEligible?: boolean;
 };
 
-export function TestActionsMenu({ testId, attemptCount, inProgressAttemptId }: TestActionsMenuProps) {
+export function TestActionsMenu({ testId, attemptCount, inProgressAttemptId, rewardEligible }: TestActionsMenuProps) {
   const router = useRouter();
   const rootRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
@@ -45,7 +46,6 @@ export function TestActionsMenu({ testId, attemptCount, inProgressAttemptId }: T
       <button
         type="button"
         className={styles.trigger}
-        aria-haspopup="menu"
         aria-expanded={open}
         aria-label="Test actions"
         onClick={() => setOpen((value) => !value)}
@@ -54,11 +54,11 @@ export function TestActionsMenu({ testId, attemptCount, inProgressAttemptId }: T
       </button>
 
       {open && (
-        <div className={styles.menu} role="menu">
+        <div className={styles.menu}>
+          {rewardEligible === false && <p className={styles.note}>Practice · No stars</p>}
           {inProgressAttemptId ? (
             <button
               type="button"
-              role="menuitem"
               className={styles.item}
               onClick={() => router.push(`/dashboard/attempts/${inProgressAttemptId}`)}
             >
@@ -68,7 +68,6 @@ export function TestActionsMenu({ testId, attemptCount, inProgressAttemptId }: T
           ) : (
             <button
               type="button"
-              role="menuitem"
               className={styles.item}
               disabled={busy}
               onClick={() => void start()}
@@ -83,7 +82,6 @@ export function TestActionsMenu({ testId, attemptCount, inProgressAttemptId }: T
           {hasHistory && (
             <button
               type="button"
-              role="menuitem"
               className={styles.item}
               onClick={() => router.push(`/dashboard/tests/${testId}/history`)}
             >

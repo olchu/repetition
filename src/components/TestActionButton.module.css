@@ -42,6 +42,8 @@
   font-weight: 600;
 }
 
+.rewardNote { margin-top: 6px; color: #526da8; font-size: 11px; text-align: center; }
+
 @media (prefers-reduced-motion: reduce) {
   .action {
     transition: none;

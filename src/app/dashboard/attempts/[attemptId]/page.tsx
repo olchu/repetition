@@ -152,7 +152,7 @@ export default function AttemptPage({ params }: RouteContext) {
   }
 
   if (state === "loading") return <main className={styles.statePage}>Loading your attempt…</main>;
-  if (state === "error" || !attempt) return <main className={styles.statePage}><div className={styles.stateCard}><span className={styles.brandSmall}>repetition</span><h1>We couldn&apos;t open this attempt.</h1><p>Go back to your progress and try the test again.</p><Link className={styles.primaryAction} href="/dashboard">Back to progress</Link></div></main>;
+  if (state === "error" || !attempt) return <main className={styles.statePage}><div className={styles.stateCard}><span className={styles.brandSmall}>repetition</span><h1>We couldn&apos;t open this attempt.</h1><p>Go back to your progress and try the test again.</p><Link className={styles.primaryAction} href="/dashboard/progress">Back to progress</Link></div></main>;
 
   const question = attempt.test.questions[currentIndex];
   const answeredCount = Object.keys(answers).length;
@@ -173,7 +173,7 @@ export default function AttemptPage({ params }: RouteContext) {
 
   return (
     <main className={styles.attemptPage}>
-      <Link className={styles.backLink} href="/dashboard"><ArrowLeft size={14} aria-hidden="true" />Exit test</Link>
+      <Link className={styles.backLink} href={submitted ? "/dashboard/progress" : "/dashboard"}><ArrowLeft size={14} aria-hidden="true" />{submitted ? "Back to progress" : "Exit test"}</Link>
       <header>
         <p className={styles.eyebrow}>{subjectLabel(attempt.test.subject)} test</p>
         <h1 className={styles.title}>{attempt.test.title}</h1>

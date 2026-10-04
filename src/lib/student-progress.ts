@@ -38,6 +38,8 @@ export type StudentTest = {
   completed: boolean;
   passed: boolean;
   attemptCount: number;
+  /** Server decision for the resumable attempt, or the next new attempt. */
+  rewardEligible: boolean;
   /** Set while a first try or a retry is unfinished. */
   inProgressAttemptId: string | null;
   /** Answers saved in that unfinished attempt — "where you left off". */

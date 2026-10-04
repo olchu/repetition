@@ -80,6 +80,10 @@ test('one test counted once across versions and assignments', async () => {
     assert.equal(payload.tests.length, 1);
     assert.equal(payload.tests[0].inProgressAttemptId, retry.id, 'an unfinished retry drives "continue"');
     assert.equal(payload.subjects.find((s) => s.subject === 'mathematics').completed, 1, 'a retry does not double the count');
+    await prisma.assignment.updateMany({ where: { childId: child.id, testId: v1.id }, data: { status: 'CANCELLED' } });
+    payload = await (await dashboard()).json();
+    assert.equal(payload.tests[0].inProgressAttemptId, retry.id, 'reassignment to another version still resumes the old attempt');
+    assert.equal(payload.tests[0].rewardEligible, false, 'a retry on a cancelled assignment stays practice');
   } finally {
     if (child) {
       await prisma.result.deleteMany({ where: { attempt: { childId: child.id } } });

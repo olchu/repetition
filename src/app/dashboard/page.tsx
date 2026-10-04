@@ -26,6 +26,7 @@ export default function DashboardPage() {
   if (!data) return null;
 
   const passedCount = data.tests.filter((test) => test.passed).length;
+  const completedCount = data.tests.filter((test) => test.completed).length;
   const assignedCount = data.tests.length;
   const overall = assignedCount ? Math.round((passedCount / assignedCount) * 100) : 0;
   const name = data.child.displayName;
@@ -39,7 +40,7 @@ export default function DashboardPage() {
   const progressTitle = assignedCount === 0
     ? "Your tests will appear here"
     : passedCount === 0
-      ? "Let’s get started!"
+      ? completedCount > 0 ? "You’ve put in the work!" : "Let’s get started!"
       : passedCount === assignedCount
         ? "All tests passed!"
         : "You’re making great progress!";
@@ -63,7 +64,7 @@ export default function DashboardPage() {
         <aside className={styles.progressCard} aria-label="Overall progress">
           <p className={styles.visuallyHidden}>Keep going!</p>
           <div className={styles.ring}>
-            <svg viewBox="0 0 120 120" role="img" aria-label={`${overall}% overall progress`}>
+            <svg viewBox="0 0 120 120" role="img" aria-label={`${overall}% of assigned tests passed`}>
               <defs>
                 <linearGradient id="ringGradient" gradientUnits="userSpaceOnUse" x1="112" y1="35" x2="8" y2="85">
                   <stop offset="0%" stopColor="#38ffc4" />
@@ -84,7 +85,7 @@ export default function DashboardPage() {
             </svg>
             <span className={styles.ringLabel}>
               <strong>{overall}<small>%</small></strong>
-              <span>overall</span>
+              <span>passed</span>
             </span>
           </div>
           <p className={styles.visuallyHidden}>&ldquo;One step at a time.&rdquo;</p>
@@ -92,12 +93,20 @@ export default function DashboardPage() {
           <div className={styles.progressText}>
             <strong>{progressTitle}</strong>
             <span>{passedCount} of {assignedCount} {assignedCount === 1 ? "test" : "tests"} passed</span>
+            <span>{completedCount} completed · {data.stars} stars earned</span>
           </div>
-          <Link className={styles.progressLink} href="/dashboard/tests" aria-label="All tests">
+          <Link className={styles.progressLink} href="/dashboard/progress" aria-label="View your progress">
             <ChevronRight size={18} strokeWidth={2.4} aria-hidden="true" />
           </Link>
         </aside>
       </section>
+
+      <p className={styles.progressCaption}>
+        {completedCount} of {assignedCount} assigned tests completed · {passedCount} passed · {data.stars} stars earned
+        {completedCount > 0 && passedCount === 0 && <> · Not passed yet</>}
+        {completedCount > 0 && <> · Best result {Math.round(Math.max(...data.tests.map((test) => test.bestPercentage)))}%</>}
+        {" · "}<Link href="/dashboard/progress">View progress →</Link>
+      </p>
 
       {upNext && (
         <section className={styles.upNext} data-subject={upNext.subject} aria-labelledby="up-next-title">
@@ -194,8 +203,8 @@ export default function DashboardPage() {
 
         {newTests.length === 0 ? (
           <div className={styles.emptyWidget}>
-            <p>{data.tests.length === 0 ? "No tests assigned yet." : "No new tests right now."}</p>
-            <span>{data.tests.length === 0 ? "Your administrator will add the next one here." : "You’ve opened every test assigned to you."}</span>
+            <p>{data.tests.length === 0 ? "No tests assigned yet." : completedCount === assignedCount ? "All tests completed." : "No new tests right now."}</p>
+            <span>{data.tests.length === 0 ? "Your administrator will add the next one here." : completedCount === assignedCount ? "Visit Tests to keep practicing." : "You’ve opened every test assigned to you."}</span>
           </div>
         ) : (
           <TestCardGrid>

@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useId, useState } from "react";
-import { BookOpen, ClipboardList, Heart, House, LogOut, Menu, X } from "lucide-react";
+import { useEffect, useId, useRef, useState } from "react";
+import { BookOpen, ChartNoAxesCombined, ClipboardList, Heart, House, LogOut, Menu, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useStudentOverview } from "@/lib/use-student-overview";
@@ -26,6 +26,7 @@ const navEntries: NavEntry[] = [
   { section: "home", label: "Home", Icon: House, href: "/dashboard" },
   { section: "subjects", label: "Subjects", Icon: BookOpen, href: "/dashboard/subjects" },
   { section: "tests", label: "Tests", Icon: ClipboardList, href: "/dashboard/tests" },
+  { section: "progress", label: "Progress", Icon: ChartNoAxesCombined, href: "/dashboard/progress" },
 ];
 
 type DashboardSidebarProps = {
@@ -62,6 +63,8 @@ export function DashboardSidebar({ userName, userRole = "Student", active = "hom
   const { data } = useStudentOverview();
   const stars = data?.stars ?? null;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuPanelRef = useRef<HTMLDivElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
   const mobileMenuId = useId();
   const shouldReduceMotion = useReducedMotion();
   const animationDuration = shouldReduceMotion ? 0 : 0.24;
@@ -70,16 +73,27 @@ export function DashboardSidebar({ userName, userRole = "Student", active = "hom
     if (!isMenuOpen) return;
 
     const previousOverflow = document.body.style.overflow;
+    const menuButton = menuButtonRef.current;
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") setIsMenuOpen(false);
+      if (event.key === "Tab") {
+        const elements = menuPanelRef.current?.querySelectorAll<HTMLElement>('a[href], button:not([disabled])');
+        const first = elements?.[0];
+        const last = elements?.[elements.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+      }
     };
 
+    const frame = requestAnimationFrame(() => menuPanelRef.current?.querySelector<HTMLButtonElement>("button")?.focus());
     document.body.style.overflow = "hidden";
     document.addEventListener("keydown", closeOnEscape);
 
     return () => {
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", closeOnEscape);
+      cancelAnimationFrame(frame);
+      menuButton?.focus();
     };
   }, [isMenuOpen]);
 
@@ -124,6 +138,7 @@ export function DashboardSidebar({ userName, userRole = "Student", active = "hom
       <UserCard userName={userName} userRole={userRole} stars={stars} />
 
       <button
+        ref={menuButtonRef}
         className={styles.menuButton}
         type="button"
         aria-label="Open navigation menu"
@@ -152,6 +167,7 @@ export function DashboardSidebar({ userName, userRole = "Student", active = "hom
               onClick={() => setIsMenuOpen(false)}
             />
             <motion.div
+              ref={menuPanelRef}
               className={styles.menuPanel}
               id={mobileMenuId}
               role="dialog"

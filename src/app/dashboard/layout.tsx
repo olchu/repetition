@@ -70,6 +70,8 @@ function DashboardFrame({ children }: { children: ReactNode }) {
         </Link>
       );
     }
+  } else if (pathname.startsWith("/dashboard/progress")) {
+    active = "progress";
   }
 
   return (

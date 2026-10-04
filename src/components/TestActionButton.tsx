@@ -28,6 +28,7 @@ export function TestActionButton({ test }: { test: StudentTest }) {
         {busy ? "Starting…" : label}
         <ArrowRight size={16} strokeWidth={2.4} aria-hidden="true" />
       </button>
+      {!test.rewardEligible && <p className={styles.rewardNote}>Practice · No stars</p>}
       {error && <p className={styles.error} role="status">{error}</p>}
     </>
   );

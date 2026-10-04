@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { FileText } from "lucide-react";
 import type { StudentTest, StudentTestStatus } from "@/lib/student-progress";
@@ -38,6 +38,13 @@ type TestTableProps = {
 export function TestTable({ title, tests, showSubject = true, showSet = false, toolbar, empty }: TestTableProps) {
   const subjectLabel = useSubjectLabel();
   const headingId = `test-table-${title.replace(/\W+/g, "-").toLowerCase()}`;
+  const signature = tests.map((test) => test.stableId).join("\n");
+  const [position, setPosition] = useState({ signature, page: 0 });
+  if (position.signature !== signature) setPosition({ signature, page: 0 });
+  const pageSize = 20;
+  const pageCount = Math.max(1, Math.ceil(tests.length / pageSize));
+  const page = position.signature === signature ? Math.min(position.page, pageCount - 1) : 0;
+  const shown = tests.slice(page * pageSize, (page + 1) * pageSize);
 
   return (
     <section
@@ -65,12 +72,13 @@ export function TestTable({ title, tests, showSubject = true, showSet = false, t
             <span>{empty.hint}</span>
           </div>
         ) : (
-          tests.map((test) => (
+          shown.map((test) => (
             <article className={styles.tableRow} key={test.stableId} data-subject={test.subject}>
               <span className={styles.testName}>
                 <FileText className={styles.testIcon} size={18} strokeWidth={2} aria-hidden="true" />
                 <span className={styles.testTitle}>
                   {test.title}
+                  {!test.rewardEligible && <small className={styles.rewardNote}>Practice · No stars</small>}
                   {showSet && test.set && (
                     <Link className={styles.setLink} href={`/dashboard/sets/${test.set.id}`}>{test.set.name}</Link>
                   )}
@@ -94,12 +102,18 @@ export function TestTable({ title, tests, showSubject = true, showSet = false, t
                   testId={test.id}
                   attemptCount={test.attemptCount}
                   inProgressAttemptId={test.inProgressAttemptId}
+                  rewardEligible={test.rewardEligible}
                 />
               </span>
             </article>
           ))
         )}
       </div>
+      {pageCount > 1 && <nav className={styles.pagination} aria-label={`${title} pages`}>
+        <button type="button" disabled={page === 0} onClick={() => setPosition({ signature, page: page - 1 })}>Previous</button>
+        <span role="status">{page * pageSize + 1}–{Math.min((page + 1) * pageSize, tests.length)} of {tests.length} · Page {page + 1} of {pageCount}</span>
+        <button type="button" disabled={page + 1 === pageCount} onClick={() => setPosition({ signature, page: page + 1 })}>Next</button>
+      </nav>}
     </section>
   );
 }

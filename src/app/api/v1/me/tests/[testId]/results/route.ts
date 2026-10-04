@@ -28,11 +28,11 @@ export async function GET(_request: Request, context: RouteContext) {
   const attempts = await prisma.attempt.findMany({
     where: {
       childId: user.id,
-      assignment: { testId, status: "ACTIVE" },
+      assignment: { test: { stableId: assignment.test.stableId } },
       status: "SUBMITTED",
     },
     include: { result: true },
-    orderBy: { submittedAt: "desc" },
+    orderBy: [{ submittedAt: "desc" }, { id: "desc" }],
   });
 
   return NextResponse.json({
